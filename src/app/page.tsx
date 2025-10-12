@@ -280,23 +280,24 @@ export default function Chat() {
                   </span>
                 </span>
               </h1>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 w-full max-w-2xl">
-                {[
-                  'find properties for rent in new york below 2000',
-                  'show apple balance sheet',
-                  'compare faang stock performance',
-                  'top tech companies by market cap'
-                ].map((suggestion, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setInput(suggestion)}
-                    className="text-left p-4 bg-white/5 hover:bg-white/10 rounded-xl border border-white/10 
-                             transition-all text-sm text-gray-300 hover:text-white"
-                  >
-                    {suggestion}
-                  </button>
-                ))}
-              </div>
+              
+<div className="grid grid-cols-1 md:grid-cols-2 gap-3 w-full max-w-2xl">
+  {[
+    'what is artificial intelligence?',
+    'find properties for rent in new york below 2000',
+    'top indian companies by market cap',
+    'how does blockchain work?'
+  ].map((suggestion, i) => (
+    <button
+      key={i}
+      onClick={() => setInput(suggestion)}
+      className="text-left p-4 bg-white/5 hover:bg-white/10 rounded-xl border border-white/10 
+                 transition-all text-sm text-gray-300 hover:text-white"
+    >
+      {suggestion}
+    </button>
+  ))}
+</div>
             </div>
           ) : (
             // Messages
