@@ -1,4 +1,4 @@
-// app/page.tsx (COMPLETE FILE - UPDATED PROPERTY DISPLAY)
+// app/page.tsx (COMPLETE FILE - MOBILE RESPONSIVE)
 'use client';
 
 import { useChat } from '@ai-sdk/react';
@@ -169,7 +169,6 @@ export default function Chat() {
       }
     });
 
-    // Add text generation step if streaming
     if (status === 'streaming') {
       const hasText = lastMessage.parts.some(p => p.type === 'text');
       if (hasText) {
@@ -184,10 +183,91 @@ export default function Chat() {
 
   const loadingSteps = getLoadingSteps();
 
+  // Render dashboard items
+  const renderDashboardItems = (message: any) => {
+    return message.parts.map((part: any) => {
+      const hasState = 'state' in part;
+      const hasToolCallId = 'toolCallId' in part;
+      
+      if (!hasState || !hasToolCallId || part.state !== 'output-available') return null;
+      
+      const callId = part.toolCallId;
+
+      if (part.type === 'tool-showBarChart') {
+        const output = part.output as ChartOutput;
+        return <BarChartPro key={callId} title={output.title} data={output.data} unit={output.unit} />;
+      }
+
+      if (part.type === 'tool-showLineChart') {
+        const output = part.output as ChartOutput;
+        return <LineChartPro key={callId} title={output.title} data={output.data} unit={output.unit} />;
+      }
+
+      if (part.type === 'tool-showPieChart') {
+        const output = part.output as ChartOutput;
+        return <PieChartPro key={callId} title={output.title} data={output.data} unit={output.unit} />;
+      }
+
+      if (part.type === 'tool-showAreaChart') {
+        const output = part.output as ChartOutput;
+        return <AreaChartPro key={callId} title={output.title} data={output.data} unit={output.unit} />;
+      }
+
+      if (part.type === 'tool-showComparison') {
+        const output = part.output as ComparisonOutput;
+        return <ComparisonTable key={callId} title={output.title} items={output.items} />;
+      }
+
+      if (part.type === 'tool-showStats') {
+        const output = part.output as StatsOutput;
+        return <StatsCard key={callId} title={output.title} stats={output.stats} />;
+      }
+
+      if (part.type === 'tool-showBalanceSheet') {
+        const output = part.output as BalanceSheetOutput;
+        return (
+          <BalanceSheet
+            key={callId}
+            title={output.title}
+            period={output.period}
+            currency={output.currency}
+            assets={output.assets}
+            liabilities={output.liabilities}
+            equity={output.equity}
+          />
+        );
+      }
+
+      if (part.type === 'tool-showPropertyPortfolio') {
+        const output = part.output as PropertyPortfolioOutput;
+        return (
+          <PropertyPortfolio
+            key={callId}
+            properties={output.properties}
+          />
+        );
+      }
+
+      if (part.type === 'tool-showZillowProperty') {
+        const output = part.output as ZillowPropertyOutput;
+        return (
+          <ZillowProperty
+            key={callId}
+            property={output.property}
+            zillowUrl={output.zillowUrl}
+            error={output.error}
+          />
+        );
+      }
+
+      return null;
+    });
+  };
+
   return (
     <div className="min-h-screen bg-[#0B0D11] text-white font-mono">
       {/* Main Content */}
-      <main className={`transition-all duration-300 ${showSidebar ? 'mr-[40%]' : 'mr-0'}`}>
+      <main className={`transition-all duration-300 ${showSidebar ? 'md:mr-[40%]' : 'mr-0'}`}>
         {/* Messages Container */}
         <div className="max-w-3xl mx-auto px-4 pb-40 pt-8">
           {messages.length === 0 ? (
@@ -223,7 +303,7 @@ export default function Chat() {
             <div className="py-8">
               {messages.map((m, idx) => (
                 <div key={m.id}>
-                  {/* User message - Bold and larger */}
+                  {/* User message */}
                   {m.role === 'user' && (
                     <div className="py-6">
                       <p className="text-white text-base font-bold leading-relaxed">
@@ -236,7 +316,7 @@ export default function Chat() {
                     </div>
                   )}
                   
-                  {/* AI message - Standard size */}
+                  {/* AI message */}
                   {m.role === 'assistant' && (
                     <div className="py-6 space-y-4">
                       <div className="text-gray-200 text-sm leading-relaxed whitespace-pre-wrap">
@@ -274,17 +354,22 @@ export default function Chat() {
                         }
                         return null;
                       })}
+
+                      {/* MOBILE ONLY: Show dashboard items inline */}
+                      <div className="md:hidden space-y-4 mt-4">
+                        {renderDashboardItems(m)}
+                      </div>
                     </div>
                   )}
                   
-                  {/* Gray separator line after each message pair */}
+                  {/* Separator */}
                   {idx < messages.length - 1 && (
                     <div className="border-b border-gray-800"></div>
                   )}
                 </div>
               ))}
               
-              {/* Loading Steps Indicator */}
+              {/* Loading Steps */}
               {(status === 'streaming' || loadingSteps.some(s => s.status === 'loading')) && loadingSteps.length > 0 && (
                 <div className="py-6 border-t border-gray-800">
                   <div className="bg-white/5 border border-white/10 rounded-lg p-4 space-y-3">
@@ -318,7 +403,6 @@ export default function Chat() {
                 </div>
               )}
 
-              {/* Simple streaming indicator (fallback) */}
               {status === 'streaming' && loadingSteps.length === 0 && (
                 <div className="py-6 border-t border-gray-800">
                   <div className="flex gap-1">
@@ -329,7 +413,6 @@ export default function Chat() {
                 </div>
               )}
 
-              {/* Error message */}
               {error && (
                 <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl mt-4">
                   <p className="text-red-400 text-sm">
@@ -352,7 +435,7 @@ export default function Chat() {
         {/* Fixed Input at Bottom */}
         <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-[#0B0D11] via-[#0B0D11] to-transparent 
                       pt-12 pb-6 z-30"
-             style={{ marginRight: showSidebar ? '40%' : '0' }}>
+             style={{ marginRight: showSidebar ? 'calc(40%)' : '0' }}>
           <div className="max-w-3xl mx-auto px-4">
             <form onSubmit={handleSubmit} className="relative">
               <input
@@ -391,7 +474,7 @@ export default function Chat() {
             {showSidebar && (
               <button 
                 onClick={() => setShowSidebar(false)}
-                className="text-xs text-gray-500 hover:text-white transition-colors text-center mt-3 w-full"
+                className="hidden md:block text-xs text-gray-500 hover:text-white transition-colors text-center mt-3 w-full"
               >
                 [hide dashboard]
               </button>
@@ -400,122 +483,15 @@ export default function Chat() {
         </div>
       </main>
 
-      {/* Dashboard Sidebar - Only for Property Details and Other Visualizations */}
+      {/* Dashboard Sidebar - DESKTOP ONLY */}
       <aside
-        className={`fixed top-0 right-0 h-full w-[40%] bg-[#0B0D11] border-l border-white/5 
+        className={`hidden md:block fixed top-0 right-0 h-full w-[40%] bg-[#0B0D11] border-l border-white/5 
                   overflow-y-auto transform transition-transform duration-300 ease-in-out z-50 ${
                     showSidebar ? 'translate-x-0' : 'translate-x-full'
                   }`}
       >
         <div className="p-4 space-y-4">
-          {messages.map((message) =>
-            message.parts.map((part) => {
-              const hasState = 'state' in part;
-              const hasToolCallId = 'toolCallId' in part;
-              
-              if (!hasState || !hasToolCallId) return null;
-              
-              const callId = part.toolCallId;
-
-              if (part.type === 'tool-showBarChart' && part.state === 'output-available') {
-                const output = part.output as ChartOutput;
-                return <BarChartPro key={callId} title={output.title} data={output.data} unit={output.unit} />;
-              }
-
-              if (part.type === 'tool-showLineChart' && part.state === 'output-available') {
-                const output = part.output as ChartOutput;
-                return <LineChartPro key={callId} title={output.title} data={output.data} unit={output.unit} />;
-              }
-
-              if (part.type === 'tool-showPieChart' && part.state === 'output-available') {
-                const output = part.output as ChartOutput;
-                return <PieChartPro key={callId} title={output.title} data={output.data} unit={output.unit} />;
-              }
-
-              if (part.type === 'tool-showAreaChart' && part.state === 'output-available') {
-                const output = part.output as ChartOutput;
-                return <AreaChartPro key={callId} title={output.title} data={output.data} unit={output.unit} />;
-              }
-
-              if (part.type === 'tool-showComparison' && part.state === 'output-available') {
-                const output = part.output as ComparisonOutput;
-                return <ComparisonTable key={callId} title={output.title} items={output.items} />;
-              }
-
-              if (part.type === 'tool-showStats' && part.state === 'output-available') {
-                const output = part.output as StatsOutput;
-                return <StatsCard key={callId} title={output.title} stats={output.stats} />;
-              }
-
-              if (part.type === 'tool-showBalanceSheet' && part.state === 'output-available') {
-                const output = part.output as BalanceSheetOutput;
-                return (
-                  <BalanceSheet
-                    key={callId}
-                    title={output.title}
-                    period={output.period}
-                    currency={output.currency}
-                    assets={output.assets}
-                    liabilities={output.liabilities}
-                    equity={output.equity}
-                  />
-                );
-              }
-
-              if (part.type === 'tool-showPropertyPortfolio' && part.state === 'output-available') {
-                const output = part.output as PropertyPortfolioOutput;
-                return (
-                  <PropertyPortfolio
-                    key={callId}
-                    properties={output.properties}
-                  />
-                );
-              }
-
-              if (part.type === 'tool-showZillowProperty' && part.state === 'output-available') {
-                const output = part.output as ZillowPropertyOutput;
-                return (
-                  <ZillowProperty
-                    key={callId}
-                    property={output.property}
-                    zillowUrl={output.zillowUrl}
-                    error={output.error}
-                  />
-                );
-              }
-
-              const loadingTools = [
-                'tool-showBarChart',
-                'tool-showLineChart',
-                'tool-showPieChart',
-                'tool-showAreaChart',
-                'tool-showComparison',
-                'tool-showStats',
-                'tool-showBalanceSheet',
-                'tool-showPropertyPortfolio',
-                'tool-showZillowProperty',
-              ];
-              
-              if (loadingTools.includes(part.type) &&
-                  (part.state === 'input-available' || part.state === 'input-streaming')) {
-                return (
-                  <div key={callId} className="flex items-center gap-2 text-gray-400 text-sm p-4 
-                                               bg-white/5 rounded-xl border border-white/10">
-                    <div className="flex gap-1">
-                      <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce"></div>
-                      <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" 
-                           style={{ animationDelay: '150ms' }}></div>
-                      <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" 
-                           style={{ animationDelay: '300ms' }}></div>
-                    </div>
-                    <span>generating...</span>
-                  </div>
-                );
-              }
-
-              return null;
-            })
-          )}
+          {messages.map((message) => renderDashboardItems(message))}
         </div>
       </aside>
     </div>
