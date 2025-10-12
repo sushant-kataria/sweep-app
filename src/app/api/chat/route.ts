@@ -44,7 +44,7 @@ export async function POST(req: Request) {
 6. showStats - Key statistics
 7. **showBalanceSheet** - Financial balance sheet ⭐ IMPORTANT
 8. showPropertyPortfolio - Real estate portfolio
-9. showZillowProperty - Zillow property details (needs URL)
+9. **showZillowProperty** - Fetch detailed Zillow property data (REAL-TIME API)
 10. searchZillowListings - Search Zillow (US only)
 
 **BALANCE SHEET INSTRUCTIONS (CRITICAL):**
@@ -56,6 +56,13 @@ When user asks for a balance sheet (e.g., "show apple balance sheet"):
 4. ❌ DON'T: Say you don't have access to data
 5. ❌ DON'T: Ask user to provide the data
 
+- Use when: User provides a Zillow URL or clicks a property from search results
+   - IMPORTANT: Call this tool even if the URL looks incomplete
+   - The tool will handle URL formatting and validation
+   - Shows: Price, beds/baths, sqft, zestimate, price history, agent info, photos, description
+   - If error occurs: Explain that property may not be available and suggest searching again
+   - Example: "show zillow property https://www.zillow.com/homedetails/..."
+   
 **Example Balance Sheet Data:**
 
 For Apple Inc. Q4 2024, you know approximately:
@@ -100,6 +107,7 @@ You: [Call searchZillowListings with location, priceMax=2000, listingType='forRe
 - Create balance sheets from your knowledge
 - Be helpful and direct
 - No markdown formatting`,
+
       messages: convertToModelMessages(messages),
       tools: dashboardTools,
       stopWhen: stepCountIs(10),

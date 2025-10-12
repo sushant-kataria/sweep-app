@@ -64,13 +64,26 @@ export const ZillowListings = ({
     );
   }
 
-  const handlePropertyClick = (property: any) => {
-    setSelectedProperty(property.id);
-    if (onPropertySelectAction && property.url) {
-      // Trigger the detail view
-      onPropertySelectAction(property.url);
+  // components/dashboard/zillow-listings.tsx (UPDATE the handlePropertyClick function)
+
+const handlePropertyClick = (property: any) => {
+  setSelectedProperty(property.id);
+  if (onPropertySelectAction && property.url) {
+    // Ensure URL is complete before passing
+    let fullUrl = property.url;
+    
+    // If URL is relative, make it absolute
+    if (!fullUrl.startsWith('http')) {
+      fullUrl = fullUrl.startsWith('/') 
+        ? `https://www.zillow.com${fullUrl}` 
+        : `https://www.zillow.com/${fullUrl}`;
     }
-  };
+    
+    console.log('Clicking property URL:', fullUrl); // Debug
+    onPropertySelectAction(fullUrl);
+  }
+};
+
 
   return (
     <div className="bg-black border border-white/20 rounded p-4 space-y-3">

@@ -8,15 +8,31 @@ type ZillowPropertyProps = {
 };
 
 export const ZillowProperty = ({ property, zillowUrl, error }: ZillowPropertyProps) => {
-  if (error) {
-    return (
-      <div className="bg-black border border-white/20 rounded p-4">
-        <h3 className="text-white font-mono text-sm mb-2">zillow property data</h3>
-        <div className="text-red-400 text-xs">{error}</div>
-        <div className="text-white/60 text-xs mt-2">URL: {zillowUrl}</div>
-      </div>
-    );
-  }
+    if (error) {
+        return (
+          <div className="bg-black border border-white/20 rounded p-4">
+            <h3 className="text-white font-mono text-sm mb-2">zillow property data</h3>
+            <div className="text-red-400 text-xs mb-3">{error}</div>
+            <div className="text-white/60 text-xs mt-2">
+              <div className="mb-2">URL: {zillowUrl}</div>
+              <div className="bg-white/5 rounded p-2 mt-2 text-xs">
+                <div className="text-white/80 mb-1">Possible issues:</div>
+                <ul className="list-disc list-inside text-white/60 space-y-1">
+                  <li>Property may have been removed from Zillow</li>
+                  <li>Property URL might be incorrect</li>
+                  <li>API rate limit reached (try again in a moment)</li>
+                </ul>
+              </div>
+            </div>
+            <button
+              onClick={() => window.open(zillowUrl, '_blank')}
+              className="mt-3 text-xs text-white/60 hover:text-white underline"
+            >
+              view original listing on zillow →
+            </button>
+          </div>
+        );
+      }
 
   if (!property) {
     return (

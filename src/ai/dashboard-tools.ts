@@ -151,7 +151,6 @@ export const dashboardTools = {
       return { properties };
     },
   }),
-  
   showZillowProperty: tool({
     description: 'Fetch and display detailed Zillow property data including price, address, specifications, price history, agent info, and photos. Use when user provides a Zillow URL or asks about specific property details.',
     inputSchema: z.object({
@@ -160,10 +159,20 @@ export const dashboardTools = {
     execute: async function ({ zillowUrl }) {
       try {
         const apiKey = 'e2f9b74a-b7ba-49f4-9983-03c55908da92';
-        const encodedUrl = encodeURIComponent(zillowUrl);
+        
+        // Ensure URL is complete
+        let fullUrl = zillowUrl;
+        if (!fullUrl.startsWith('http')) {
+          fullUrl = 'https://www.zillow.com' + (fullUrl.startsWith('/') ? '' : '/') + fullUrl;
+        }
+        
+        // URL encode for API
+        const encodedUrl = encodeURIComponent(fullUrl);
+        
+        console.log('Fetching property:', fullUrl); // Debug log
         
         const response = await fetch(
-          `https://api.hasdata.com/scrape/zillow/property?url=${encodedUrl}&extractAgentEmails=true`,
+          `https://api.hasdata.com/scrape/zillow/property?url=${encodedUrl}&extractAgentEmails=false`,
           {
             headers: {
               'Content-Type': 'application/json',
@@ -171,31 +180,38 @@ export const dashboardTools = {
             },
           }
         );
-
+  
+        console.log('API Response status:', response.status); // Debug log
+  
         if (!response.ok) {
+          const errorText = await response.text();
+          console.error('API Error:', errorText);
           return { 
-            error: `Failed to fetch property data: ${response.status}`,
-            zillowUrl 
+            error: `Failed to fetch property data (Status: ${response.status}). The property might not be available or the URL format is incorrect.`,
+            zillowUrl: fullUrl
           };
         }
-
+  
         const data = await response.json();
+        
+        console.log('API Response data:', data); // Debug log
         
         if (!data.property) {
           return { 
-            error: 'No property data found',
-            zillowUrl 
+            error: 'No property data found. This property may have been removed from Zillow or is not accessible.',
+            zillowUrl: fullUrl
           };
         }
-
+  
         return {
           success: true,
           property: data.property,
-          zillowUrl,
+          zillowUrl: fullUrl,
         };
       } catch (error: any) {
+        console.error('Tool execution error:', error);
         return {
-          error: `Error fetching property: ${error.message}`,
+          error: `Error fetching property: ${error.message}. Please check the URL and try again.`,
           zillowUrl,
         };
       }
