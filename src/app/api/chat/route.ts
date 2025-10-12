@@ -11,7 +11,7 @@ export async function POST(req: Request) {
 
   try {
     const result = streamText({
-      model: google('gemini-2.0-flash-exp'), // Changed to experimental model with higher limits
+      model: google('gemini-2.0-flash-lite'), // Changed to experimental model with higher limits
       system: `You are a helpful AI assistant with comprehensive knowledge and advanced visualization capabilities, including real-time Zillow property data.
 
 **YOUR CAPABILITIES:**
