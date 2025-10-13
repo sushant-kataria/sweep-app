@@ -77,6 +77,52 @@ export const dashboardTools = {
       return { title, items };
     },
   }),
+
+  generateImage: tool({
+    description: "Generate an image from a text prompt using Stability AI.",
+    inputSchema: z.object({
+      prompt: z.string().describe("Image prompt"),
+    }),
+    execute: async function({ prompt }) {
+      const apiKey = process.env.STABILITY_API_KEY;
+      const response = await fetch(
+        'https://api.stability.ai/v1/generation/stable-diffusion-xl-1024-v1-0/text-to-image',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiKey}`,
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify({
+            text_prompts: [{ text: prompt }],
+            cfg_scale: 7,
+            height: 1024,
+            width: 1024,
+            samples: 1,
+            steps: 30
+          }),
+          
+        }
+      );
+  
+      if (!response.ok) {
+        const errText = await response.text();
+        return { error: "Failed to generate image: " + errText };
+      }
+  
+      const data = await response.json();
+      // The API returns base64 PNGs in data.artifacts[0-...].base64
+      if (!data || !data.artifacts || !data.artifacts[0] || !data.artifacts[0].base64) {
+        return { error: "Image not created by Stability AI" };
+      }
+      return {
+        imageUrl: `data:image/png;base64,${data.artifacts[0].base64}`,
+        prompt
+      };
+    }
+  }),
+  
   
   showStats: tool({
     description: 'Display key statistics or metrics in a card layout',
