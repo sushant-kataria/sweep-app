@@ -167,6 +167,14 @@ export default function Chat() {
       if (part.type === 'tool-generateImage') {
         const callId = part.toolCallId || Math.random();
         if (part.output.error) {
+          // Do not render anything for rate limit error
+          if (
+            part.output.error.includes("rate limit") ||
+            part.output.error.includes("429") ||
+            part.output.error.toLowerCase().includes("quota")
+          ) {
+            return null; // Suppress output completely
+          }
           return <div key={callId} className="text-red-400 p-2">{part.output.error}</div>;
         }
         return (
