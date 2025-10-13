@@ -140,7 +140,20 @@ export const dashboardTools = {
   }),
   
   showBalanceSheet: tool({
-    description: 'Display a financial balance sheet showing assets, liabilities, and equity. Use for company financial statements or accounting data.',
+    description: `
+    Display a financial balance sheet. 
+    IMPORTANT: Format all tool inputs as follows:
+    assets: {
+      current: [{ label: "Cash", value: 1000 }],
+      nonCurrent: [{ label: "Property", value: 4000 }]
+    },
+    liabilities: {
+      current: [{ label: "Accounts Payable", value: 500 }],
+      nonCurrent: [{ label: "Long-term Debt", value: 1200 }]
+    },
+    equity: [{ label: "Shareholders' Equity", value: 3300 }]
+    DO NOT use arrays for assets or liabilities directly. Always use an object with current/nonCurrent keys even if some are empty.
+  `,
     inputSchema: z.object({
       title: z.string().describe('Balance sheet title (e.g., "Apple Inc. Balance Sheet Q4 2024")'),
       period: z.string().describe('Period (e.g., "Q4 2024", "FY 2023")'),
