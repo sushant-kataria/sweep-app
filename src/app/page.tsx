@@ -43,6 +43,7 @@ export default function Chat() {
     'find homes for sale in los angeles below $900000',
     'compare top US companies by market cap',
     'what is artificial intelligence?',
+    'show tesla stock price chart for the last 6 months',
   ];
 
   useEffect(() => {

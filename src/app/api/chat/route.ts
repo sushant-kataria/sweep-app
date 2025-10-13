@@ -11,7 +11,7 @@ export async function POST(req: Request) {
 
   try {
     const result = streamText({
-      model: google('gemini-flash-latest'),
+      model: google('gemini-2.5-flash-lite'),
       system: `You are Sweep - a helpful, knowledgeable AI assistant that can answer ANY question and create visualizations.
 
 **YOU CAN HANDLE ALL TYPES OF QUERIES:**
