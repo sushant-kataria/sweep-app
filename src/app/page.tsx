@@ -15,7 +15,6 @@ import { PropertyPortfolio } from '@/components/dashboard/property-portfolio';
 import { ZillowProperty } from '@/components/dashboard/zillow-property';
 import { ZillowListings } from '@/components/dashboard/zillow-listings';
 
-// --- TYPES (except StockDetails type and all stock types are removed) ---
 type ChartOutput = { chartType: string; title: string; unit?: string; data: Array<{ label: string; value: number }>; };
 type ComparisonOutput = { title: string; items: Array<{ name: string; metrics: Record<string, number | string>; }>; };
 type StatsOutput = { title: string; stats: Array<{ label: string; value: string; change?: string; }>; };
@@ -37,40 +36,44 @@ export default function Chat() {
   const { messages, sendMessage, status, error } = useChat();
   const [input, setInput] = useState('');
   const [showSidebar, setShowSidebar] = useState(false);
+  const [hasDashboardItems, setHasDashboardItems] = useState(false);
 
   const suggestions = [
-    'show apple balance sheet',
+    'show apple stock',
+    'price of tesla',
     'find homes for sale in los angeles below $900000',
+    'show walmart balance sheet',
     'compare top US companies by market cap',
-    'what is artificial intelligence?',
-    'show tesla stock price chart for the last 6 months',
-  ];
+      ];
 
+  // Tracks if dashboard content exists in any message
   useEffect(() => {
-    const hasDashboardItems = messages.some((message) =>
-      message.parts.some((part) => {
-        const toolTypes = [
-          'tool-showBarChart', 'tool-showLineChart', 'tool-showPieChart', 'tool-showAreaChart', 'tool-showComparison',
-          'tool-showStats', 'tool-showBalanceSheet', 'tool-showPropertyPortfolio', 'tool-showZillowProperty'
-        ];
-        if (toolTypes.includes(part.type)) {
-          return 'state' in part && part.state === 'output-available';
-        }
-        return false;
-      })
+    const toolTypes = [
+      'tool-showBarChart', 'tool-showLineChart', 'tool-showPieChart', 'tool-showAreaChart', 'tool-showComparison',
+      'tool-showStats', 'tool-showBalanceSheet', 'tool-showPropertyPortfolio', 'tool-showZillowProperty'
+    ];
+    const hasItems = messages.some((message) =>
+      message.parts.some((part) =>
+        toolTypes.includes(part.type) && 'state' in part && part.state === 'output-available'
+      )
     );
-    setShowSidebar(hasDashboardItems);
+    setHasDashboardItems(hasItems);
+    // hide dashboard if there are no dashboard results
+    if (!hasItems) setShowSidebar(false);
   }, [messages]);
 
+  // Hide dashboard on every new query
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim()) return;
+    setShowSidebar(false);
     sendMessage({ text: input });
     setInput('');
   };
 
   const handleLogoClick = () => window.location.reload();
 
+  // Loading steps for bottom loader
   const getLoadingSteps = () => {
     if (messages.length === 0) return [];
     const lastMessage = messages[messages.length - 1];
@@ -113,6 +116,7 @@ export default function Chat() {
 
   const loadingSteps = getLoadingSteps();
 
+  // Dashboard rendering
   const renderDashboardItems = (message: any) => {
     return message.parts.map((part: any) => {
       const hasState = 'state' in part;
@@ -165,20 +169,26 @@ export default function Chat() {
 
   return (
     <div className="min-h-screen bg-black text-white font-mono">
-      {(messages.length > 0) && (
-        <header className="fixed top-0 left-0 right-0 z-40 bg-black/80 backdrop-blur-xl border-b border-white/10">
-          <div className="max-w-7xl mx-auto px-4 py-3">
-            <button
-              onClick={handleLogoClick}
-              className="text-2xl font-mono hover:opacity-80 transition-opacity"
-            >
-              <span className="bg-gradient-to-r from-gray-600 via-white to-gray-600 bg-clip-text text-transparent animate-gradient bg-[length:200%_100%]">
-                Sweep
-              </span>
-            </button>
-          </div>
-        </header>
-      )}
+      {/* Header with responsive positioning */}
+      {messages.length > 0 && (
+  <header className="fixed top-0 left-0 right-0 z-40 bg-black/80 backdrop-blur-xl border-b border-white/10">
+    <div className={
+      showSidebar
+        ? "px-4 py-3 flex items-center"
+        : "max-w-7xl mx-auto px-4 py-3 flex items-center justify-center"
+    }>
+      <button
+        onClick={handleLogoClick}
+        className="text-2xl font-mono hover:opacity-80 transition-opacity"
+      >
+        <span className="bg-gradient-to-r from-gray-600 via-white to-gray-600 bg-clip-text text-transparent animate-gradient bg-[length:200%_100%]">
+          Sweep
+        </span>
+      </button>
+    </div>
+  </header>
+)}
+
 
       <main className={`transition-all duration-300 ${showSidebar ? 'md:mr-[40%]' : 'mr-0'} ${messages.length > 0 ? 'pt-16' : ''}`}>
         <div className="max-w-3xl mx-auto px-4 pb-40 pt-8">
@@ -331,10 +341,27 @@ export default function Chat() {
                   </button>
                 </div>
               )}
+
+              {/* Show/hide dashboard controls (desktop only) */}
+              {hasDashboardItems && !showSidebar && (
+                <button
+                  onClick={() => setShowSidebar(true)}
+                  className="hidden md:block text-xs text-gray-500 hover:text-white transition-colors text-center mt-3 w-full"
+                >
+                  [show dashboard]
+                </button>
+              )}
+              {showSidebar && (
+                <button
+                  onClick={() => setShowSidebar(false)}
+                  className="hidden md:block text-xs text-gray-500 hover:text-white transition-colors text-center mt-3 w-full"
+                >
+                  [hide dashboard]
+                </button>
+              )}
             </div>
           )}
         </div>
-
         {(messages.length > 0) && (
           <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black to-transparent pt-12 pb-6 z-30" style={{ marginRight: showSidebar ? 'calc(40%)' : '0' }}>
             <div className="max-w-3xl mx-auto px-4">
@@ -357,19 +384,13 @@ export default function Chat() {
                   <Send className="size-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" aria-hidden="true" />
                 </button>
               </form>
-              {showSidebar && (
-                <button
-                  onClick={() => setShowSidebar(false)}
-                  className="hidden md:block text-xs text-gray-500 hover:text-white transition-colors text-center mt-3 w-full"
-                >
-                  [hide dashboard]
-                </button>
-              )}
             </div>
           </div>
         )}
       </main>
-      <aside className={`hidden md:block fixed top-0 right-0 h-full w-[40%] bg-black border-l border-white/5 overflow-y-auto transform transition-transform duration-300 ease-in-out z-50 ${showSidebar ? 'translate-x-0' : 'translate-x-full'}`}>
+      <aside className={`hidden md:block fixed top-0 right-0 h-full w-[40%] bg-black border-l border-white/5 overflow-y-auto transform transition-transform duration-300 ease-in-out z-50 ${
+        showSidebar ? 'translate-x-0' : 'translate-x-full'
+      }`}>
         <div className="p-4 space-y-4">
           {messages.map((message) => renderDashboardItems(message))}
         </div>

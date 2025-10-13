@@ -1,6 +1,7 @@
 // ai/dashboard-tools.ts (COMPLETE FILE)
 import { tool, type ToolSet } from 'ai';
 import { z } from 'zod';
+import { normalizeBalanceSheetInput } from '@/utils/normalizeBalanceSheetInput';
 
 export const dashboardTools = {
   showBarChart: tool({
@@ -123,9 +124,13 @@ export const dashboardTools = {
         value: z.number().describe('Value in specified currency'),
       })).describe('Shareholders equity'),
     }),
-    execute: async function ({ title, period, currency, assets, liabilities, equity }) {
+    execute: async function (input) {
+      // Always normalize the input (fix Gemini array-outputs)
+      const { title, period, currency, equity } = input;
+      const { assets, liabilities } = normalizeBalanceSheetInput(input);
       return { title, period, currency, assets, liabilities, equity };
     },
+  
   }),
   
   showPropertyPortfolio: tool({
