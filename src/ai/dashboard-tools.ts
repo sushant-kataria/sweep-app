@@ -88,7 +88,8 @@ export const dashboardTools = {
       // No server-side fetch needed (avoids edge runtime timeouts).
       const encodedPrompt = encodeURIComponent(prompt);
       const seed = Math.floor(Math.random() * 1_000_000);
-      const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&model=flux&nologo=true&enhance=true&seed=${seed}`;
+      // flux-schnell is fast (seconds vs minutes for full flux)
+      const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&model=flux-schnell&nologo=true&seed=${seed}`;
       return { imageUrl, prompt };
     }
   }),
