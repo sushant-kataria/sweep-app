@@ -84,24 +84,12 @@ export const dashboardTools = {
       prompt: z.string().describe("Detailed image prompt"),
     }),
     execute: async function({ prompt }) {
-      try {
-        const encodedPrompt = encodeURIComponent(prompt);
-        const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&model=flux&nologo=true&enhance=true`;
-
-        // Fetch the image to trigger generation and confirm it's ready
-        const response = await fetch(imageUrl);
-
-        if (!response.ok) {
-          return { error: "Failed to generate image. Please try again." };
-        }
-
-        // Drain the response body so the connection completes cleanly
-        await response.arrayBuffer();
-
-        return { imageUrl, prompt };
-      } catch (error: any) {
-        return { error: `Error generating image: ${error.message}` };
-      }
+      // Return the Pollinations URL directly — the browser loads the image.
+      // No server-side fetch needed (avoids edge runtime timeouts).
+      const encodedPrompt = encodeURIComponent(prompt);
+      const seed = Math.floor(Math.random() * 1_000_000);
+      const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&model=flux&nologo=true&enhance=true&seed=${seed}`;
+      return { imageUrl, prompt };
     }
   }),
   
