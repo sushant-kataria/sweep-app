@@ -79,47 +79,29 @@ export const dashboardTools = {
   }),
 
   generateImage: tool({
-    description: "Generate an image from a text prompt using Stability AI.",
+    description: "Generate an image from a text prompt using Pollinations AI (free, no API key required).",
     inputSchema: z.object({
-      prompt: z.string().describe("Image prompt"),
+      prompt: z.string().describe("Detailed image prompt"),
     }),
     execute: async function({ prompt }) {
-      const apiKey = process.env.STABILITY_API_KEY;
-      const response = await fetch(
-        'https://api.stability.ai/v1/generation/stable-diffusion-xl-1024-v1-0/text-to-image',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${apiKey}`,
-            'Accept': 'application/json'
-          },
-          body: JSON.stringify({
-            text_prompts: [{ text: prompt }],
-            cfg_scale: 7,
-            height: 1024,
-            width: 1024,
-            samples: 1,
-            steps: 30
-          }),
-          
+      try {
+        const encodedPrompt = encodeURIComponent(prompt);
+        const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&model=flux&nologo=true&enhance=true`;
+
+        // Fetch the image to trigger generation and confirm it's ready
+        const response = await fetch(imageUrl);
+
+        if (!response.ok) {
+          return { error: "Failed to generate image. Please try again." };
         }
-      );
-  
-      if (!response.ok) {
-        const errText = await response.text();
-        return { error: "Failed to generate image: " + errText };
+
+        // Drain the response body so the connection completes cleanly
+        await response.arrayBuffer();
+
+        return { imageUrl, prompt };
+      } catch (error: any) {
+        return { error: `Error generating image: ${error.message}` };
       }
-  
-      const data = await response.json();
-      // The API returns base64 PNGs in data.artifacts[0-...].base64
-      if (!data || !data.artifacts || !data.artifacts[0] || !data.artifacts[0].base64) {
-        return { error: "Image not created by Stability AI" };
-      }
-      return {
-        imageUrl: `data:image/png;base64,${data.artifacts[0].base64}`,
-        prompt
-      };
     }
   }),
   

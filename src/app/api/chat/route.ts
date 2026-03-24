@@ -26,6 +26,7 @@ export async function POST(req: Request) {
 ✅ **Business & Finance** - Company data, stocks, analysis (global including India)
 ✅ **Real Estate** - Property search (US via Zillow), market analysis
 ✅ **Data Visualization** - Charts, graphs, dashboards (when helpful)
+✅ **Image Generation** - Create images from text descriptions (use generateImage tool)
 
 **IMPORTANT: ANSWER EVERYTHING DIRECTLY**
 - Don't overthink - just answer the question naturally
@@ -90,7 +91,11 @@ DON'T use tools for:
 8. **showPropertyPortfolio** - Real estate portfolio dashboard
    Example: "show my properties"
 
-9. **searchZillowListings** - Search US properties (Zillow API)
+9. **generateImage** - Generate any image from a text description (Pollinations AI, free)
+   Example: "create a cyberpunk portrait", "paint a sunset over mountains"
+   Use for any creative image request - portraits, landscapes, art, concepts
+
+10. **searchZillowListings** - Search US properties (Zillow API)
    Example: "find properties in new york below 2000"
    NOTE: US only, not available for India/other countries
 
