@@ -79,18 +79,50 @@ export const dashboardTools = {
   }),
 
   generateImage: tool({
-    description: "Generate an image from a text prompt using Pollinations AI (free, no API key required).",
+    description: "Generate an image from a text prompt using Hugging Face FLUX.1-schnell (free).",
     inputSchema: z.object({
       prompt: z.string().describe("Detailed image prompt"),
     }),
     execute: async function({ prompt }) {
-      // Return the Pollinations URL directly — the browser loads the image.
-      // No server-side fetch needed (avoids edge runtime timeouts).
-      const encodedPrompt = encodeURIComponent(prompt);
-      const seed = Math.floor(Math.random() * 1_000_000);
-      // flux-schnell is fast (seconds vs minutes for full flux)
-      const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&model=flux-schnell&nologo=true&seed=${seed}`;
-      return { imageUrl, prompt };
+      try {
+        const headers: Record<string, string> = {
+          'Content-Type': 'application/json',
+        };
+        if (process.env.HUGGINGFACE_API_KEY) {
+          headers['Authorization'] = `Bearer ${process.env.HUGGINGFACE_API_KEY}`;
+        }
+
+        const response = await fetch(
+          'https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell',
+          {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({ inputs: prompt }),
+          }
+        );
+
+        if (!response.ok) {
+          if (response.status === 503) {
+            return { error: "Image model is warming up — please try again in a few seconds." };
+          }
+          return { error: `Image generation failed (${response.status}). Please try again.` };
+        }
+
+        // Convert binary response to base64 data URL
+        const arrayBuffer = await response.arrayBuffer();
+        const bytes = new Uint8Array(arrayBuffer);
+        let binary = '';
+        const chunk = 8192;
+        for (let i = 0; i < bytes.length; i += chunk) {
+          binary += String.fromCharCode(...(bytes.slice(i, i + chunk) as any));
+        }
+        const base64 = btoa(binary);
+        const contentType = response.headers.get('content-type') || 'image/jpeg';
+
+        return { imageUrl: `data:${contentType};base64,${base64}`, prompt };
+      } catch (error: any) {
+        return { error: `Error generating image: ${error.message}` };
+      }
     }
   }),
   
