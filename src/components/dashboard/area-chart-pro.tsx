@@ -1,73 +1,100 @@
-// components/dashboard/area-chart-pro.tsx
 'use client';
 
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+
+function formatYAxis(v: number): string {
+  if (v >= 1_000_000_000) return `${(v / 1_000_000_000).toFixed(1)}B`;
+  if (v >= 1_000_000) return `${(v / 1_000_000).toFixed(1)}M`;
+  if (v >= 1_000) return `${(v / 1_000).toFixed(0)}K`;
+  return v % 1 === 0 ? v.toString() : v.toFixed(2);
+}
+
+function formatDisplay(v: number, unit?: string): string {
+  const u = (unit || '').toLowerCase();
+  const prefix = u.includes('usd') || u.includes('$') || u.includes('price') ? '$' : '';
+  const suffix = u.includes('%') || u.includes('percent') ? '%' : '';
+  if (v >= 1_000_000_000) return `${prefix}${(v / 1_000_000_000).toFixed(2)}B${suffix}`;
+  if (v >= 1_000_000) return `${prefix}${(v / 1_000_000).toFixed(2)}M${suffix}`;
+  if (v >= 1_000) return `${prefix}${v.toLocaleString()}${suffix}`;
+  return `${prefix}${v % 1 === 0 ? v.toLocaleString() : v.toFixed(2)}${suffix}`;
+}
+
+const CustomTooltip = ({ active, payload, label, unit }: any) => {
+  if (!active || !payload?.length) return null;
+  return (
+    <div className="bg-[#111118] border border-white/10 rounded-xl px-3 py-2.5 shadow-2xl">
+      <p className="text-white/40 text-[11px] mb-1">{label}</p>
+      <p className="text-white font-semibold text-sm">{formatDisplay(payload[0].value, unit)}</p>
+    </div>
+  );
+};
 
 type AreaChartProProps = {
-  title: string;
+  title?: string;
   data: Array<{ label: string; value: number }>;
   unit?: string;
 };
 
-export const AreaChartPro = ({ title, data, unit = '' }: AreaChartProProps) => {
-  const chartData = data.map(item => ({
-    name: item.label,
-    value: item.value,
-  }));
+export const AreaChartPro = ({ title, data, unit }: AreaChartProProps) => {
+  if (!Array.isArray(data) || data.length === 0) {
+    return (
+      <div className="w-full rounded-2xl bg-white/[0.03] border border-white/[0.08] p-5 h-48 flex items-center justify-center">
+        <span className="text-white/25 text-xs">No data available</span>
+      </div>
+    );
+  }
+
+  const gradId = `area-lg-${Math.random().toString(36).slice(2, 7)}`;
 
   return (
-    <div className="bg-black border border-white/20 rounded p-4">
-      <h3 className="text-white font-mono text-sm mb-3">{title}</h3>
-      {unit && (
-        <p className="text-white/60 font-mono text-xs mb-3">Unit: {unit}</p>
+    <div className="w-full rounded-2xl bg-white/[0.03] border border-white/[0.08] p-4">
+      {title && (
+        <p className="text-white/40 text-[11px] font-medium uppercase tracking-wider mb-4">{title}</p>
       )}
-      
-      <ResponsiveContainer width="100%" height={300}>
-        <AreaChart data={chartData} margin={{ top: 5, right: 20, left: 20, bottom: 5 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-          <XAxis 
-            dataKey="name" 
-            stroke="rgba(255,255,255,0.6)"
-            style={{ fontSize: '10px', fontFamily: 'monospace' }}
-            angle={-45}
-            textAnchor="end"
-            height={80}
+
+      <ResponsiveContainer width="100%" height={200}>
+        <AreaChart data={data} margin={{ top: 4, right: 4, left: -8, bottom: 0 }}>
+          <defs>
+            <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.25} />
+              <stop offset="85%" stopColor="#3b82f6" stopOpacity={0} />
+            </linearGradient>
+          </defs>
+          <CartesianGrid
+            stroke="rgba(255,255,255,0.05)"
+            strokeDasharray="0"
+            vertical={false}
           />
-          <YAxis 
-            stroke="rgba(255,255,255,0.6)"
-            style={{ fontSize: '10px', fontFamily: 'monospace' }}
-            label={{ 
-              value: unit, 
-              angle: -90, 
-              position: 'insideLeft',
-              style: { fill: 'rgba(255,255,255,0.6)', fontSize: '10px', fontFamily: 'monospace' }
-            }}
+          <XAxis
+            dataKey="label"
+            tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 11, fontFamily: 'inherit' }}
+            axisLine={false}
+            tickLine={false}
+            interval="preserveStartEnd"
           />
-          <Tooltip 
-            contentStyle={{ 
-              backgroundColor: '#1a1a1a', 
-              border: '1px solid rgba(255,255,255,0.2)',
-              borderRadius: '4px',
-              fontFamily: 'monospace',
-              fontSize: '12px'
-            }}
-            labelStyle={{ color: 'white' }}
-            itemStyle={{ color: 'white' }}
+          <YAxis
+            domain={['auto', 'auto']}
+            tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 11, fontFamily: 'inherit' }}
+            axisLine={false}
+            tickLine={false}
+            tickCount={5}
+            width={52}
+            tickFormatter={formatYAxis}
           />
-          <Legend 
-            wrapperStyle={{ 
-              fontFamily: 'monospace', 
-              fontSize: '10px',
-              color: 'rgba(255,255,255,0.8)'
-            }}
+          <Tooltip
+            content={<CustomTooltip unit={unit} />}
+            cursor={{ stroke: 'rgba(255,255,255,0.08)', strokeWidth: 1, strokeDasharray: '4 2' }}
           />
-          <Area 
-            type="monotone" 
-            dataKey="value" 
-            stroke="white" 
-            fill="rgba(255,255,255,0.3)"
+          <Area
+            type="monotone"
+            dataKey="value"
+            stroke="#3b82f6"
             strokeWidth={2}
-            name={unit || 'Value'}
+            fill={`url(#${gradId})`}
+            dot={false}
+            activeDot={{ r: 4, fill: '#3b82f6', stroke: '#000', strokeWidth: 2 }}
+            isAnimationActive
+            animationDuration={600}
           />
         </AreaChart>
       </ResponsiveContainer>

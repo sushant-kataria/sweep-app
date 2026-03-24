@@ -1,66 +1,98 @@
-// components/dashboard/pie-chart-pro.tsx (COMPLETE REPLACEMENT)
 'use client';
 
-import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
+
+const COLORS = [
+  '#3b82f6', '#8b5cf6', '#06b6d4', '#10b981', '#f59e0b',
+  '#ef4444', '#ec4899', '#84cc16', '#f97316', '#6366f1',
+];
+
+function formatValue(v: number, unit?: string): string {
+  const u = (unit || '').toLowerCase();
+  const prefix = u.includes('usd') || u.includes('$') || u.includes('price') ? '$' : '';
+  const suffix = u.includes('%') || u.includes('percent') ? '%' : '';
+  if (v >= 1_000_000_000) return `${prefix}${(v / 1_000_000_000).toFixed(2)}B${suffix}`;
+  if (v >= 1_000_000) return `${prefix}${(v / 1_000_000).toFixed(2)}M${suffix}`;
+  if (v >= 1_000) return `${prefix}${v.toLocaleString()}${suffix}`;
+  return `${prefix}${v % 1 === 0 ? v.toLocaleString() : v.toFixed(2)}${suffix}`;
+}
+
+const CustomTooltip = ({ active, payload, unit }: any) => {
+  if (!active || !payload?.length) return null;
+  const item = payload[0];
+  return (
+    <div className="bg-[#111118] border border-white/10 rounded-xl px-3 py-2.5 shadow-2xl">
+      <p className="text-white/40 text-[11px] mb-1">{item.name}</p>
+      <p className="text-white font-semibold text-sm">
+        {formatValue(item.value, unit)} <span className="text-white/40 font-normal">({(item.payload.percent * 100).toFixed(1)}%)</span>
+      </p>
+    </div>
+  );
+};
+
+const CustomLegend = ({ data, colors }: { data: Array<{ label: string; value: number; percent: number }>; colors: string[] }) => (
+  <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1.5">
+    {data.map((item, i) => (
+      <div key={i} className="flex items-center gap-2 min-w-0">
+        <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: colors[i % colors.length] }} />
+        <span className="text-white/60 text-[11px] truncate">{item.label}</span>
+        <span className="text-white/40 text-[11px] ml-auto flex-shrink-0">{item.percent.toFixed(1)}%</span>
+      </div>
+    ))}
+  </div>
+);
 
 type PieChartProProps = {
-  title: string;
+  title?: string;
   data: Array<{ label: string; value: number }>;
   unit?: string;
 };
 
-const COLORS = ['#FFFFFF', '#E0E0E0', '#C0C0C0', '#A0A0A0', '#808080', '#606060', '#404040'];
+export const PieChartPro = ({ title, data, unit }: PieChartProProps) => {
+  if (!Array.isArray(data) || data.length === 0) {
+    return (
+      <div className="w-full rounded-2xl bg-white/[0.03] border border-white/[0.08] p-5 h-48 flex items-center justify-center">
+        <span className="text-white/25 text-xs">No data available</span>
+      </div>
+    );
+  }
 
-export const PieChartPro = ({ title, data, unit = '' }: PieChartProProps) => {
-  const chartData = data.map(item => ({
-    name: item.label,
-    value: item.value,
-  }));
+  const total = data.reduce((sum, d) => sum + d.value, 0);
+  const enriched = data.map(d => ({ ...d, percent: total > 0 ? (d.value / total) * 100 : 0 }));
+  const chartData = enriched.map(d => ({ name: d.label, value: d.value, percent: d.percent / 100 }));
 
   return (
-    <div className="bg-black border border-white/20 rounded p-4">
-      <h3 className="text-white font-mono text-sm mb-3">{title}</h3>
-      {unit && (
-        <p className="text-white/60 font-mono text-xs mb-3">Unit: {unit}</p>
+    <div className="w-full rounded-2xl bg-white/[0.03] border border-white/[0.08] p-4">
+      {title && (
+        <p className="text-white/40 text-[11px] font-medium uppercase tracking-wider mb-4">{title}</p>
       )}
-      
-      <ResponsiveContainer width="100%" height={300}>
+
+      <ResponsiveContainer width="100%" height={200}>
         <PieChart>
           <Pie
             data={chartData}
             cx="50%"
             cy="50%"
-            labelLine={false}
-            label={(entry: any) => `${entry.name}: ${(entry.percent * 100).toFixed(0)}%`}
-            outerRadius={80}
-            fill="#8884d8"
+            innerRadius={52}
+            outerRadius={88}
+            paddingAngle={2}
             dataKey="value"
-            style={{ fontSize: '10px', fontFamily: 'monospace', fill: 'white' }}
+            isAnimationActive
+            animationDuration={600}
           >
-            {chartData.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} stroke="black" strokeWidth={2} />
+            {chartData.map((_, index) => (
+              <Cell
+                key={`cell-${index}`}
+                fill={COLORS[index % COLORS.length]}
+                stroke="transparent"
+              />
             ))}
           </Pie>
-          <Tooltip 
-            contentStyle={{ 
-              backgroundColor: '#1a1a1a', 
-              border: '1px solid rgba(255,255,255,0.2)',
-              borderRadius: '4px',
-              fontFamily: 'monospace',
-              fontSize: '12px'
-            }}
-            labelStyle={{ color: 'white' }}
-            itemStyle={{ color: 'white' }}
-          />
-          <Legend 
-            wrapperStyle={{ 
-              fontFamily: 'monospace', 
-              fontSize: '10px',
-              color: 'white'
-            }}
-          />
+          <Tooltip content={<CustomTooltip unit={unit} />} />
         </PieChart>
       </ResponsiveContainer>
+
+      <CustomLegend data={enriched} colors={COLORS} />
     </div>
   );
 };

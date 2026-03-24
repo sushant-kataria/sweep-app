@@ -1,68 +1,107 @@
-// components/dashboard/bar-chart-pro.tsx
 'use client';
 
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+
+function formatValue(v: number, unit?: string): string {
+  const u = (unit || '').toLowerCase();
+  const prefix = u.includes('usd') || u.includes('$') || u.includes('price') ? '$' : '';
+  const suffix = u.includes('%') || u.includes('percent') ? '%' : '';
+  if (v >= 1_000_000_000) return `${prefix}${(v / 1_000_000_000).toFixed(2)}B${suffix}`;
+  if (v >= 1_000_000) return `${prefix}${(v / 1_000_000).toFixed(2)}M${suffix}`;
+  if (v >= 1_000) return `${prefix}${v.toLocaleString()}${suffix}`;
+  return `${prefix}${v % 1 === 0 ? v.toLocaleString() : v.toFixed(2)}${suffix}`;
+}
+
+function formatAxisTick(v: number): string {
+  if (v >= 1_000_000_000) return `${(v / 1_000_000_000).toFixed(1)}B`;
+  if (v >= 1_000_000) return `${(v / 1_000_000).toFixed(1)}M`;
+  if (v >= 1_000) return `${(v / 1_000).toFixed(0)}K`;
+  return v % 1 === 0 ? v.toString() : v.toFixed(1);
+}
+
+const CustomTooltip = ({ active, payload, label, unit }: any) => {
+  if (!active || !payload?.length) return null;
+  return (
+    <div className="bg-[#111118] border border-white/10 rounded-xl px-3 py-2.5 shadow-2xl">
+      <p className="text-white/40 text-[11px] mb-1">{label}</p>
+      <p className="text-white font-semibold text-sm">{formatValue(payload[0].value, unit)}</p>
+    </div>
+  );
+};
 
 type BarChartProProps = {
-  title: string;
+  title?: string;
   data: Array<{ label: string; value: number }>;
   unit?: string;
 };
 
-export const BarChartPro = ({ title, data, unit = '' }: BarChartProProps) => {
-  // Transform data for Recharts
-  const chartData = data.map(item => ({
-    name: item.label,
-    value: item.value,
-  }));
+export const BarChartPro = ({ title, data, unit }: BarChartProProps) => {
+  if (!Array.isArray(data) || data.length === 0) {
+    return (
+      <div className="w-full rounded-2xl bg-white/[0.03] border border-white/[0.08] p-5 h-48 flex items-center justify-center">
+        <span className="text-white/25 text-xs">No data available</span>
+      </div>
+    );
+  }
+
+  const maxValue = Math.max(...data.map(d => d.value));
 
   return (
-    <div className="bg-black border border-white/20 rounded p-4">
-      <h3 className="text-white font-mono text-sm mb-3">{title}</h3>
-      {unit && (
-        <p className="text-white/60 font-mono text-xs mb-3">Unit: {unit}</p>
+    <div className="w-full rounded-2xl bg-white/[0.03] border border-white/[0.08] p-4">
+      {/* Header */}
+      {title && (
+        <div className="mb-4">
+          <p className="text-white/40 text-[11px] font-medium uppercase tracking-wider">{title}</p>
+        </div>
       )}
-      
-      <ResponsiveContainer width="100%" height={300}>
-        <BarChart data={chartData} margin={{ top: 5, right: 20, left: 20, bottom: 5 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-          <XAxis 
-            dataKey="name" 
-            stroke="rgba(255,255,255,0.6)"
-            style={{ fontSize: '10px', fontFamily: 'monospace' }}
-            angle={-45}
-            textAnchor="end"
-            height={80}
+
+      {/* Chart */}
+      <ResponsiveContainer width="100%" height={Math.max(200, data.length * 42)}>
+        <BarChart
+          layout="vertical"
+          data={data.map(d => ({ name: d.label, value: d.value }))}
+          margin={{ top: 2, right: 16, left: 0, bottom: 2 }}
+          barCategoryGap="28%"
+        >
+          <CartesianGrid
+            stroke="rgba(255,255,255,0.05)"
+            strokeDasharray="0"
+            horizontal={false}
           />
-          <YAxis 
-            stroke="rgba(255,255,255,0.6)"
-            style={{ fontSize: '10px', fontFamily: 'monospace' }}
-            label={{ 
-              value: unit, 
-              angle: -90, 
-              position: 'insideLeft',
-              style: { fill: 'rgba(255,255,255,0.6)', fontSize: '10px', fontFamily: 'monospace' }
-            }}
+          <XAxis
+            type="number"
+            domain={[0, 'auto']}
+            tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 11, fontFamily: 'inherit' }}
+            axisLine={false}
+            tickLine={false}
+            tickFormatter={formatAxisTick}
+            tickCount={5}
           />
-          <Tooltip 
-            contentStyle={{ 
-              backgroundColor: '#1a1a1a', 
-              border: '1px solid rgba(255,255,255,0.2)',
-              borderRadius: '4px',
-              fontFamily: 'monospace',
-              fontSize: '12px'
-            }}
-            labelStyle={{ color: 'white' }}
-            itemStyle={{ color: 'white' }}
+          <YAxis
+            type="category"
+            dataKey="name"
+            width={110}
+            tick={{ fill: 'rgba(255,255,255,0.6)', fontSize: 12, fontFamily: 'inherit' }}
+            axisLine={false}
+            tickLine={false}
           />
-          <Legend 
-            wrapperStyle={{ 
-              fontFamily: 'monospace', 
-              fontSize: '10px',
-              color: 'rgba(255,255,255,0.8)'
-            }}
+          <Tooltip
+            content={<CustomTooltip unit={unit} />}
+            cursor={{ fill: 'rgba(255,255,255,0.03)' }}
           />
-          <Bar dataKey="value" fill="white" name={unit || 'Value'} />
+          <Bar
+            dataKey="value"
+            radius={[0, 4, 4, 0]}
+            isAnimationActive
+            animationDuration={600}
+          >
+            {data.map((entry, index) => (
+              <Cell
+                key={`cell-${index}`}
+                fill={entry.value === maxValue ? '#3b82f6' : 'rgba(59,130,246,0.4)'}
+              />
+            ))}
+          </Bar>
         </BarChart>
       </ResponsiveContainer>
     </div>
