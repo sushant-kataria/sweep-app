@@ -1,8 +1,8 @@
 'use client';
 
 import { useChat } from '@ai-sdk/react';
-import { useState, useEffect } from 'react';
-import { Send } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Send, BarChart2, X, ChevronDown } from 'lucide-react';
 
 import { BarChartPro } from '@/components/dashboard/bar-chart-pro';
 import { LineChartPro } from '@/components/dashboard/line-chart-pro';
@@ -32,24 +32,40 @@ type ZillowListingsOutput = {
   error?: string;
 };
 
+const suggestions = [
+  { label: 'Apple stock chart', icon: '📈' },
+  { label: 'Cyberpunk portrait of a man', icon: '🎨' },
+  { label: 'Homes for sale in LA below $900k', icon: '🏡' },
+  { label: 'Walmart balance sheet', icon: '📊' },
+  { label: 'Top US companies by market cap', icon: '🏢' },
+];
+
+const toolTypes = [
+  'tool-showBarChart', 'tool-showLineChart', 'tool-showPieChart', 'tool-showAreaChart', 'tool-showComparison',
+  'tool-showStats', 'tool-showBalanceSheet', 'tool-showPropertyPortfolio', 'tool-showZillowProperty', 'tool-generateImage'
+];
+
+const toolNameMap: Record<string, string> = {
+  'tool-showBarChart': 'Creating bar chart',
+  'tool-showLineChart': 'Creating line chart',
+  'tool-showPieChart': 'Creating pie chart',
+  'tool-showAreaChart': 'Creating area chart',
+  'tool-showComparison': 'Building comparison',
+  'tool-showStats': 'Calculating stats',
+  'tool-showBalanceSheet': 'Generating balance sheet',
+  'tool-showPropertyPortfolio': 'Loading portfolio',
+  'tool-showZillowProperty': 'Fetching property data',
+  'tool-searchZillowListings': 'Searching properties',
+  'tool-generateImage': 'Generating image',
+};
+
 export default function Chat() {
   const { messages, sendMessage, status, error } = useChat();
   const [input, setInput] = useState('');
   const [showSidebar, setShowSidebar] = useState(false);
   const [hasDashboardItems, setHasDashboardItems] = useState(false);
-
-  const suggestions = [
-    'show apple stock',
-    'create cyberpunk style potrait of a man',
-    'find homes for sale in los angeles below $900000',
-    'show walmart balance sheet',
-    'compare top US companies by market cap',
-  ];
-
-  const toolTypes = [
-    'tool-showBarChart', 'tool-showLineChart', 'tool-showPieChart', 'tool-showAreaChart', 'tool-showComparison',
-    'tool-showStats', 'tool-showBalanceSheet', 'tool-showPropertyPortfolio', 'tool-showZillowProperty', 'tool-generateImage'
-  ];
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const outputs = messages.flatMap(message =>
@@ -63,10 +79,12 @@ export default function Chat() {
     else setShowSidebar(true);
   }, [messages]);
 
-  // Type guard for text parts
-  const isTextPart = (part: any): part is { type: 'text'; text: string } => {
-    return part.type === 'text' && 'text' in part;
-  };
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, status]);
+
+  const isTextPart = (part: any): part is { type: 'text'; text: string } =>
+    part.type === 'text' && 'text' in part;
 
   // AUTO-RETRY LOGIC
   useEffect(() => {
@@ -75,31 +93,15 @@ export default function Chat() {
       lastAssistant?.role === 'assistant' &&
       lastAssistant.parts.some(part => {
         if (!isTextPart(part)) return false;
-        
         const text = part.text.toLowerCase();
-        
-        // Error patterns to detect
         const errorPatterns = [
-          "could not be displayed",
-          "incorrectly formatted",
-          "i encountered an issue with the provided data",
-          "data format error",
-          "unable to display",
-          "failed to display",
-          "error displaying"
+          "could not be displayed", "incorrectly formatted",
+          "i encountered an issue with the provided data", "data format error",
+          "unable to display", "failed to display", "error displaying"
         ];
-        
-        const hasError = errorPatterns.some(pattern => 
-          text.includes(pattern)
-        );
-        
-        const notAlreadyRetried = !part.text.includes("[auto-retried]");
-        
-        return hasError && notAlreadyRetried;
+        return errorPatterns.some(p => text.includes(p)) && !part.text.includes("[auto-retried]");
       })
     ) {
-      // Auto-retry by sending a retry message
-      console.log('Auto-retrying due to format error...');
       sendMessage({ text: "retry [auto-retried]" });
     }
   }, [messages, sendMessage]);
@@ -112,53 +114,36 @@ export default function Chat() {
     setInput('');
   };
 
-  const handleLogoClick = () => window.location.reload();
+  const handleSuggestion = (label: string) => {
+    sendMessage({ text: label });
+  };
 
   const getLoadingSteps = () => {
     if (messages.length === 0) return [];
     const lastMessage = messages[messages.length - 1];
     if (lastMessage.role !== 'assistant') return [];
     const steps: Array<{ name: string; status: 'pending' | 'loading' | 'complete' }> = [];
-    const toolNameMap: Record<string, string> = {
-      'tool-showBarChart': 'Creating bar chart',
-      'tool-showLineChart': 'Creating line chart',
-      'tool-showPieChart': 'Creating pie chart',
-      'tool-showAreaChart': 'Creating area chart',
-      'tool-showComparison': 'Building comparison table',
-      'tool-showStats': 'Calculating statistics',
-      'tool-showBalanceSheet': 'Generating balance sheet',
-      'tool-showPropertyPortfolio': 'Loading property portfolio',
-      'tool-showZillowProperty': 'Fetching Zillow data',
-      'tool-searchZillowListings': 'Searching properties',
-      'tool-generateImage': 'Generating image',
-    };
 
     lastMessage.parts.forEach((part) => {
       if ('state' in part && part.type.startsWith('tool-')) {
-        const toolName = toolNameMap[part.type] || part.type.replace('tool-show', 'Processing ');
+        const toolName = toolNameMap[part.type] || part.type.replace('tool-show', '');
         let stepStatus: 'pending' | 'loading' | 'complete' = 'pending';
-        if (part.state === 'input-available' || part.state === 'input-streaming') {
-          stepStatus = 'loading';
-        } else if (part.state === 'output-available') {
-          stepStatus = 'complete';
-        }
+        if (part.state === 'input-available' || part.state === 'input-streaming') stepStatus = 'loading';
+        else if (part.state === 'output-available') stepStatus = 'complete';
         steps.push({ name: toolName, status: stepStatus });
       }
     });
+
     if (status === 'streaming') {
       const hasText = lastMessage.parts.some(p => p.type === 'text');
-      if (hasText) {
-        steps.push({ name: 'Writing response', status: 'loading' });
-      } else if (steps.length === 0) {
-        steps.push({ name: 'Thinking', status: 'loading' });
-      }
+      if (hasText) steps.push({ name: 'Writing response', status: 'loading' });
+      else if (steps.length === 0) steps.push({ name: 'Thinking', status: 'loading' });
     }
     return steps;
   };
 
   const loadingSteps = getLoadingSteps();
 
-  // Renders dashboard output
   const renderDashboardItems = (message: any) => {
     return message.parts.map((part: any) => {
       const hasState = 'state' in part;
@@ -166,78 +151,35 @@ export default function Chat() {
       if (!hasState || !hasToolCallId || part.state !== 'output-available') return null;
       const callId = part.toolCallId;
 
-      if (part.type === 'tool-showBarChart') {
-        const output = part.output as ChartOutput;
-        return <BarChartPro key={callId} title={output.title} data={output.data} unit={output.unit} />;
-      }
-      if (part.type === 'tool-showLineChart') {
-        const output = part.output as ChartOutput;
-        return <LineChartPro key={callId} title={output.title} data={output.data} unit={output.unit} />;
-      }
-      if (part.type === 'tool-showPieChart') {
-        const output = part.output as ChartOutput;
-        return <PieChartPro key={callId} title={output.title} data={output.data} unit={output.unit} />;
-      }
-      if (part.type === 'tool-showAreaChart') {
-        const output = part.output as ChartOutput;
-        return <AreaChartPro key={callId} title={output.title} data={output.data} unit={output.unit} />;
-      }
-      if (part.type === 'tool-showComparison') {
-        const output = part.output as ComparisonOutput;
-        return <ComparisonTable key={callId} title={output.title} items={output.items} />;
-      }
-      if (part.type === 'tool-showStats') {
-        const output = part.output as StatsOutput;
-        return <StatsCard key={callId} title={output.title} stats={output.stats} />;
-      }
+      if (part.type === 'tool-showBarChart') return <BarChartPro key={callId} title={(part.output as ChartOutput).title} data={(part.output as ChartOutput).data} unit={(part.output as ChartOutput).unit} />;
+      if (part.type === 'tool-showLineChart') return <LineChartPro key={callId} title={(part.output as ChartOutput).title} data={(part.output as ChartOutput).data} unit={(part.output as ChartOutput).unit} />;
+      if (part.type === 'tool-showPieChart') return <PieChartPro key={callId} title={(part.output as ChartOutput).title} data={(part.output as ChartOutput).data} unit={(part.output as ChartOutput).unit} />;
+      if (part.type === 'tool-showAreaChart') return <AreaChartPro key={callId} title={(part.output as ChartOutput).title} data={(part.output as ChartOutput).data} unit={(part.output as ChartOutput).unit} />;
+      if (part.type === 'tool-showComparison') return <ComparisonTable key={callId} title={(part.output as ComparisonOutput).title} items={(part.output as ComparisonOutput).items} />;
+      if (part.type === 'tool-showStats') return <StatsCard key={callId} title={(part.output as StatsOutput).title} stats={(part.output as StatsOutput).stats} />;
       if (part.type === 'tool-showBalanceSheet') {
-        const output = part.output as BalanceSheetOutput;
-        return (
-          <BalanceSheet
-            key={callId}
-            title={output.title}
-            period={output.period}
-            currency={output.currency}
-            assets={output.assets}
-            liabilities={output.liabilities}
-            equity={output.equity}
-          />
-        );
+        const o = part.output as BalanceSheetOutput;
+        return <BalanceSheet key={callId} title={o.title} period={o.period} currency={o.currency} assets={o.assets} liabilities={o.liabilities} equity={o.equity} />;
       }
-      if (part.type === 'tool-showPropertyPortfolio') {
-        const output = part.output as PropertyPortfolioOutput;
-        return <PropertyPortfolio key={callId} properties={output.properties} />;
-      }
+      if (part.type === 'tool-showPropertyPortfolio') return <PropertyPortfolio key={callId} properties={(part.output as PropertyPortfolioOutput).properties} />;
       if (part.type === 'tool-showZillowProperty') {
-        const output = part.output as ZillowPropertyOutput;
-        return <ZillowProperty key={callId} property={output.property} zillowUrl={output.zillowUrl} error={output.error} />;
+        const o = part.output as ZillowPropertyOutput;
+        return <ZillowProperty key={callId} property={o.property} zillowUrl={o.zillowUrl} error={o.error} />;
       }
       if (part.type === 'tool-generateImage') {
-        // If image exists, ignore all errors!
         if (part.output.imageUrl) {
           return (
-            <div key={callId} className="py-4 flex flex-col items-start">
-              <div className="mb-2 text-xs text-gray-400">{part.output.prompt}</div>
-              <img
-                src={part.output.imageUrl}
-                alt={part.output.prompt}
-                className="rounded-lg border w-[350px] max-w-full"
-              />
-              <span className="text-[10px] text-white/50 mt-1">Generated by Stability AI</span>
+            <div key={callId} className="py-2 flex flex-col items-start gap-2">
+              <p className="text-xs text-white/40 font-mono">{part.output.prompt}</p>
+              <img src={part.output.imageUrl} alt={part.output.prompt} className="rounded-xl border border-white/10 w-full max-w-sm object-cover" />
+              <span className="text-[10px] text-white/30 font-mono">Generated by Stability AI</span>
             </div>
           );
         }
-        // Only show error if NO image is available
         if (part.output.error && !part.output.imageUrl) {
           const errLower = part.output.error.toLowerCase();
-          if (
-            errLower.includes("rate limit") ||
-            errLower.includes("429") ||
-            errLower.includes("quota")
-          ) {
-            return null;
-          }
-          return <div key={callId} className="text-red-400 p-2">{part.output.error}</div>;
+          if (errLower.includes("rate limit") || errLower.includes("429") || errLower.includes("quota")) return null;
+          return <div key={callId} className="text-red-400 text-sm p-3 bg-red-500/10 rounded-lg border border-red-500/20">{part.output.error}</div>;
         }
         return null;
       }
@@ -245,259 +187,295 @@ export default function Chat() {
     });
   };
 
-  // Helper: does any assistant message part have a valid image?
   const hasValidImage = messages.some(
-    m => m.role === "assistant" &&
-      m.parts.some(
-        part => part.type === "tool-generateImage" && part.output && (part.output as any).imageUrl
-      )
+    m => m.role === "assistant" && m.parts.some(part => part.type === "tool-generateImage" && part.output && (part.output as any).imageUrl)
   );
 
+  const isLoading = status === 'streaming';
+
   return (
-    <div className="min-h-screen bg-black text-white font-mono relative">
-      {/* Header */}
+    <div className="min-h-screen bg-[#0a0a0a] text-white flex flex-col">
+      {/* ── HEADER (only during chat) ── */}
       {messages.length > 0 && (
-        <header className="fixed top-0 left-0 right-0 z-40 bg-black/80 backdrop-blur-xl border-b border-white/10">
-          <div className={
-            showSidebar
-              ? "px-4 py-3 flex items-center"
-              : "max-w-7xl mx-auto px-4 py-3 flex items-center justify-center"
-          }>
-            <button
-              onClick={handleLogoClick}
-              className="text-2xl font-mono hover:opacity-80 transition-opacity"
-            >
-              <span className="bg-gradient-to-r from-gray-600 via-white to-gray-600 bg-clip-text text-transparent animate-gradient bg-[length:200%_100%]">
+        <header className="fixed top-0 left-0 right-0 z-40 bg-[#0a0a0a]/90 backdrop-blur-xl border-b border-white/[0.06]">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
+            <button onClick={() => window.location.reload()} className="flex items-center gap-2 group">
+              <span className="text-lg font-semibold tracking-tight bg-gradient-to-r from-white/60 via-white to-white/60 bg-clip-text text-transparent animate-gradient bg-[length:200%_100%]">
                 Sweep
               </span>
             </button>
+
+            {hasDashboardItems && (
+              <button
+                onClick={() => setShowSidebar(v => !v)}
+                className="flex items-center gap-1.5 text-xs text-white/50 hover:text-white transition-colors px-3 py-1.5 rounded-lg border border-white/[0.08] hover:border-white/20 bg-white/[0.03] hover:bg-white/[0.06]"
+              >
+                <BarChart2 className="w-3.5 h-3.5" />
+                {showSidebar ? 'Hide' : 'Show'} dashboard
+              </button>
+            )}
           </div>
         </header>
       )}
 
-      <main className={`transition-all duration-300 ${showSidebar ? 'md:mr-[40%]' : 'mr-0'} ${messages.length > 0 ? 'pt-16' : ''}`}>
-        <div className="max-w-3xl mx-auto px-4 pb-40 pt-8">
+      {/* ── MAIN CONTENT ── */}
+      <main className={`flex-1 transition-all duration-300 ease-in-out ${showSidebar ? 'md:mr-[42%]' : ''} ${messages.length > 0 ? 'pt-14' : ''}`}>
+        <div className="max-w-2xl mx-auto px-4 sm:px-6 pb-36">
+
+          {/* ── HERO (no messages) ── */}
           {messages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center min-h-screen">
-              <h1 className="text-7xl md:text-8xl font-mono mb-10 text-center relative overflow-hidden">
-                <span className="relative inline-block">
-                  <span className="bg-gradient-to-r from-gray-600 via-white to-gray-600 bg-clip-text text-transparent animate-gradient bg-[length:200%_100%]">
+            <div className="flex flex-col items-center justify-center min-h-screen gap-8 py-20">
+              {/* Logo */}
+              <div className="text-center space-y-3">
+                <h1 className="text-6xl sm:text-7xl font-semibold tracking-tight">
+                  <span className="bg-gradient-to-r from-white/50 via-white to-white/50 bg-clip-text text-transparent animate-gradient bg-[length:200%_100%]">
                     Sweep
                   </span>
-                </span>
-              </h1>
-              <form onSubmit={handleSubmit} className="w-full max-w-md mx-auto mb-6 relative flex items-center">
-                <input
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  className="w-full bg-white/5 text-white rounded-2xl pl-6 pr-12 py-4 border border-white/10 focus:border-white/20 focus:outline-none placeholder-gray-500 text-sm backdrop-blur-xl hover:bg-white/[0.07] transition-all"
-                  placeholder="ask anything..."
-                  autoComplete="off"
-                  aria-label="Message input"
-                />
-                <button
-                  type="submit"
-                  disabled={!input.trim()}
-                  aria-label="Submit message"
-                  className="absolute right-4 top-1/2 -translate-y-1/2 size-8 rounded-lg p-0 bg-gradient-to-br from-gray-700 to-gray-900 hover:from-gray-600 hover:to-gray-800 disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 transition-all duration-200 hover:shadow-lg hover:shadow-gray-700/50 flex items-center justify-center group"
-                  tabIndex={-1}
-                >
-                  <Send className="size-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" aria-hidden="true" />
-                </button>
+                </h1>
+                <p className="text-white/40 text-sm sm:text-base font-light tracking-wide">
+                  AI for finance, data & real estate
+                </p>
+              </div>
+
+              {/* Input */}
+              <form onSubmit={handleSubmit} className="w-full max-w-lg">
+                <div className="relative flex items-center">
+                  <input
+                    ref={inputRef}
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    className="w-full bg-white/[0.04] text-white rounded-2xl pl-5 pr-14 py-4 border border-white/[0.10] focus:border-white/25 focus:bg-white/[0.06] focus:outline-none placeholder-white/25 text-sm transition-all duration-200"
+                    placeholder="Ask anything..."
+                    autoComplete="off"
+                    autoFocus
+                  />
+                  <button
+                    type="submit"
+                    disabled={!input.trim()}
+                    className="absolute right-3 w-8 h-8 rounded-xl bg-white/10 hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center transition-all duration-200 group"
+                  >
+                    <Send className="w-3.5 h-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                  </button>
+                </div>
               </form>
-              <div className="w-full max-w-md mx-auto">
-                <div className="flex flex-col gap-2 items-center">
-                  {suggestions.map((suggestion, i) => (
+
+              {/* Suggestion chips */}
+              <div className="w-full max-w-lg">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {suggestions.map((s, i) => (
                     <button
                       key={i}
-                      type="button"
-                      onClick={() => setInput(suggestion)}
-                      className="text-xs text-gray-400 hover:text-white px-3 py-2 rounded transition-colors"
-                      tabIndex={0}
+                      onClick={() => handleSuggestion(s.label)}
+                      className="flex items-center gap-2.5 px-4 py-3 rounded-xl border border-white/[0.08] bg-white/[0.02] hover:bg-white/[0.06] hover:border-white/[0.16] text-white/50 hover:text-white/80 text-sm text-left transition-all duration-200 group"
                     >
-                      {suggestion}
+                      <span className="text-base shrink-0">{s.icon}</span>
+                      <span className="truncate">{s.label}</span>
                     </button>
                   ))}
                 </div>
               </div>
             </div>
           ) : (
-            <div className="py-8">
+            /* ── MESSAGES ── */
+            <div className="pt-8 pb-4 space-y-1">
               {messages.map((m, idx) => (
                 <div key={m.id + '-' + idx}>
+                  {/* User message */}
                   {m.role === 'user' && (
-                    <div className="py-6">
-                      <p className="text-white text-base font-bold leading-relaxed">
-                        {m.parts.filter((part) => part.type === 'text').map((part, index) => (
-                          <span key={index}>{part.text}</span>
-                        ))}
-                      </p>
+                    <div className="py-5 flex justify-end">
+                      <div className="max-w-[85%] sm:max-w-[75%] bg-white/[0.06] border border-white/[0.08] rounded-2xl rounded-tr-sm px-4 py-3">
+                        <p className="text-white text-sm leading-relaxed">
+                          {m.parts.filter(p => p.type === 'text').map((part, i) => (
+                            <span key={i}>{(part as any).text}</span>
+                          ))}
+                        </p>
+                      </div>
                     </div>
                   )}
+
+                  {/* Assistant message */}
                   {m.role === 'assistant' && (
-                    <div className="py-6 space-y-4">
-                      <div className="text-gray-200 text-sm leading-relaxed whitespace-pre-wrap">
-                        {m.parts.filter((part) => part.type === 'text').map((part, index) => (
-                          <span key={index}>{part.text}</span>
-                        ))}
-                      </div>
-                      {m.parts.map((part) => {
-                        const hasState = 'state' in part;
-                        const hasToolCallId = 'toolCallId' in part;
-                        if (!hasState || !hasToolCallId) return null;
-                        const callId = part.toolCallId;
-                        if (part.type === 'tool-searchZillowListings' && part.state === 'output-available') {
-                          const output = part.output as ZillowListingsOutput;
-                          return (
-                            <div key={callId} className="mt-4">
-                              <ZillowListings
-                                properties={output.properties || []}
-                                totalResults={output.totalResults || 0}
-                                searchCriteria={output.searchCriteria}
-                                error={output.error}
-                                onPropertySelectAction={(url) => { sendMessage({ text: `show zillow property ${url}` }); }}
-                              />
-                            </div>
-                          );
-                        }
-                        return null;
-                      })}
-                      <div className="md:hidden space-y-4 mt-4">
-                        {renderDashboardItems(m)}
+                    <div className="py-5">
+                      {/* Sweep avatar dot */}
+                      <div className="flex items-start gap-3">
+                        <div className="w-6 h-6 rounded-full bg-gradient-to-br from-white/20 to-white/5 border border-white/10 flex items-center justify-center shrink-0 mt-0.5">
+                          <div className="w-2 h-2 rounded-full bg-white/60" />
+                        </div>
+                        <div className="flex-1 min-w-0 space-y-4">
+                          {/* Text parts */}
+                          {m.parts.filter(p => p.type === 'text').map((part, i) => (
+                            <p key={i} className="text-white/80 text-sm leading-relaxed whitespace-pre-wrap">
+                              {(part as any).text}
+                            </p>
+                          ))}
+
+                          {/* Zillow listings inline */}
+                          {m.parts.map((part: any) => {
+                            if (!('state' in part) || !('toolCallId' in part)) return null;
+                            if (part.type === 'tool-searchZillowListings' && part.state === 'output-available') {
+                              const output = part.output as ZillowListingsOutput;
+                              return (
+                                <div key={part.toolCallId} className="mt-2">
+                                  <ZillowListings
+                                    properties={output.properties || []}
+                                    totalResults={output.totalResults || 0}
+                                    searchCriteria={output.searchCriteria}
+                                    error={output.error}
+                                    onPropertySelectAction={(url) => sendMessage({ text: `show zillow property ${url}` })}
+                                  />
+                                </div>
+                              );
+                            }
+                            return null;
+                          })}
+
+                          {/* Dashboard items (mobile only — desktop goes to sidebar) */}
+                          <div className="md:hidden space-y-4">
+                            {renderDashboardItems(m)}
+                          </div>
+                        </div>
                       </div>
                     </div>
                   )}
+
+                  {/* Divider between messages */}
                   {idx < messages.length - 1 && (
-                    <div className="border-b border-gray-800"></div>
+                    <div className="border-b border-white/[0.04]" />
                   )}
                 </div>
               ))}
-              {(status === 'streaming' || loadingSteps.some(s => s.status === 'loading')) && loadingSteps.length > 0 && (
-                <div className="py-6 border-t border-gray-800">
-                  <div className="bg-white/5 border border-white/10 rounded-lg p-4 space-y-3">
-                    <div className="text-white/60 text-xs mb-2">processing your request...</div>
-                    {loadingSteps.map((step, i) => (
-                      <div key={i} className="flex items-center gap-3">
-                        {step.status === 'complete' && (
-                          <div className="w-5 h-5 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0">
-                            <svg className="w-3 h-3 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/></svg>
-                          </div>
-                        )}
-                        {step.status === 'loading' && (
-                          <div className="w-5 h-5 rounded-full border-2 border-white/20 border-t-white animate-spin flex-shrink-0" />
-                        )}
-                        {step.status === 'pending' && (
-                          <div className="w-5 h-5 rounded-full bg-white/10 flex-shrink-0" />
-                        )}
-                        <div className={`text-xs ${
-                          step.status === 'complete' ? 'text-green-400' :
-                          step.status === 'loading' ? 'text-white' :
-                          'text-white/40'
-                        }`}>
-                          {step.name}
+
+              {/* ── LOADING STATE ── */}
+              {(isLoading || loadingSteps.some(s => s.status === 'loading')) && loadingSteps.length > 0 && (
+                <div className="py-5">
+                  <div className="flex items-start gap-3">
+                    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-white/20 to-white/5 border border-white/10 flex items-center justify-center shrink-0 mt-0.5">
+                      <div className="w-2 h-2 rounded-full bg-white/60 animate-pulse" />
+                    </div>
+                    <div className="flex-1 space-y-2.5 pt-0.5">
+                      {loadingSteps.map((step, i) => (
+                        <div key={i} className="flex items-center gap-2.5">
+                          {step.status === 'complete' ? (
+                            <div className="w-4 h-4 rounded-full bg-emerald-500/20 flex items-center justify-center shrink-0">
+                              <svg className="w-2.5 h-2.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                              </svg>
+                            </div>
+                          ) : step.status === 'loading' ? (
+                            <div className="w-4 h-4 rounded-full border-2 border-white/15 border-t-white/60 animate-spin shrink-0" />
+                          ) : (
+                            <div className="w-4 h-4 rounded-full bg-white/[0.06] border border-white/10 shrink-0" />
+                          )}
+                          <span className={`text-xs transition-colors ${
+                            step.status === 'complete' ? 'text-emerald-400' :
+                            step.status === 'loading' ? 'text-white/70' :
+                            'text-white/25'
+                          }`}>
+                            {step.name}
+                          </span>
                         </div>
-                      </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Simple thinking dots */}
+              {isLoading && loadingSteps.length === 0 && (
+                <div className="py-5 flex items-center gap-3">
+                  <div className="w-6 h-6 rounded-full bg-gradient-to-br from-white/20 to-white/5 border border-white/10 flex items-center justify-center shrink-0">
+                    <div className="w-2 h-2 rounded-full bg-white/60 animate-pulse" />
+                  </div>
+                  <div className="flex gap-1 pt-1">
+                    {[0, 150, 300].map((delay, i) => (
+                      <div key={i} className="w-1.5 h-1.5 bg-white/30 rounded-full animate-bounce" style={{ animationDelay: `${delay}ms` }} />
                     ))}
                   </div>
                 </div>
               )}
-              {status === 'streaming' && loadingSteps.length === 0 && (
-                <div className="py-6 border-t border-gray-800">
-                  <div className="flex gap-1">
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-                  </div>
-                </div>
-              )}
-              {/* --- GLOBAL ERROR BLOCK WITH IMAGE CHECK --- */}
+
+              {/* Error block */}
               {error && !hasValidImage && (
-                <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl mt-4">
+                <div className="mt-4 p-4 bg-red-500/[0.08] border border-red-500/20 rounded-xl">
                   <p className="text-red-400 text-sm">
                     {error.message?.includes('quota') || error.message?.includes('rate limit') || error.message?.includes('429')
-                      ? 'Rate limit exceeded. Please wait a moment and try again.'
-                      : 'An error occurred. Please try again.'}
+                      ? 'Rate limit reached — please wait a moment and try again.'
+                      : 'Something went wrong. Please try again.'}
                   </p>
-                  <button
-                    onClick={() => window.location.reload()}
-                    className="mt-2 text-xs text-white/60 hover:text-white underline"
-                  >
-                    refresh page
+                  <button onClick={() => window.location.reload()} className="mt-2 text-xs text-white/40 hover:text-white/70 underline underline-offset-2 transition-colors">
+                    Refresh page
                   </button>
                 </div>
               )}
-              {showSidebar && (
-                <div className="flex justify-center mt-4">
-                  <button
-                    onClick={() => setShowSidebar(false)}
-                    className="text-xs text-gray-500 hover:text-white transition-colors px-4 py-2 border border-gray-700 rounded-lg hover:border-gray-500"
-                  >
-                    [hide dashboard]
-                  </button>
-                </div>
-              )}
-              {!showSidebar && hasDashboardItems && (
-                <div className="flex justify-center mt-4">
-                  <button
-                    onClick={() => setShowSidebar(true)}
-                    className="text-xs text-gray-500 hover:text-white transition-colors px-4 py-2 border border-gray-700 rounded-lg hover:border-gray-500"
-                  >
-                    [show dashboard]
-                  </button>
-                </div>
-              )}
+
+              <div ref={messagesEndRef} />
             </div>
           )}
         </div>
-        {(messages.length > 0) && (
-          <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black to-transparent pt-12 pb-6 z-30" style={{ marginRight: showSidebar ? 'calc(40%)' : '0' }}>
-            <div className="max-w-3xl mx-auto px-4">
+
+        {/* ── FIXED BOTTOM INPUT (chat mode) ── */}
+        {messages.length > 0 && (
+          <div
+            className="fixed bottom-0 left-0 right-0 z-30 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/95 to-transparent pt-8 pb-5 sm:pb-6"
+            style={{ right: showSidebar ? 'calc(42%)' : '0' }}
+          >
+            <div className="max-w-2xl mx-auto px-4 sm:px-6">
               <form onSubmit={handleSubmit} className="relative flex items-center">
                 <input
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
-                  className="w-full bg-white/5 text-white rounded-2xl pl-6 pr-12 py-4 border border-white/10 focus:border-white/20 focus:outline-none placeholder-gray-500 text-sm backdrop-blur-xl hover:bg-white/[0.07] transition-all"
-                  placeholder="ask anything..."
-                  disabled={status === 'streaming'}
+                  className="w-full bg-white/[0.05] text-white rounded-2xl pl-5 pr-14 py-3.5 border border-white/[0.10] focus:border-white/25 focus:bg-white/[0.07] focus:outline-none placeholder-white/25 text-sm transition-all duration-200 disabled:opacity-50"
+                  placeholder="Ask anything..."
+                  disabled={isLoading}
                   autoComplete="off"
-                  aria-label="Message input"
                 />
                 <button
                   type="submit"
-                  disabled={!input.trim() || status === 'streaming'}
-                  aria-label="Submit message"
-                  className="absolute right-4 top-1/2 -translate-y-1/2 size-8 rounded-lg p-0 bg-gradient-to-br from-gray-700 to-gray-900 hover:from-gray-600 hover:to-gray-800 disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 transition-all duration-200 hover:shadow-lg hover:shadow-gray-700/50 flex items-center justify-center group"
+                  disabled={!input.trim() || isLoading}
+                  className="absolute right-3 w-8 h-8 rounded-xl bg-white/10 hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center transition-all duration-200 group"
                 >
-                  <Send className="size-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" aria-hidden="true" />
+                  <Send className="w-3.5 h-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
                 </button>
               </form>
+              <p className="text-center text-[11px] text-white/20 mt-2.5">
+                Sweep can make mistakes. Verify important information.
+              </p>
             </div>
           </div>
         )}
       </main>
-      <aside className={`hidden md:block fixed top-0 right-0 h-full w-[40%] bg-black border-l border-white/5 overflow-y-auto transform transition-transform duration-300 ease-in-out z-50 ${
-        showSidebar ? 'translate-x-0' : 'translate-x-full'
-      }`}>
-        <div className="p-4 space-y-4">
+
+      {/* ── RIGHT SIDEBAR (desktop dashboard) ── */}
+      <aside className={`hidden md:flex flex-col fixed top-0 right-0 h-full w-[42%] bg-[#0d0d0d] border-l border-white/[0.06] z-50 transform transition-transform duration-300 ease-in-out ${showSidebar ? 'translate-x-0' : 'translate-x-full'}`}>
+        {/* Sidebar header */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.06] shrink-0">
+          <div className="flex items-center gap-2">
+            <BarChart2 className="w-4 h-4 text-white/40" />
+            <span className="text-sm font-medium text-white/70">Dashboard</span>
+          </div>
+          <button
+            onClick={() => setShowSidebar(false)}
+            className="w-7 h-7 rounded-lg hover:bg-white/[0.06] flex items-center justify-center text-white/30 hover:text-white/60 transition-colors"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Sidebar content */}
+        <div className="flex-1 overflow-y-auto p-5 space-y-5 scrollbar-thin">
           {(() => {
             const lastWithDashboard = [...messages].reverse().find(m =>
               m.role === 'assistant' &&
-              m.parts.some(part =>
-                toolTypes.includes(part.type) &&
-                'state' in part &&
-                part.state === 'output-available'
-              )
+              m.parts.some(part => toolTypes.includes(part.type) && 'state' in part && part.state === 'output-available')
             );
             return lastWithDashboard ? renderDashboardItems(lastWithDashboard) : null;
           })()}
         </div>
       </aside>
-      {/* Website credits in the bottom right corner */}
-      <div
-        className="fixed bottom-2 right-4 text-[10px] text-gray-500 pointer-events-none select-none z-50"
-        style={{ fontFamily: 'inherit', opacity: 0.7, letterSpacing: 0.4 }}
-      >
-        Website created by Sushant Kataria
+
+      {/* Credit */}
+      <div className="fixed bottom-2 right-4 text-[10px] text-white/15 pointer-events-none select-none z-50 font-light tracking-wide" style={{ right: showSidebar ? 'calc(42% + 12px)' : '16px' }}>
+        by Sushant Kataria
       </div>
     </div>
   );
