@@ -214,11 +214,6 @@ export default function Chat() {
       }
     });
 
-    if (status === 'streaming') {
-      const hasText = lastMessage.parts.some(p => p.type === 'text');
-      if (hasText) steps.push({ name: 'Writing response', status: 'loading' });
-      else if (steps.length === 0) steps.push({ name: 'Thinking', status: 'loading' });
-    }
     return steps;
   };
 
@@ -294,7 +289,7 @@ export default function Chat() {
   );
 
   return (
-    <div className="bg-[#0a0a0a] text-white flex flex-col" style={{ height: '100dvh', overflow: 'hidden' }}>
+    <div className="bg-[#0a0a0a] text-white flex flex-col" style={{ position: 'fixed', inset: 0, overflow: 'hidden' }}>
       {/* ── HEADER (only during chat) ── */}
       {messages.length > 0 && (
         <header className="fixed top-0 left-0 right-0 z-40 bg-[#0a0a0a]/90 backdrop-blur-xl border-b border-white/[0.06]">
@@ -351,6 +346,7 @@ export default function Chat() {
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     className="w-full bg-white/[0.04] text-white rounded-2xl pl-5 pr-14 py-4 border border-white/[0.10] focus:border-white/25 focus:bg-white/[0.06] focus:outline-none placeholder-white/25 text-sm transition-all duration-200"
+                    style={{ fontSize: '16px' }}
                     placeholder={currentPlaceholder}
                     autoComplete="off"
                   />
@@ -404,9 +400,42 @@ export default function Chat() {
                       {/* Sweep avatar dot */}
                       <div className="flex items-start gap-3">
                         <div className="w-6 h-6 rounded-full bg-gradient-to-br from-white/20 to-white/5 border border-white/10 flex items-center justify-center shrink-0 mt-0.5">
-                          <div className="w-2 h-2 rounded-full bg-white/60" />
+                          <div className={`w-2 h-2 rounded-full bg-white/60 ${isLoading && idx === messages.length - 1 ? 'animate-pulse' : ''}`} />
                         </div>
                         <div className="flex-1 min-w-0 space-y-4">
+                          {/* Thinking dots — shown inline before any text arrives */}
+                          {isLoading && idx === messages.length - 1 && !m.parts.some(p => p.type === 'text') && loadingSteps.length === 0 && (
+                            <div className="flex gap-1 pt-1">
+                              {[0, 150, 300].map((delay, i) => (
+                                <div key={i} className="w-1.5 h-1.5 bg-white/30 rounded-full animate-bounce" style={{ animationDelay: `${delay}ms` }} />
+                              ))}
+                            </div>
+                          )}
+                          {/* Tool loading steps — shown inline */}
+                          {isLoading && idx === messages.length - 1 && loadingSteps.length > 0 && (
+                            <div className="space-y-2.5">
+                              {loadingSteps.map((step, i) => (
+                                <div key={i} className="flex items-center gap-2.5">
+                                  {step.status === 'complete' ? (
+                                    <div className="w-4 h-4 rounded-full bg-emerald-500/20 flex items-center justify-center shrink-0">
+                                      <svg className="w-2.5 h-2.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                                      </svg>
+                                    </div>
+                                  ) : step.status === 'loading' ? (
+                                    <div className="w-4 h-4 rounded-full border-2 border-white/15 border-t-white/60 animate-spin shrink-0" />
+                                  ) : (
+                                    <div className="w-4 h-4 rounded-full bg-white/[0.06] border border-white/10 shrink-0" />
+                                  )}
+                                  <span className={`text-xs transition-colors ${
+                                    step.status === 'complete' ? 'text-emerald-400' :
+                                    step.status === 'loading' ? 'text-white/70' :
+                                    'text-white/25'
+                                  }`}>{step.name}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
                           {/* Text parts */}
                           {m.parts.filter(p => p.type === 'text').map((part, i) => (
                             <p key={i} className="text-white/80 text-sm leading-relaxed whitespace-pre-wrap">
@@ -450,54 +479,6 @@ export default function Chat() {
                 </div>
               ))}
 
-              {/* ── LOADING STATE ── */}
-              {(isLoading || loadingSteps.some(s => s.status === 'loading')) && loadingSteps.length > 0 && (
-                <div className="py-5">
-                  <div className="flex items-start gap-3">
-                    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-white/20 to-white/5 border border-white/10 flex items-center justify-center shrink-0 mt-0.5">
-                      <div className="w-2 h-2 rounded-full bg-white/60 animate-pulse" />
-                    </div>
-                    <div className="flex-1 space-y-2.5 pt-0.5">
-                      {loadingSteps.map((step, i) => (
-                        <div key={i} className="flex items-center gap-2.5">
-                          {step.status === 'complete' ? (
-                            <div className="w-4 h-4 rounded-full bg-emerald-500/20 flex items-center justify-center shrink-0">
-                              <svg className="w-2.5 h-2.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                              </svg>
-                            </div>
-                          ) : step.status === 'loading' ? (
-                            <div className="w-4 h-4 rounded-full border-2 border-white/15 border-t-white/60 animate-spin shrink-0" />
-                          ) : (
-                            <div className="w-4 h-4 rounded-full bg-white/[0.06] border border-white/10 shrink-0" />
-                          )}
-                          <span className={`text-xs transition-colors ${
-                            step.status === 'complete' ? 'text-emerald-400' :
-                            step.status === 'loading' ? 'text-white/70' :
-                            'text-white/25'
-                          }`}>
-                            {step.name}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Simple thinking dots */}
-              {isLoading && loadingSteps.length === 0 && (
-                <div className="py-5 flex items-center gap-3">
-                  <div className="w-6 h-6 rounded-full bg-gradient-to-br from-white/20 to-white/5 border border-white/10 flex items-center justify-center shrink-0">
-                    <div className="w-2 h-2 rounded-full bg-white/60 animate-pulse" />
-                  </div>
-                  <div className="flex gap-1 pt-1">
-                    {[0, 150, 300].map((delay, i) => (
-                      <div key={i} className="w-1.5 h-1.5 bg-white/30 rounded-full animate-bounce" style={{ animationDelay: `${delay}ms` }} />
-                    ))}
-                  </div>
-                </div>
-              )}
 
               {/* Error block */}
               {error && !hasValidImage && (
@@ -530,6 +511,7 @@ export default function Chat() {
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   className="w-full bg-white/[0.05] text-white rounded-2xl pl-5 pr-14 py-3.5 border border-white/[0.10] focus:border-white/25 focus:bg-white/[0.07] focus:outline-none placeholder-white/25 text-sm transition-all duration-200 disabled:opacity-50"
+                  style={{ fontSize: '16px' }}
                   placeholder={currentPlaceholder}
                   disabled={isLoading}
                   autoComplete="off"

@@ -1,6 +1,7 @@
 // app/api/chat/route.ts
 import { createOpenAI } from '@ai-sdk/openai';
-import { streamText, convertToModelMessages, type UIMessage } from 'ai';
+import { streamText, convertToModelMessages, stepCountIs, type UIMessage } from 'ai';
+import { dashboardTools } from '@/ai/dashboard-tools';
 
 export const runtime = 'edge';
 export const maxDuration = 60;
@@ -162,7 +163,7 @@ const openrouter = createOpenAI({
 });
 
 // Use .chat() to force /chat/completions endpoint (OpenRouter doesn't support /responses)
-const nemotron = openrouter.chat('nvidia/nemotron-3-super-120b-a12b:free');
+const model = openrouter.chat('meta-llama/llama-3.3-70b-instruct:free');
 
 export async function POST(req: Request) {
   const { messages, mode = 'chat' }: { messages: UIMessage[]; mode?: Mode } = await req.json();
@@ -172,25 +173,26 @@ export async function POST(req: Request) {
   };
 
   try {
-    // Search and Code modes: no dashboard tools
+    // Search and Code modes: text only
     if (mode === 'search' || mode === 'code') {
       const result = streamText({
-        model: nemotron,
+        model,
         system: nemotronSystemPrompts[mode],
         messages: convertToModelMessages(messages),
-        maxTokens: 4096,
+
         maxRetries: 0,
         onError,
       });
       return result.toUIMessageStreamResponse();
     }
 
-    // Chat mode: Nemotron (tool calling not supported by this model on OpenRouter)
+    // Chat mode: with tools (charts, images, etc.)
     const result = streamText({
-      model: nemotron,
+      model,
       system: nemotronSystemPrompts.chat,
       messages: convertToModelMessages(messages),
-      maxTokens: 4096,
+      tools: dashboardTools,
+      stopWhen: stepCountIs(10),
       maxRetries: 0,
       onError,
     });
