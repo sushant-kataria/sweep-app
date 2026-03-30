@@ -278,25 +278,6 @@ export default function Chat() {
     }
   }, [messages, status]);
 
-  // AUTO-RETRY LOGIC
-  useEffect(() => {
-    const lastAssistant = messages[messages.length - 1];
-    if (
-      lastAssistant?.role === 'assistant' &&
-      lastAssistant.parts.some(part => {
-        if (!(part.type === 'text' && 'text' in part)) return false;
-        const text = part.text.toLowerCase();
-        const errorPatterns = [
-          "could not be displayed", "incorrectly formatted",
-          "i encountered an issue with the provided data", "data format error",
-          "unable to display", "failed to display", "error displaying"
-        ];
-        return errorPatterns.some(p => text.includes(p)) && !part.text.includes("[auto-retried]");
-      })
-    ) {
-      sendMessage({ text: "retry [auto-retried]" });
-    }
-  }, [messages, sendMessage]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

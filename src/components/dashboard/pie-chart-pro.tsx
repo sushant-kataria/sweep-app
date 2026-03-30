@@ -77,8 +77,7 @@ export const PieChartPro = ({ title, data, unit }: PieChartProProps) => {
             outerRadius={88}
             paddingAngle={2}
             dataKey="value"
-            isAnimationActive
-            animationDuration={600}
+            isAnimationActive={false}
           >
             {chartData.map((_, index) => (
               <Cell

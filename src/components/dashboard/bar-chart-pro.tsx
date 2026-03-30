@@ -92,8 +92,7 @@ export const BarChartPro = ({ title, data, unit }: BarChartProProps) => {
           <Bar
             dataKey="value"
             radius={[0, 4, 4, 0]}
-            isAnimationActive
-            animationDuration={600}
+            isAnimationActive={false}
           >
             {data.map((entry, index) => (
               <Cell

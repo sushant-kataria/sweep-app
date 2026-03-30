@@ -93,8 +93,7 @@ export const AreaChartPro = ({ title, data, unit }: AreaChartProProps) => {
             fill={`url(#${gradId})`}
             dot={false}
             activeDot={{ r: 4, fill: '#3b82f6', stroke: '#000', strokeWidth: 2 }}
-            isAnimationActive
-            animationDuration={600}
+            isAnimationActive={false}
           />
         </AreaChart>
       </ResponsiveContainer>

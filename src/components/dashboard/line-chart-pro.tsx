@@ -126,8 +126,7 @@ export function LineChartPro({
             fill={`url(#${gradId})`}
             dot={false}
             activeDot={{ r: 4, fill: lineColor, stroke: '#000', strokeWidth: 2 }}
-            isAnimationActive
-            animationDuration={600}
+            isAnimationActive={false}
           />
         </AreaChart>
       </ResponsiveContainer>
