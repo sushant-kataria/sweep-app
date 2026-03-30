@@ -234,6 +234,8 @@ export default function Chat() {
   const [hasDashboardItems, setHasDashboardItems] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const mainRef = useRef<HTMLElement>(null);
+  const isNearBottomRef = useRef(true);
 
   useEffect(() => {
     const outputs = messages.flatMap(message =>
@@ -247,8 +249,23 @@ export default function Chat() {
     else setShowSidebar(true);
   }, [messages]);
 
+  // Track whether user is near the bottom
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const el = mainRef.current;
+    if (!el) return;
+    const onScroll = () => {
+      const threshold = 120;
+      isNearBottomRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < threshold;
+    };
+    el.addEventListener('scroll', onScroll, { passive: true });
+    return () => el.removeEventListener('scroll', onScroll);
+  }, []);
+
+  // Only auto-scroll when user is near the bottom
+  useEffect(() => {
+    if (isNearBottomRef.current) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
   }, [messages, status]);
 
   // AUTO-RETRY LOGIC
@@ -275,6 +292,7 @@ export default function Chat() {
     e.preventDefault();
     if (!input.trim()) return;
     setShowSidebar(false);
+    isNearBottomRef.current = true; // force scroll on new message
     sendMessage({ text: input }, { body: { mode } });
     setInput('');
   };
@@ -402,7 +420,7 @@ export default function Chat() {
       )}
 
       {/* ── MAIN CONTENT ── */}
-      <main className={`flex-1 overflow-y-auto transition-all duration-300 ease-in-out ${showSidebar ? 'md:mr-[42%]' : ''} ${messages.length > 0 ? 'pt-14' : ''}`}>
+      <main ref={mainRef} className={`flex-1 overflow-y-auto transition-all duration-300 ease-in-out ${showSidebar ? 'md:mr-[42%]' : ''} ${messages.length > 0 ? 'pt-14' : ''}`}>
         <div className="w-full max-w-2xl mx-auto px-4 sm:px-6 pb-36">
 
           {/* ── HERO (no messages) ── */}
