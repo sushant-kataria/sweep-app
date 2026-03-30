@@ -277,12 +277,12 @@ export default function Chat() {
           key={m.id}
           type="button"
           onClick={() => setMode(m.id)}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all duration-200 ${
-            mode === m.id ? modeColors[m.id] : modeInactiveColors[m.id]
-          }`}
+          className={`flex items-center gap-1.5 rounded-lg border text-xs font-medium transition-all duration-200 ${
+            compact ? 'px-2 py-1.5 sm:px-3' : 'px-3 py-1.5'
+          } ${mode === m.id ? modeColors[m.id] : modeInactiveColors[m.id]}`}
         >
           {m.icon}
-          {m.label}
+          <span className={compact ? 'hidden sm:inline' : ''}>{m.label}</span>
         </button>
       ))}
     </div>
@@ -293,22 +293,22 @@ export default function Chat() {
       {/* ── HEADER (only during chat) ── */}
       {messages.length > 0 && (
         <header className="fixed top-0 left-0 right-0 z-40 bg-[#0a0a0a]/90 backdrop-blur-xl border-b border-white/[0.06]">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
-            <button onClick={() => window.location.reload()} className="flex items-center gap-2 group">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-2 min-w-0">
+            <button onClick={() => window.location.reload()} className="flex items-center gap-2 group shrink-0">
               <span className="text-lg font-semibold tracking-tight bg-gradient-to-r from-white/60 via-white to-white/60 bg-clip-text text-transparent animate-gradient bg-[length:200%_100%]">
                 Sweep
               </span>
             </button>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 min-w-0 overflow-hidden">
               <ModeSelector compact />
               {hasDashboardItems && (
                 <button
                   onClick={() => setShowSidebar(v => !v)}
-                  className="flex items-center gap-1.5 text-xs text-white/50 hover:text-white transition-colors px-3 py-1.5 rounded-lg border border-white/[0.08] hover:border-white/20 bg-white/[0.03] hover:bg-white/[0.06]"
+                  className="flex items-center gap-1.5 text-xs text-white/50 hover:text-white transition-colors px-2 sm:px-3 py-1.5 rounded-lg border border-white/[0.08] hover:border-white/20 bg-white/[0.03] hover:bg-white/[0.06] shrink-0"
                 >
                   <BarChart2 className="w-3.5 h-3.5" />
-                  {showSidebar ? 'Hide' : 'Show'} dashboard
+                  <span className="hidden sm:inline">{showSidebar ? 'Hide' : 'Show'} dashboard</span>
                 </button>
               )}
             </div>
@@ -318,7 +318,7 @@ export default function Chat() {
 
       {/* ── MAIN CONTENT ── */}
       <main className={`flex-1 overflow-y-auto transition-all duration-300 ease-in-out ${showSidebar ? 'md:mr-[42%]' : ''} ${messages.length > 0 ? 'pt-14' : ''}`}>
-        <div className="max-w-2xl mx-auto px-4 sm:px-6 pb-36">
+        <div className="w-full max-w-2xl mx-auto px-4 sm:px-6 pb-36">
 
           {/* ── HERO (no messages) ── */}
           {messages.length === 0 ? (
@@ -502,8 +502,8 @@ export default function Chat() {
         {/* ── FIXED BOTTOM INPUT (chat mode) ── */}
         {messages.length > 0 && (
           <div
-            className="fixed bottom-0 left-0 right-0 z-30 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/95 to-transparent pt-8 pb-5 sm:pb-6"
-            style={{ right: showSidebar ? 'calc(42%)' : '0' }}
+            className="fixed bottom-0 left-0 z-30 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/95 to-transparent pt-8 pb-safe"
+            style={{ right: showSidebar ? '42%' : '0', paddingBottom: 'max(20px, env(safe-area-inset-bottom))' }}
           >
             <div className="max-w-2xl mx-auto px-4 sm:px-6 space-y-2">
               <form onSubmit={handleSubmit} className="relative flex items-center">
