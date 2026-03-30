@@ -177,7 +177,15 @@ export async function POST(req: Request) {
   const { messages, mode = 'chat' }: { messages: UIMessage[]; mode?: Mode } = await req.json();
 
   const onError = ({ error }: { error: unknown }) => {
-    console.error('[Nemotron stream error]', JSON.stringify(error));
+    const e = error as any;
+    // Surface 429 errors from the stream (they come via onError not catch)
+    if (e?.statusCode === 429 || e?.data?.error?.code === 'rate_limit_exceeded') {
+      const msg = e?.data?.error?.message || '';
+      const isTokenLimit = msg.includes('TPD') || msg.includes('tokens per day');
+      console.error('[Rate limit]', isTokenLimit ? 'token/day' : 'requests', msg);
+    } else {
+      console.error('[Nemotron stream error]', JSON.stringify(error));
+    }
   };
 
   try {

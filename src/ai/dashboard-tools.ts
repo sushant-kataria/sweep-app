@@ -235,9 +235,15 @@ export const dashboardTools = {
           };
         }
   
+        // Strip excessive photos — keep only first 3 to save tokens
+        const prop = data.property;
+        if (prop?.photos && Array.isArray(prop.photos)) {
+          prop.photos = prop.photos.slice(0, 3);
+        }
+
         return {
           success: true,
-          property: data.property,
+          property: prop,
           zillowUrl: fullUrl,
         };
       } catch (error: any) {
@@ -340,22 +346,39 @@ searchZillowListings: tool({
   
         // Sort by price (lowest first)
         filteredProperties.sort((a: any, b: any) => a.price - b.price);
-  
-        // Limit to 20 results
-        filteredProperties = filteredProperties.slice(0, 20);
-  
+
+        // Limit to 10 results (was 20 — fewer = less tokens)
+        filteredProperties = filteredProperties.slice(0, 10);
+
         if (filteredProperties.length === 0) {
-          return { 
+          return {
             error: 'No properties found matching your exact criteria. Try adjusting your filters.',
             searchCriteria: { location, listingType, priceMin, priceMax, bedsMin },
             properties: []
           };
         }
-  
+
+        // Strip down to only essential fields — photos arrays are massive and burn tokens
+        const slim = filteredProperties.map((p: any) => ({
+          id: p.id,
+          url: p.url,
+          homeType: p.homeType,
+          status: p.status,
+          price: p.price,
+          address: p.addressRaw || p.address,
+          beds: p.beds,
+          baths: p.baths,
+          area: p.area,
+          image: p.photos?.[0] || p.image || null,
+          zestimate: p.zestimate,
+          daysOnZillow: p.daysOnZillow,
+          brokerName: p.brokerName,
+        }));
+
         return {
           success: true,
-          properties: filteredProperties,
-          totalResults: filteredProperties.length,
+          properties: slim,
+          totalResults: slim.length,
           searchCriteria: { location, listingType, priceMin, priceMax, bedsMin },
         };
       } catch (error: any) {

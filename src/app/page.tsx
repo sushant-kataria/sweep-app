@@ -683,7 +683,9 @@ export default function Chat() {
               {error && !hasValidImage && (
                 <div className="mt-4 p-4 bg-red-500/[0.08] border border-red-500/20 rounded-xl">
                   <p className="text-red-400 text-sm">
-                    {error.message?.includes('quota') || error.message?.includes('rate limit') || error.message?.includes('429')
+                    {error.message?.includes('tokens per day') || error.message?.includes('TPD')
+                      ? 'Daily token limit reached — the free AI quota resets in a few hours. Try again later.'
+                      : error.message?.includes('quota') || error.message?.includes('rate limit') || error.message?.includes('429')
                       ? 'Rate limit reached — please wait a moment and try again.'
                       : 'Something went wrong. Please try again.'}
                   </p>
