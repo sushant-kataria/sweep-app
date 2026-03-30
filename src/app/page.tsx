@@ -158,7 +158,8 @@ function CodeBlock({ lang, code }: { lang: string; code: string }) {
   );
 }
 
-function renderContent(raw: string) {
+function renderContent(raw: string | undefined | null) {
+  if (!raw) return null;
   // Strip bold/italic/headings then split on fenced code blocks
   const text = raw.replace(/\*\*(.*?)\*\*/g, '$1').replace(/\*(.*?)\*/g, '$1').replace(/^#{1,6}\s+/gm, '');
   const parts = text.split(/(```[\s\S]*?```)/g);
