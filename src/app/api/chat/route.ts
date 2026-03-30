@@ -157,13 +157,13 @@ EXPERTISE:
 - Security best practices and performance optimization`,
 };
 
-const openrouter = createOpenAI({
-  baseURL: 'https://openrouter.ai/api/v1',
-  apiKey: process.env.OPENROUTER_API_KEY,
+const groq = createOpenAI({
+  baseURL: 'https://api.groq.com/openai/v1',
+  apiKey: process.env.GROQ_API_KEY,
 });
 
-// Use .chat() to force /chat/completions endpoint (OpenRouter doesn't support /responses)
-const model = openrouter.chat('nvidia/nemotron-3-super-120b-a12b:free');
+// llama-3.3-70b-versatile: supports tool calling, 14,400 req/day free on Groq
+const model = groq.chat('llama-3.3-70b-versatile');
 
 export async function POST(req: Request) {
   const { messages, mode = 'chat' }: { messages: UIMessage[]; mode?: Mode } = await req.json();
