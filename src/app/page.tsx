@@ -2,7 +2,7 @@
 
 import { useChat } from '@ai-sdk/react';
 import { useState, useEffect, useRef } from 'react';
-import { Send, BarChart2, X, ChevronDown } from 'lucide-react';
+import { Send, BarChart2, X, Search, MessageSquare, Code2 } from 'lucide-react';
 
 import { BarChartPro } from '@/components/dashboard/bar-chart-pro';
 import { LineChartPro } from '@/components/dashboard/line-chart-pro';
@@ -14,6 +14,8 @@ import { BalanceSheet } from '@/components/dashboard/balance-sheet';
 import { PropertyPortfolio } from '@/components/dashboard/property-portfolio';
 import { ZillowProperty } from '@/components/dashboard/zillow-property';
 import { ZillowListings } from '@/components/dashboard/zillow-listings';
+
+type Mode = 'chat' | 'search' | 'code';
 
 type ChartOutput = { chartType: string; title: string; unit?: string; data: Array<{ label: string; value: number }>; };
 type ComparisonOutput = { title: string; items: Array<{ name: string; metrics: Record<string, number | string>; }>; };
@@ -31,6 +33,27 @@ type ZillowListingsOutput = {
   searchCriteria: { location: string; listingType: string; priceMin?: number; priceMax?: number; bedsMin?: number };
   error?: string;
 };
+
+const modes: { id: Mode; label: string; icon: React.ReactNode; placeholder: string }[] = [
+  {
+    id: 'chat',
+    label: 'Chat',
+    icon: <MessageSquare className="w-3.5 h-3.5" />,
+    placeholder: 'Ask anything...',
+  },
+  {
+    id: 'search',
+    label: 'Search',
+    icon: <Search className="w-3.5 h-3.5" />,
+    placeholder: 'Search for information...',
+  },
+  {
+    id: 'code',
+    label: 'Code',
+    icon: <Code2 className="w-3.5 h-3.5" />,
+    placeholder: 'Ask a coding question...',
+  },
+];
 
 function ImageWithLoader({ src, alt }: { src: string; alt: string }) {
   const [loaded, setLoaded] = useState(false);
@@ -60,13 +83,29 @@ function ImageWithLoader({ src, alt }: { src: string; alt: string }) {
   );
 }
 
-const suggestions = [
-  { label: 'Apple stock chart', icon: '📈' },
-  { label: 'Cyberpunk portrait of a man', icon: '🎨' },
-  { label: 'Homes for sale in LA below $900k', icon: '🏡' },
-  { label: 'Walmart balance sheet', icon: '📊' },
-  { label: 'Top US companies by market cap', icon: '🏢' },
-];
+const suggestionsByMode: Record<Mode, Array<{ label: string; icon: string }>> = {
+  chat: [
+    { label: 'Apple stock chart', icon: '📈' },
+    { label: 'Cyberpunk portrait of a man', icon: '🎨' },
+    { label: 'Homes for sale in LA below $900k', icon: '🏡' },
+    { label: 'Walmart balance sheet', icon: '📊' },
+    { label: 'Top US companies by market cap', icon: '🏢' },
+  ],
+  search: [
+    { label: 'How does NVIDIA Nemotron work?', icon: '🤖' },
+    { label: 'Latest developments in fusion energy', icon: '⚡' },
+    { label: 'India vs China GDP comparison', icon: '🌏' },
+    { label: 'History of the internet', icon: '🌐' },
+    { label: 'SpaceX Starship program overview', icon: '🚀' },
+  ],
+  code: [
+    { label: 'Build a REST API with FastAPI', icon: '🐍' },
+    { label: 'React custom hook for debounce', icon: '⚛️' },
+    { label: 'Implement binary search in TypeScript', icon: '🔍' },
+    { label: 'Docker compose for Next.js + Postgres', icon: '🐳' },
+    { label: 'Async/await vs Promise chaining', icon: '⚡' },
+  ],
+};
 
 const toolTypes = [
   'tool-showBarChart', 'tool-showLineChart', 'tool-showPieChart', 'tool-showAreaChart', 'tool-showComparison',
@@ -87,9 +126,22 @@ const toolNameMap: Record<string, string> = {
   'tool-generateImage': 'Generating image',
 };
 
+const modeColors: Record<Mode, string> = {
+  chat: 'text-white/80 border-white/30 bg-white/[0.08]',
+  search: 'text-sky-300 border-sky-400/40 bg-sky-400/[0.08]',
+  code: 'text-emerald-300 border-emerald-400/40 bg-emerald-400/[0.08]',
+};
+
+const modeInactiveColors: Record<Mode, string> = {
+  chat: 'text-white/40 border-white/[0.08] bg-transparent hover:text-white/60 hover:border-white/20',
+  search: 'text-white/40 border-white/[0.08] bg-transparent hover:text-sky-300/60 hover:border-sky-400/20',
+  code: 'text-white/40 border-white/[0.08] bg-transparent hover:text-emerald-300/60 hover:border-emerald-400/20',
+};
+
 export default function Chat() {
   const { messages, sendMessage, status, error } = useChat();
   const [input, setInput] = useState('');
+  const [mode, setMode] = useState<Mode>('chat');
   const [showSidebar, setShowSidebar] = useState(false);
   const [hasDashboardItems, setHasDashboardItems] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -138,12 +190,12 @@ export default function Chat() {
     e.preventDefault();
     if (!input.trim()) return;
     setShowSidebar(false);
-    sendMessage({ text: input });
+    sendMessage({ text: input }, { body: { mode } });
     setInput('');
   };
 
   const handleSuggestion = (label: string) => {
-    sendMessage({ text: label });
+    sendMessage({ text: label }, { body: { mode } });
   };
 
   const getLoadingSteps = () => {
@@ -220,6 +272,26 @@ export default function Chat() {
   );
 
   const isLoading = status === 'streaming';
+  const currentPlaceholder = modes.find(m => m.id === mode)?.placeholder ?? 'Ask anything...';
+  const suggestions = suggestionsByMode[mode];
+
+  const ModeSelector = ({ compact = false }: { compact?: boolean }) => (
+    <div className={`flex items-center gap-1 ${compact ? '' : 'justify-center'}`}>
+      {modes.map((m) => (
+        <button
+          key={m.id}
+          type="button"
+          onClick={() => setMode(m.id)}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all duration-200 ${
+            mode === m.id ? modeColors[m.id] : modeInactiveColors[m.id]
+          }`}
+        >
+          {m.icon}
+          {m.label}
+        </button>
+      ))}
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white flex flex-col">
@@ -233,15 +305,18 @@ export default function Chat() {
               </span>
             </button>
 
-            {hasDashboardItems && (
-              <button
-                onClick={() => setShowSidebar(v => !v)}
-                className="flex items-center gap-1.5 text-xs text-white/50 hover:text-white transition-colors px-3 py-1.5 rounded-lg border border-white/[0.08] hover:border-white/20 bg-white/[0.03] hover:bg-white/[0.06]"
-              >
-                <BarChart2 className="w-3.5 h-3.5" />
-                {showSidebar ? 'Hide' : 'Show'} dashboard
-              </button>
-            )}
+            <div className="flex items-center gap-3">
+              <ModeSelector compact />
+              {hasDashboardItems && (
+                <button
+                  onClick={() => setShowSidebar(v => !v)}
+                  className="flex items-center gap-1.5 text-xs text-white/50 hover:text-white transition-colors px-3 py-1.5 rounded-lg border border-white/[0.08] hover:border-white/20 bg-white/[0.03] hover:bg-white/[0.06]"
+                >
+                  <BarChart2 className="w-3.5 h-3.5" />
+                  {showSidebar ? 'Hide' : 'Show'} dashboard
+                </button>
+              )}
+            </div>
           </div>
         </header>
       )}
@@ -265,6 +340,9 @@ export default function Chat() {
                 </p>
               </div>
 
+              {/* Mode Selector */}
+              <ModeSelector />
+
               {/* Input */}
               <form onSubmit={handleSubmit} className="w-full max-w-lg">
                 <div className="relative flex items-center">
@@ -273,7 +351,7 @@ export default function Chat() {
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     className="w-full bg-white/[0.04] text-white rounded-2xl pl-5 pr-14 py-4 border border-white/[0.10] focus:border-white/25 focus:bg-white/[0.06] focus:outline-none placeholder-white/25 text-sm transition-all duration-200"
-                    placeholder="Ask anything..."
+                    placeholder={currentPlaceholder}
                     autoComplete="off"
                     autoFocus
                   />
@@ -349,7 +427,7 @@ export default function Chat() {
                                     totalResults={output.totalResults || 0}
                                     searchCriteria={output.searchCriteria}
                                     error={output.error}
-                                    onPropertySelectAction={(url) => sendMessage({ text: `show zillow property ${url}` })}
+                                    onPropertySelectAction={(url) => sendMessage({ text: `show zillow property ${url}` }, { body: { mode } })}
                                   />
                                 </div>
                               );
@@ -447,13 +525,13 @@ export default function Chat() {
             className="fixed bottom-0 left-0 right-0 z-30 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/95 to-transparent pt-8 pb-5 sm:pb-6"
             style={{ right: showSidebar ? 'calc(42%)' : '0' }}
           >
-            <div className="max-w-2xl mx-auto px-4 sm:px-6">
+            <div className="max-w-2xl mx-auto px-4 sm:px-6 space-y-2">
               <form onSubmit={handleSubmit} className="relative flex items-center">
                 <input
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   className="w-full bg-white/[0.05] text-white rounded-2xl pl-5 pr-14 py-3.5 border border-white/[0.10] focus:border-white/25 focus:bg-white/[0.07] focus:outline-none placeholder-white/25 text-sm transition-all duration-200 disabled:opacity-50"
-                  placeholder="Ask anything..."
+                  placeholder={currentPlaceholder}
                   disabled={isLoading}
                   autoComplete="off"
                 />
@@ -465,7 +543,7 @@ export default function Chat() {
                   <Send className="w-3.5 h-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
                 </button>
               </form>
-              <p className="text-center text-[11px] text-white/20 mt-2.5">
+              <p className="text-center text-[11px] text-white/20">
                 Sweep can make mistakes. Verify important information.
               </p>
             </div>
