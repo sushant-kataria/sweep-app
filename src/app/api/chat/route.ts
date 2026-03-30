@@ -186,11 +186,13 @@ export async function POST(req: Request) {
       return result.toUIMessageStreamResponse();
     }
 
-    // Chat mode: no tools (Nemotron doesn't support tool calling on OpenRouter)
+    // Chat mode: with tools for charts, images, etc.
     const result = streamText({
       model,
       system: nemotronSystemPrompts.chat,
       messages: convertToModelMessages(messages),
+      tools: dashboardTools,
+      stopWhen: stepCountIs(10),
       maxRetries: 0,
       onError,
     });
