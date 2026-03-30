@@ -2,7 +2,7 @@
 
 import { useChat } from '@ai-sdk/react';
 import { useState, useEffect, useRef } from 'react';
-import { Send, BarChart2, X, Search, MessageSquare, Code2 } from 'lucide-react';
+import { Send, BarChart2, X, Search, MessageSquare, Code2, Copy, Check } from 'lucide-react';
 
 import { BarChartPro } from '@/components/dashboard/bar-chart-pro';
 import { LineChartPro } from '@/components/dashboard/line-chart-pro';
@@ -81,6 +81,57 @@ function ImageWithLoader({ src, alt }: { src: string; alt: string }) {
       />
     </div>
   );
+}
+
+function CopyButton({ text, className = '' }: { text: string; className?: string }) {
+  const [copied, setCopied] = useState(false);
+  const copy = () => {
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+  return (
+    <button onClick={copy} className={`flex items-center gap-1.5 text-xs text-white/30 hover:text-white/60 transition-colors ${className}`}>
+      {copied ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+      <span>{copied ? 'Copied' : 'Copy'}</span>
+    </button>
+  );
+}
+
+function CodeBlock({ lang, code }: { lang: string; code: string }) {
+  return (
+    <div className="rounded-xl overflow-hidden border border-white/[0.10] my-3 text-left">
+      <div className="flex items-center justify-between px-4 py-2 bg-[#1a1a2e] border-b border-white/[0.08]">
+        <span className="text-xs text-violet-300/70 font-mono">{lang || 'code'}</span>
+        <CopyButton text={code} />
+      </div>
+      <pre className="p-4 overflow-x-auto bg-[#0f0f1a] text-sm font-mono leading-relaxed">
+        <code className="text-emerald-300/90 whitespace-pre">{code}</code>
+      </pre>
+    </div>
+  );
+}
+
+function renderContent(raw: string) {
+  // Strip bold/italic/headings then split on fenced code blocks
+  const text = raw.replace(/\*\*(.*?)\*\*/g, '$1').replace(/\*(.*?)\*/g, '$1').replace(/^#{1,6}\s+/gm, '');
+  const parts = text.split(/(```[\s\S]*?```)/g);
+  return parts.map((part, i) => {
+    const m = part.match(/^```(\w*)\n?([\s\S]*?)```$/);
+    if (m) return <CodeBlock key={i} lang={m[1]} code={m[2].replace(/\n$/, '')} />;
+    if (!part) return null;
+    // Inline code
+    const inlineParts = part.split(/(`[^`]+`)/g);
+    return (
+      <span key={i} className="whitespace-pre-wrap">
+        {inlineParts.map((s, j) =>
+          s.startsWith('`') && s.endsWith('`')
+            ? <code key={j} className="px-1.5 py-0.5 rounded bg-[#1a1a2e] text-violet-300/80 font-mono text-[0.8em] border border-white/[0.08]">{s.slice(1, -1)}</code>
+            : s
+        )}
+      </span>
+    );
+  });
 }
 
 const suggestionsByMode: Record<Mode, Array<{ label: string; icon: string }>> = {
@@ -162,9 +213,6 @@ export default function Chat() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, status]);
-
-  const cleanText = (text: string) =>
-    text.replace(/\*\*(.*?)\*\*/g, '$1').replace(/\*(.*?)\*/g, '$1').replace(/^#{1,6}\s+/gm, '');
 
   // AUTO-RETRY LOGIC
   useEffect(() => {
@@ -305,10 +353,10 @@ export default function Chat() {
               {hasDashboardItems && (
                 <button
                   onClick={() => setShowSidebar(v => !v)}
-                  className="flex items-center gap-1.5 text-xs text-white/50 hover:text-white transition-colors px-2 sm:px-3 py-1.5 rounded-lg border border-white/[0.08] hover:border-white/20 bg-white/[0.03] hover:bg-white/[0.06] shrink-0"
+                  className="hidden sm:flex items-center gap-1.5 text-xs text-white/50 hover:text-white transition-colors px-3 py-1.5 rounded-lg border border-white/[0.08] hover:border-white/20 bg-white/[0.03] hover:bg-white/[0.06] shrink-0"
                 >
                   <BarChart2 className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">{showSidebar ? 'Hide' : 'Show'} dashboard</span>
+                  {showSidebar ? 'Hide' : 'Show'} dashboard
                 </button>
               )}
             </div>
@@ -387,7 +435,7 @@ export default function Chat() {
                       <div className="max-w-[85%] sm:max-w-[75%] bg-white/[0.06] border border-white/[0.08] rounded-2xl rounded-tr-sm px-4 py-3">
                         <p className="text-white text-sm leading-relaxed">
                           {m.parts.filter(p => p.type === 'text').map((part, i) => (
-                            <span key={i}>{cleanText((part as any).text)}</span>
+                            <span key={i}>{(part as any).text}</span>
                           ))}
                         </p>
                       </div>
@@ -438,10 +486,17 @@ export default function Chat() {
                           )}
                           {/* Text parts */}
                           {m.parts.filter(p => p.type === 'text').map((part, i) => (
-                            <p key={i} className="text-white/80 text-sm leading-relaxed whitespace-pre-wrap">
-                              {cleanText((part as any).text)}
-                            </p>
+                            <div key={i} className="text-white/80 text-sm leading-relaxed">
+                              {renderContent((part as any).text)}
+                            </div>
                           ))}
+                          {/* Copy message button — only on completed messages */}
+                          {!(isLoading && idx === messages.length - 1) && m.parts.some(p => p.type === 'text') && (
+                            <CopyButton
+                              text={m.parts.filter(p => p.type === 'text').map(p => (p as any).text).join('')}
+                              className="mt-1"
+                            />
+                          )}
 
                           {/* Zillow listings inline */}
                           {m.parts.map((part: any) => {
