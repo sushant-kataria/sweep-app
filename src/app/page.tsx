@@ -163,8 +163,8 @@ export default function Chat() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, status]);
 
-  const isTextPart = (part: any): part is { type: 'text'; text: string } =>
-    part.type === 'text' && 'text' in part;
+  const cleanText = (text: string) =>
+    text.replace(/\*\*(.*?)\*\*/g, '$1').replace(/\*(.*?)\*/g, '$1').replace(/^#{1,6}\s+/gm, '');
 
   // AUTO-RETRY LOGIC
   useEffect(() => {
@@ -172,7 +172,7 @@ export default function Chat() {
     if (
       lastAssistant?.role === 'assistant' &&
       lastAssistant.parts.some(part => {
-        if (!isTextPart(part)) return false;
+        if (!(part.type === 'text' && 'text' in part)) return false;
         const text = part.text.toLowerCase();
         const errorPatterns = [
           "could not be displayed", "incorrectly formatted",
@@ -387,7 +387,7 @@ export default function Chat() {
                       <div className="max-w-[85%] sm:max-w-[75%] bg-white/[0.06] border border-white/[0.08] rounded-2xl rounded-tr-sm px-4 py-3">
                         <p className="text-white text-sm leading-relaxed">
                           {m.parts.filter(p => p.type === 'text').map((part, i) => (
-                            <span key={i}>{(part as any).text}</span>
+                            <span key={i}>{cleanText((part as any).text)}</span>
                           ))}
                         </p>
                       </div>
@@ -439,7 +439,7 @@ export default function Chat() {
                           {/* Text parts */}
                           {m.parts.filter(p => p.type === 'text').map((part, i) => (
                             <p key={i} className="text-white/80 text-sm leading-relaxed whitespace-pre-wrap">
-                              {(part as any).text}
+                              {cleanText((part as any).text)}
                             </p>
                           ))}
 
