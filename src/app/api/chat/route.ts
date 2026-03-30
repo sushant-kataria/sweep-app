@@ -202,18 +202,40 @@ export async function POST(req: Request) {
       return result.toUIMessageStreamResponse();
     }
 
-    // Image mode: directly generate images
+    // Image mode: bypass AI entirely — build Pollinations URL directly from the prompt
+    // Zero Groq tokens used, completely free and unlimited
     if (mode === 'image') {
-      const result = streamText({
-        model,
-        system: `You are an AI image generator. The user will describe an image. Immediately call the generateImage tool with a detailed, vivid, creative prompt based on their description. Enhance their description with artistic details (lighting, style, mood, colors, composition). Do not add any text before or after calling the tool — just call it directly.`,
-        messages: convertToModelMessages(messages),
-        tools: { generateImage: dashboardTools.generateImage },
-        stopWhen: stepCountIs(3),
-        maxRetries: 0,
-        onError,
+      const lastUserMessage = messages.filter(m => m.role === 'user').pop();
+      const prompt = lastUserMessage?.parts
+        ?.filter((p: any) => p.type === 'text')
+        .map((p: any) => p.text)
+        .join(' ')
+        .trim() || 'a beautiful image';
+
+      const seed = Math.floor(Math.random() * 1000000);
+      const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1024&height=1024&model=flux&nologo=true&seed=${seed}`;
+
+      // Return a synthetic UI message stream with the image tool result
+      const encoder = new TextEncoder();
+      const stream = new ReadableStream({
+        start(controller) {
+          // Emit a tool-call part then a tool-result part in the UI message stream format
+          const toolCallId = `img_${seed}`;
+          controller.enqueue(encoder.encode(`2:[{"type":"tool-input-available","toolCallId":"${toolCallId}","toolName":"generateImage","input":${JSON.stringify({ prompt })}}]\n`));
+          controller.enqueue(encoder.encode(`2:[{"type":"tool-output-available","toolCallId":"${toolCallId}","toolName":"generateImage","output":${JSON.stringify({ imageUrl, prompt })}}]\n`));
+          controller.enqueue(encoder.encode(`e:{"finishReason":"tool-calls","usage":{"promptTokens":0,"completionTokens":0}}\n`));
+          controller.enqueue(encoder.encode(`d:{"finishReason":"tool-calls","usage":{"promptTokens":0,"completionTokens":0}}\n`));
+          controller.close();
+        }
       });
-      return result.toUIMessageStreamResponse();
+
+      return new Response(stream, {
+        headers: {
+          'Content-Type': 'text/event-stream; charset=utf-8',
+          'X-Vercel-AI-Data-Stream': 'v1',
+          'Cache-Control': 'no-cache',
+        }
+      });
     }
 
     // Chat mode: with tools for charts, images, etc.
