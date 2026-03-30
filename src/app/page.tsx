@@ -294,7 +294,7 @@ export default function Chat() {
   );
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white flex flex-col">
+    <div className="bg-[#0a0a0a] text-white flex flex-col" style={{ height: '100dvh', overflow: 'hidden' }}>
       {/* ── HEADER (only during chat) ── */}
       {messages.length > 0 && (
         <header className="fixed top-0 left-0 right-0 z-40 bg-[#0a0a0a]/90 backdrop-blur-xl border-b border-white/[0.06]">
@@ -322,12 +322,12 @@ export default function Chat() {
       )}
 
       {/* ── MAIN CONTENT ── */}
-      <main className={`flex-1 transition-all duration-300 ease-in-out ${showSidebar ? 'md:mr-[42%]' : ''} ${messages.length > 0 ? 'pt-14' : ''}`}>
+      <main className={`flex-1 overflow-y-auto transition-all duration-300 ease-in-out ${showSidebar ? 'md:mr-[42%]' : ''} ${messages.length > 0 ? 'pt-14' : ''}`}>
         <div className="max-w-2xl mx-auto px-4 sm:px-6 pb-36">
 
           {/* ── HERO (no messages) ── */}
           {messages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center min-h-screen gap-8 py-20">
+            <div className="flex flex-col items-center justify-center gap-8 py-20" style={{ minHeight: 'calc(100dvh - 80px)' }}>
               {/* Logo */}
               <div className="text-center space-y-3">
                 <h1 className="text-6xl sm:text-7xl font-semibold tracking-tight">
@@ -353,7 +353,6 @@ export default function Chat() {
                     className="w-full bg-white/[0.04] text-white rounded-2xl pl-5 pr-14 py-4 border border-white/[0.10] focus:border-white/25 focus:bg-white/[0.06] focus:outline-none placeholder-white/25 text-sm transition-all duration-200"
                     placeholder={currentPlaceholder}
                     autoComplete="off"
-                    autoFocus
                   />
                   <button
                     type="submit"
