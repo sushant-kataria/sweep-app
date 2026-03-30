@@ -167,6 +167,10 @@ const nemotron = openrouter('nvidia/llama-3.1-nemotron-ultra-253b-v1');
 export async function POST(req: Request) {
   const { messages, mode = 'chat' }: { messages: UIMessage[]; mode?: Mode } = await req.json();
 
+  const onError = ({ error }: { error: unknown }) => {
+    console.error('[Nemotron stream error]', JSON.stringify(error));
+  };
+
   try {
     // Search and Code modes: no dashboard tools
     if (mode === 'search' || mode === 'code') {
@@ -174,7 +178,8 @@ export async function POST(req: Request) {
         model: nemotron,
         system: nemotronSystemPrompts[mode],
         messages: convertToModelMessages(messages),
-        maxRetries: 3,
+        maxRetries: 0,
+        onError,
       });
       return result.toUIMessageStreamResponse();
     }
@@ -186,37 +191,24 @@ export async function POST(req: Request) {
       messages: convertToModelMessages(messages),
       tools: dashboardTools,
       stopWhen: stepCountIs(10),
-      maxRetries: 3,
+      maxRetries: 0,
+      onError,
     });
 
     return result.toUIMessageStreamResponse();
   } catch (error: any) {
-    if (error.statusCode === 429 || error.data?.error?.code === 429) {
+    console.error('[Nemotron request error]', error?.message, JSON.stringify(error));
+
+    if (error?.status === 429 || error?.statusCode === 429 || error?.data?.error?.code === 429) {
       return new Response(
-        JSON.stringify({
-          error: 'Rate limit exceeded. Please wait a moment and try again.',
-          retryAfter: 2000,
-        }),
-        {
-          status: 429,
-          headers: {
-            'Content-Type': 'application/json',
-            'Retry-After': '2',
-          },
-        }
+        JSON.stringify({ error: 'Rate limit exceeded. Please wait a moment and try again.' }),
+        { status: 429, headers: { 'Content-Type': 'application/json', 'Retry-After': '2' } }
       );
     }
 
     return new Response(
-      JSON.stringify({
-        error: error.message || 'An error occurred',
-      }),
-      {
-        status: 500,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      }
+      JSON.stringify({ error: error?.message || 'An error occurred' }),
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
   }
 }
