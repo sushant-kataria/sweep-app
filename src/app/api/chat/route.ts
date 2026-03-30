@@ -163,7 +163,7 @@ const openrouter = createOpenAI({
 });
 
 // Use .chat() to force /chat/completions endpoint (OpenRouter doesn't support /responses)
-const model = openrouter.chat('meta-llama/llama-3.3-70b-instruct:free');
+const model = openrouter.chat('nvidia/nemotron-3-super-120b-a12b:free');
 
 export async function POST(req: Request) {
   const { messages, mode = 'chat' }: { messages: UIMessage[]; mode?: Mode } = await req.json();
@@ -186,13 +186,11 @@ export async function POST(req: Request) {
       return result.toUIMessageStreamResponse();
     }
 
-    // Chat mode: with tools (charts, images, etc.)
+    // Chat mode: no tools (Nemotron doesn't support tool calling on OpenRouter)
     const result = streamText({
       model,
       system: nemotronSystemPrompts.chat,
       messages: convertToModelMessages(messages),
-      tools: dashboardTools,
-      stopWhen: stepCountIs(10),
       maxRetries: 0,
       onError,
     });
