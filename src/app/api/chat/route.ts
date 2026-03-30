@@ -1,7 +1,6 @@
 // app/api/chat/route.ts
 import { createOpenAI } from '@ai-sdk/openai';
-import { streamText, convertToModelMessages, stepCountIs, type UIMessage } from 'ai';
-import { dashboardTools } from '@/ai/dashboard-tools';
+import { streamText, convertToModelMessages, type UIMessage } from 'ai';
 
 export const runtime = 'edge';
 export const maxDuration = 60;
@@ -162,7 +161,8 @@ const openrouter = createOpenAI({
   apiKey: process.env.OPENROUTER_API_KEY,
 });
 
-const nemotron = openrouter('nvidia/llama-3.1-nemotron-ultra-253b-v1');
+// Use .chat() to force /chat/completions endpoint (OpenRouter doesn't support /responses)
+const nemotron = openrouter.chat('nvidia/llama-3.1-nemotron-ultra-253b-v1');
 
 export async function POST(req: Request) {
   const { messages, mode = 'chat' }: { messages: UIMessage[]; mode?: Mode } = await req.json();
@@ -184,13 +184,11 @@ export async function POST(req: Request) {
       return result.toUIMessageStreamResponse();
     }
 
-    // Chat mode: Nemotron with dashboard tools
+    // Chat mode: Nemotron (tool calling not supported by this model on OpenRouter)
     const result = streamText({
       model: nemotron,
       system: nemotronSystemPrompts.chat,
       messages: convertToModelMessages(messages),
-      tools: dashboardTools,
-      stopWhen: stepCountIs(10),
       maxRetries: 0,
       onError,
     });
