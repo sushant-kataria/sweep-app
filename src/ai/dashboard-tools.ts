@@ -84,20 +84,9 @@ export const dashboardTools = {
       prompt: z.string().describe("Detailed image prompt"),
     }),
     execute: async function({ prompt }) {
-      try {
-        const encodedPrompt = encodeURIComponent(prompt);
-        const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&model=flux&nologo=true&enhance=true`;
-
-        const response = await fetch(imageUrl);
-        if (!response.ok) {
-          return { error: "Failed to generate image. Please try again." };
-        }
-        await response.arrayBuffer();
-
-        return { imageUrl, prompt };
-      } catch (error: any) {
-        return { error: `Error generating image: ${error.message}` };
-      }
+      const encodedPrompt = encodeURIComponent(prompt);
+      const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&model=flux&nologo=true&enhance=true&seed=${Date.now()}`;
+      return { imageUrl, prompt };
     }
   }),
   

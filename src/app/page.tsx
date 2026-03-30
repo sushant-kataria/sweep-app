@@ -83,6 +83,43 @@ function ImageWithLoader({ src, alt }: { src: string; alt: string }) {
   );
 }
 
+const THINKING_WORDS = [
+  'Analyzing...', 'Thinking...', 'Interpreting...', 'Researching...',
+  'Processing...', 'Understanding...', 'Reasoning...', 'Computing...',
+];
+
+function ThinkingAnimation() {
+  const [wordIdx, setWordIdx] = useState(0);
+  const [fade, setFade] = useState(true);
+
+  useEffect(() => {
+    const iv = setInterval(() => {
+      setFade(false);
+      setTimeout(() => {
+        setWordIdx(i => (i + 1) % THINKING_WORDS.length);
+        setFade(true);
+      }, 300);
+    }, 1600);
+    return () => clearInterval(iv);
+  }, []);
+
+  return (
+    <div className="flex items-center gap-2">
+      <div className="flex gap-1">
+        {[0, 150, 300].map((d, i) => (
+          <div key={i} className="w-1.5 h-1.5 bg-white/30 rounded-full animate-bounce" style={{ animationDelay: `${d}ms` }} />
+        ))}
+      </div>
+      <span
+        className="text-xs text-white/40 font-mono transition-opacity duration-300"
+        style={{ opacity: fade ? 1 : 0 }}
+      >
+        {THINKING_WORDS[wordIdx]}
+      </span>
+    </div>
+  );
+}
+
 function CopyButton({ text, className = '' }: { text: string; className?: string }) {
   const [copied, setCopied] = useState(false);
   const copy = () => {
@@ -387,7 +424,7 @@ export default function Chat() {
               <ModeSelector />
 
               {/* Input */}
-              <form onSubmit={handleSubmit} className="w-full max-w-lg">
+              <form onSubmit={handleSubmit} className="w-full">
                 <div className="relative flex items-center">
                   <input
                     ref={inputRef}
@@ -409,7 +446,7 @@ export default function Chat() {
               </form>
 
               {/* Suggestion chips */}
-              <div className="w-full max-w-lg">
+              <div className="w-full">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {suggestions.map((s, i) => (
                     <button
@@ -451,13 +488,9 @@ export default function Chat() {
                           <div className={`w-2 h-2 rounded-full bg-white/60 ${isLoading && idx === messages.length - 1 ? 'animate-pulse' : ''}`} />
                         </div>
                         <div className="flex-1 min-w-0 space-y-4">
-                          {/* Thinking dots — shown inline before any text arrives */}
+                          {/* Thinking animation — shown before any text arrives */}
                           {isLoading && idx === messages.length - 1 && !m.parts.some(p => p.type === 'text') && loadingSteps.length === 0 && (
-                            <div className="flex gap-1 pt-1">
-                              {[0, 150, 300].map((delay, i) => (
-                                <div key={i} className="w-1.5 h-1.5 bg-white/30 rounded-full animate-bounce" style={{ animationDelay: `${delay}ms` }} />
-                              ))}
-                            </div>
+                            <ThinkingAnimation />
                           )}
                           {/* Tool loading steps — shown inline */}
                           {isLoading && idx === messages.length - 1 && loadingSteps.length > 0 && (
@@ -557,10 +590,10 @@ export default function Chat() {
         {/* ── FIXED BOTTOM INPUT (chat mode) ── */}
         {messages.length > 0 && (
           <div
-            className="fixed bottom-0 left-0 z-30 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/95 to-transparent pt-8 pb-safe"
-            style={{ right: showSidebar ? '42%' : '0', paddingBottom: 'max(20px, env(safe-area-inset-bottom))' }}
+            className="fixed bottom-0 left-0 right-0 z-30 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/95 to-transparent pt-8"
+            style={{ right: showSidebar ? '42%' : undefined, paddingBottom: 'max(20px, env(safe-area-inset-bottom))' }}
           >
-            <div className="max-w-2xl mx-auto px-4 sm:px-6 space-y-2">
+            <div className="w-full max-w-2xl mx-auto px-4 sm:px-6 space-y-2">
               <form onSubmit={handleSubmit} className="relative flex items-center">
                 <input
                   value={input}
