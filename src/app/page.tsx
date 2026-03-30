@@ -2,7 +2,7 @@
 
 import { useChat } from '@ai-sdk/react';
 import { useState, useEffect, useRef } from 'react';
-import { Send, BarChart2, X, Search, MessageSquare, Code2, Copy, Check } from 'lucide-react';
+import { Send, BarChart2, X, Search, MessageSquare, Code2, Copy, Check, Wand2, Download } from 'lucide-react';
 
 import { BarChartPro } from '@/components/dashboard/bar-chart-pro';
 import { LineChartPro } from '@/components/dashboard/line-chart-pro';
@@ -15,7 +15,7 @@ import { PropertyPortfolio } from '@/components/dashboard/property-portfolio';
 import { ZillowProperty } from '@/components/dashboard/zillow-property';
 import { ZillowListings } from '@/components/dashboard/zillow-listings';
 
-type Mode = 'chat' | 'search' | 'code';
+type Mode = 'chat' | 'search' | 'code' | 'image';
 
 type ChartOutput = { chartType: string; title: string; unit?: string; data: Array<{ label: string; value: number }>; };
 type ComparisonOutput = { title: string; items: Array<{ name: string; metrics: Record<string, number | string>; }>; };
@@ -53,13 +53,33 @@ const modes: { id: Mode; label: string; icon: React.ReactNode; placeholder: stri
     icon: <Code2 className="w-3.5 h-3.5" />,
     placeholder: 'Ask a coding question...',
   },
+  {
+    id: 'image',
+    label: 'Image',
+    icon: <Wand2 className="w-3.5 h-3.5" />,
+    placeholder: 'Describe an image to generate...',
+  },
 ];
+
+async function downloadImage(src: string) {
+  try {
+    const res = await fetch(src);
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `sweep-image-${Date.now()}.jpg`;
+    a.click();
+    URL.revokeObjectURL(url);
+  } catch {
+    window.open(src, '_blank');
+  }
+}
 
 function ImageWithLoader({ src, alt }: { src: string; alt: string }) {
   const [loaded, setLoaded] = useState(false);
   const [errored, setErrored] = useState(false);
 
-  // Timeout after 60s — Pollinations can be slow but shouldn't take longer
   useEffect(() => {
     if (loaded || errored) return;
     const t = setTimeout(() => setErrored(true), 60000);
@@ -67,27 +87,38 @@ function ImageWithLoader({ src, alt }: { src: string; alt: string }) {
   }, [loaded, errored]);
 
   return (
-    <div className="relative w-full max-w-sm rounded-xl overflow-hidden border border-white/10 bg-white/[0.03]" style={{ aspectRatio: '1' }}>
-      {!loaded && !errored && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
-          <div className="w-5 h-5 rounded-full border-2 border-white/15 border-t-white/50 animate-spin" />
-          <span className="text-[10px] text-white/25 font-mono">generating image...</span>
-        </div>
+    <div className="flex flex-col items-start gap-2">
+      <div className="relative w-full max-w-sm rounded-xl overflow-hidden border border-white/10 bg-white/[0.03]" style={{ aspectRatio: '1' }}>
+        {!loaded && !errored && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
+            <div className="w-5 h-5 rounded-full border-2 border-white/15 border-t-white/50 animate-spin" />
+            <span className="text-[10px] text-white/25 font-mono">generating image...</span>
+          </div>
+        )}
+        {errored && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-1">
+            <span className="text-xs text-white/30">Failed to load image</span>
+            <a href={src} target="_blank" rel="noopener noreferrer" className="text-[10px] text-white/20 underline">try direct link</a>
+          </div>
+        )}
+        <img
+          src={src}
+          alt={alt}
+          className="w-full h-full object-cover"
+          style={{ opacity: loaded ? 1 : 0, transition: 'opacity 0.5s ease' }}
+          onLoad={() => setLoaded(true)}
+          onError={() => setErrored(true)}
+        />
+      </div>
+      {loaded && (
+        <button
+          onClick={() => downloadImage(src)}
+          className="flex items-center gap-1.5 text-xs text-white/30 hover:text-white/70 transition-colors"
+        >
+          <Download className="w-3 h-3" />
+          <span>Download</span>
+        </button>
       )}
-      {errored && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center gap-1">
-          <span className="text-xs text-white/30">Failed to load image</span>
-          <a href={src} target="_blank" rel="noopener noreferrer" className="text-[10px] text-white/20 underline">try direct link</a>
-        </div>
-      )}
-      <img
-        src={src}
-        alt={alt}
-        className="w-full h-full object-cover"
-        style={{ opacity: loaded ? 1 : 0, transition: 'opacity 0.5s ease' }}
-        onLoad={() => setLoaded(true)}
-        onError={() => setErrored(true)}
-      />
     </div>
   );
 }
@@ -181,6 +212,55 @@ function renderContent(raw: string | undefined | null) {
   });
 }
 
+// Render text that may contain <function(toolName){...json...}</function> patterns
+// This handles cases where Llama outputs tool calls as text instead of proper tool calls
+function renderTextWithInlineTools(text: string): React.ReactNode[] {
+  const nodes: React.ReactNode[] = [];
+  const regex = /<function\((\w+)\)([\s\S]*?)<\/function>/g;
+  let lastIndex = 0;
+  let match;
+  let key = 0;
+
+  while ((match = regex.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      const before = text.slice(lastIndex, match.index).trim();
+      if (before) nodes.push(<div key={key++}>{renderContent(before)}</div>);
+    }
+    try {
+      const toolName = match[1];
+      const args = JSON.parse(match[2]);
+      if ((toolName === 'showBarChart' || toolName === 'showLineChart' || toolName === 'showPieChart' || toolName === 'showAreaChart') && args.items) {
+        const chartData = args.items.map((it: any) => ({ label: it.label, value: it.value }));
+        if (toolName === 'showBarChart') nodes.push(<BarChartPro key={key++} title={args.title} data={chartData} unit={args.unit} />);
+        else if (toolName === 'showLineChart') nodes.push(<LineChartPro key={key++} title={args.title} data={chartData} unit={args.unit} />);
+        else if (toolName === 'showPieChart') nodes.push(<PieChartPro key={key++} title={args.title} data={chartData} unit={args.unit} />);
+        else if (toolName === 'showAreaChart') nodes.push(<AreaChartPro key={key++} title={args.title} data={chartData} unit={args.unit} />);
+      } else if (toolName === 'showStats' && args.stats) {
+        nodes.push(<StatsCard key={key++} title={args.title} stats={args.stats} />);
+      } else if (toolName === 'showComparison' && args.items) {
+        nodes.push(<ComparisonTable key={key++} title={args.title} items={args.items} />);
+      } else if (toolName === 'generateImage' && args.prompt) {
+        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(args.prompt)}?width=1024&height=1024&model=flux&nologo=true&seed=${Math.floor(Math.random() * 1000000)}`;
+        nodes.push(
+          <div key={key++} className="py-2 flex flex-col items-start gap-2">
+            <p className="text-xs text-white/40 font-mono">{args.prompt}</p>
+            <ImageWithLoader src={url} alt={args.prompt} />
+            <span className="text-[10px] text-white/30 font-mono">Generated by Pollinations AI · FLUX</span>
+          </div>
+        );
+      }
+    } catch { /* skip malformed function call */ }
+    lastIndex = match.index + match[0].length;
+  }
+
+  if (lastIndex < text.length) {
+    const remaining = text.slice(lastIndex).trim();
+    if (remaining) nodes.push(<div key={key++}>{renderContent(remaining)}</div>);
+  }
+
+  return nodes;
+}
+
 const suggestionsByMode: Record<Mode, Array<{ label: string; icon: string }>> = {
   chat: [
     { label: 'Apple stock chart', icon: '📈' },
@@ -202,6 +282,13 @@ const suggestionsByMode: Record<Mode, Array<{ label: string; icon: string }>> = 
     { label: 'Implement binary search in TypeScript', icon: '🔍' },
     { label: 'Docker compose for Next.js + Postgres', icon: '🐳' },
     { label: 'Async/await vs Promise chaining', icon: '⚡' },
+  ],
+  image: [
+    { label: 'Futuristic city at night with neon lights', icon: '🌃' },
+    { label: 'Cyberpunk portrait of a samurai', icon: '⚔️' },
+    { label: 'Cozy cabin in snowy mountains', icon: '🏔️' },
+    { label: 'Abstract art in vibrant colors', icon: '🎨' },
+    { label: 'Golden retriever puppy playing in a park', icon: '🐶' },
   ],
 };
 
@@ -228,12 +315,14 @@ const modeColors: Record<Mode, string> = {
   chat: 'text-white/80 border-white/30 bg-white/[0.08]',
   search: 'text-sky-300 border-sky-400/40 bg-sky-400/[0.08]',
   code: 'text-emerald-300 border-emerald-400/40 bg-emerald-400/[0.08]',
+  image: 'text-violet-300 border-violet-400/40 bg-violet-400/[0.08]',
 };
 
 const modeInactiveColors: Record<Mode, string> = {
   chat: 'text-white/40 border-white/[0.08] bg-transparent hover:text-white/60 hover:border-white/20',
   search: 'text-white/40 border-white/[0.08] bg-transparent hover:text-sky-300/60 hover:border-sky-400/20',
   code: 'text-white/40 border-white/[0.08] bg-transparent hover:text-emerald-300/60 hover:border-emerald-400/20',
+  image: 'text-white/40 border-white/[0.08] bg-transparent hover:text-violet-300/60 hover:border-violet-400/20',
 };
 
 export default function Chat() {
@@ -521,12 +610,23 @@ export default function Chat() {
                               ))}
                             </div>
                           )}
-                          {/* Text parts */}
-                          {m.parts.filter(p => p.type === 'text').map((part, i) => (
-                            <div key={i} className="text-white/80 text-sm leading-relaxed">
-                              {renderContent((part as any).text)}
-                            </div>
-                          ))}
+                          {/* Text parts — with inline tool call fallback parser */}
+                          {m.parts.filter(p => p.type === 'text').map((part, i) => {
+                            const text = (part as any).text as string;
+                            const hasInlineTool = /<function\(\w+\)/.test(text);
+                            if (hasInlineTool) {
+                              return (
+                                <div key={i} className="space-y-4">
+                                  {renderTextWithInlineTools(text)}
+                                </div>
+                              );
+                            }
+                            return (
+                              <div key={i} className="text-white/80 text-sm leading-relaxed">
+                                {renderContent(text)}
+                              </div>
+                            );
+                          })}
                           {/* Copy message button — only on completed messages */}
                           {!(isLoading && idx === messages.length - 1) && m.parts.some(p => p.type === 'text') && (
                             <CopyButton
@@ -570,6 +670,7 @@ export default function Chat() {
                               })}
                             </div>
                           )}
+                          {/* Charts on mobile */}
                           <div className="md:hidden space-y-4">
                             {renderDashboardItems(m)}
                           </div>
@@ -611,7 +712,7 @@ export default function Chat() {
             className="fixed bottom-0 left-0 right-0 z-30 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/95 to-transparent pt-8"
             style={{ right: showSidebar ? '42%' : undefined, paddingBottom: 'max(20px, env(safe-area-inset-bottom))' }}
           >
-            <div className="w-full max-w-2xl mx-auto px-4 sm:px-6 space-y-2">
+            <div className="w-full px-3 sm:px-4 space-y-2">
               <form onSubmit={handleSubmit} className="relative flex items-center">
                 <input
                   value={input}

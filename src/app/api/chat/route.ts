@@ -6,7 +6,7 @@ import { dashboardTools } from '@/ai/dashboard-tools';
 export const runtime = 'edge';
 export const maxDuration = 60;
 
-type Mode = 'chat' | 'search' | 'code';
+type Mode = 'chat' | 'search' | 'code' | 'image';
 
 const nemotronSystemPrompts: Record<Mode, string> = {
   chat: `You are Sweep - a helpful, knowledgeable AI assistant that can answer ANY question and create visualizations.
@@ -70,6 +70,14 @@ AVAILABLE TOOLS:
 9. generateImage - Generate any image from a text description
 10. searchZillowListings - Search US properties (Zillow API)
 11. showZillowProperty - Detailed property info (Zillow API)
+
+ACCURATE STOCK & MARKET DATA (use these exact figures):
+Apple (AAPL) historical year-end prices (split-adjusted):
+- 2018: $39, 2019: $73, 2020: $132, 2021: $178, 2022: $130, 2023: $193, 2024: $250
+
+Top US companies by market cap (2024):
+- Apple: $3.5T, Microsoft: $3.1T, NVIDIA: $3.0T, Amazon: $2.1T, Alphabet: $2.0T
+- Meta: $1.4T, Tesla: $0.8T, Berkshire: $0.9T, Broadcom: $0.7T, JPMorgan: $0.7T
 
 INDIAN MARKET DATA:
 Top Companies by Market Cap (you know these):
@@ -180,6 +188,20 @@ export async function POST(req: Request) {
         system: nemotronSystemPrompts[mode],
         messages: convertToModelMessages(messages),
 
+        maxRetries: 0,
+        onError,
+      });
+      return result.toUIMessageStreamResponse();
+    }
+
+    // Image mode: directly generate images
+    if (mode === 'image') {
+      const result = streamText({
+        model,
+        system: `You are an AI image generator. The user will describe an image. Immediately call the generateImage tool with a detailed, vivid, creative prompt based on their description. Enhance their description with artistic details (lighting, style, mood, colors, composition). Do not add any text before or after calling the tool — just call it directly.`,
+        messages: convertToModelMessages(messages),
+        tools: { generateImage: dashboardTools.generateImage },
+        stopWhen: stepCountIs(3),
         maxRetries: 0,
         onError,
       });
