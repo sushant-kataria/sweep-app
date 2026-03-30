@@ -178,6 +178,7 @@ export async function POST(req: Request) {
         model: nemotron,
         system: nemotronSystemPrompts[mode],
         messages: convertToModelMessages(messages),
+        maxTokens: 16384,
         maxRetries: 0,
         onError,
       });
@@ -189,6 +190,7 @@ export async function POST(req: Request) {
       model: nemotron,
       system: nemotronSystemPrompts.chat,
       messages: convertToModelMessages(messages),
+      maxTokens: 16384,
       maxRetries: 0,
       onError,
     });
