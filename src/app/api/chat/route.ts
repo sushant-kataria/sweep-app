@@ -162,7 +162,7 @@ const openrouter = createOpenAI({
 });
 
 // Use .chat() to force /chat/completions endpoint (OpenRouter doesn't support /responses)
-const nemotron = openrouter.chat('nvidia/llama-3.1-nemotron-ultra-253b-v1');
+const nemotron = openrouter.chat('nvidia/llama-3.1-nemotron-70b-instruct');
 
 export async function POST(req: Request) {
   const { messages, mode = 'chat' }: { messages: UIMessage[]; mode?: Mode } = await req.json();
@@ -178,7 +178,7 @@ export async function POST(req: Request) {
         model: nemotron,
         system: nemotronSystemPrompts[mode],
         messages: convertToModelMessages(messages),
-        maxTokens: 16384,
+        maxTokens: 4096,
         maxRetries: 0,
         onError,
       });
@@ -190,7 +190,7 @@ export async function POST(req: Request) {
       model: nemotron,
       system: nemotronSystemPrompts.chat,
       messages: convertToModelMessages(messages),
-      maxTokens: 16384,
+      maxTokens: 4096,
       maxRetries: 0,
       onError,
     });
