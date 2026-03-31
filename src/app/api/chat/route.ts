@@ -203,7 +203,7 @@ export async function POST(req: Request) {
     }
 
     // Image mode: bypass AI entirely — build Pollinations URL directly from the prompt
-    // Zero Groq tokens used, completely free and unlimited
+    // Zero tokens used, completely free and unlimited
     if (mode === 'image') {
       const lastUserMessage = messages.filter(m => m.role === 'user').pop();
       const prompt = lastUserMessage?.parts
@@ -215,16 +215,16 @@ export async function POST(req: Request) {
       const seed = Math.floor(Math.random() * 1000000);
       const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1024&height=1024&model=flux&nologo=true&seed=${seed}`;
 
-      // Return a synthetic UI message stream with the image tool result
+      // Emit a text stream with the inline function call format the client parser handles
+      const textContent = `<function(generateImage)${JSON.stringify({ prompt, imageUrl })}</function>`;
+      const msgId = `img_${seed}`;
       const encoder = new TextEncoder();
       const stream = new ReadableStream({
         start(controller) {
-          // Emit a tool-call part then a tool-result part in the UI message stream format
-          const toolCallId = `img_${seed}`;
-          controller.enqueue(encoder.encode(`2:[{"type":"tool-input-available","toolCallId":"${toolCallId}","toolName":"generateImage","input":${JSON.stringify({ prompt })}}]\n`));
-          controller.enqueue(encoder.encode(`2:[{"type":"tool-output-available","toolCallId":"${toolCallId}","toolName":"generateImage","output":${JSON.stringify({ imageUrl, prompt })}}]\n`));
-          controller.enqueue(encoder.encode(`e:{"finishReason":"tool-calls","usage":{"promptTokens":0,"completionTokens":0}}\n`));
-          controller.enqueue(encoder.encode(`d:{"finishReason":"tool-calls","usage":{"promptTokens":0,"completionTokens":0}}\n`));
+          controller.enqueue(encoder.encode(`f:{"messageId":"${msgId}"}\n`));
+          controller.enqueue(encoder.encode(`0:${JSON.stringify(textContent)}\n`));
+          controller.enqueue(encoder.encode(`e:{"finishReason":"stop","usage":{"promptTokens":0,"completionTokens":0}}\n`));
+          controller.enqueue(encoder.encode(`d:{"finishReason":"stop","usage":{"promptTokens":0,"completionTokens":0}}\n`));
           controller.close();
         }
       });

@@ -2,27 +2,7 @@
 
 import { useChat } from '@ai-sdk/react';
 import { useState, useEffect, useRef } from 'react';
-import {
-  Send,
-  BarChart2,
-  X,
-  Search,
-  MessageSquare,
-  Code2,
-  Copy,
-  Check,
-  Image as LucideImage,
-  Download,
-  Sun,
-  Moon,
-} from 'lucide-react';
-
-/** ~17pt SF Symbol–like stroke; Lucide is used because SF Symbols are not licensed for web. */
-const GLASS_ICON = {
-  className: 'w-[15px] h-[15px] shrink-0',
-  strokeWidth: 1.75,
-  absoluteStrokeWidth: true as const,
-};
+import { Send, BarChart2, X, Search, MessageSquare, Code2, Copy, Check, Wand2, Download } from 'lucide-react';
 
 import { BarChartPro } from '@/components/dashboard/bar-chart-pro';
 import { LineChartPro } from '@/components/dashboard/line-chart-pro';
@@ -34,7 +14,6 @@ import { BalanceSheet } from '@/components/dashboard/balance-sheet';
 import { PropertyPortfolio } from '@/components/dashboard/property-portfolio';
 import { ZillowProperty } from '@/components/dashboard/zillow-property';
 import { ZillowListings } from '@/components/dashboard/zillow-listings';
-import { LiquidGlassBackdrop } from '@/components/liquid-glass/LiquidGlassBackdrop';
 
 type Mode = 'chat' | 'search' | 'code' | 'image';
 
@@ -59,25 +38,25 @@ const modes: { id: Mode; label: string; icon: React.ReactNode; placeholder: stri
   {
     id: 'chat',
     label: 'Chat',
-    icon: <MessageSquare {...GLASS_ICON} />,
+    icon: <MessageSquare className="w-3.5 h-3.5" />,
     placeholder: 'Ask anything...',
   },
   {
     id: 'search',
     label: 'Search',
-    icon: <Search {...GLASS_ICON} />,
+    icon: <Search className="w-3.5 h-3.5" />,
     placeholder: 'Search for information...',
   },
   {
     id: 'code',
     label: 'Code',
-    icon: <Code2 {...GLASS_ICON} />,
+    icon: <Code2 className="w-3.5 h-3.5" />,
     placeholder: 'Ask a coding question...',
   },
   {
     id: 'image',
     label: 'Image',
-    icon: <LucideImage {...GLASS_ICON} />,
+    icon: <Wand2 className="w-3.5 h-3.5" />,
     placeholder: 'Describe an image to generate...',
   },
 ];
@@ -97,17 +76,6 @@ async function downloadImage(src: string) {
   }
 }
 
-function SmoothLoadingBar({ wide }: { wide?: boolean }) {
-  return (
-    <div
-      className={`relative h-1 overflow-hidden rounded-full bg-[var(--v-border)] shrink-0 ${wide ? 'w-14' : 'w-10'}`}
-      aria-hidden
-    >
-      <div className="absolute inset-y-0 w-[42%] rounded-full bg-gradient-to-r from-transparent via-[var(--v-fg-3)] to-transparent opacity-85 dark:via-white/45 tool-loading-shimmer" />
-    </div>
-  );
-}
-
 function ImageWithLoader({ src, alt }: { src: string; alt: string }) {
   const [loaded, setLoaded] = useState(false);
   const [errored, setErrored] = useState(false);
@@ -120,17 +88,17 @@ function ImageWithLoader({ src, alt }: { src: string; alt: string }) {
 
   return (
     <div className="flex flex-col items-start gap-2">
-      <div className="relative w-full max-w-sm rounded-lg overflow-hidden border border-[var(--v-border)] bg-[var(--v-surface)]" style={{ aspectRatio: '1' }}>
+      <div className="relative w-full max-w-sm rounded-xl overflow-hidden border border-white/10 bg-white/[0.03]" style={{ aspectRatio: '1' }}>
         {!loaded && !errored && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
-            <SmoothLoadingBar wide />
-            <span className="text-[10px] text-[var(--v-fg-5)] font-mono">generating image...</span>
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
+            <div className="w-5 h-5 rounded-full border-2 border-white/15 border-t-white/50 animate-spin" />
+            <span className="text-[10px] text-white/25 font-mono">generating image...</span>
           </div>
         )}
         {errored && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-1">
-            <span className="text-xs text-[var(--v-fg-4)]">Failed to load image</span>
-            <a href={src} target="_blank" rel="noopener noreferrer" className="text-[10px] text-[var(--v-fg-5)] underline">try direct link</a>
+            <span className="text-xs text-white/30">Failed to load image</span>
+            <a href={src} target="_blank" rel="noopener noreferrer" className="text-[10px] text-white/20 underline">try direct link</a>
           </div>
         )}
         <img
@@ -145,7 +113,7 @@ function ImageWithLoader({ src, alt }: { src: string; alt: string }) {
       {loaded && (
         <button
           onClick={() => downloadImage(src)}
-          className="glass-pill glass-pill--idle gap-1.5 px-3 py-1.5 text-xs"
+          className="flex items-center gap-1.5 text-xs text-white/30 hover:text-white/70 transition-colors"
         >
           <Download className="w-3 h-3" />
           <span>Download</span>
@@ -179,11 +147,11 @@ function ThinkingAnimation() {
     <div className="flex items-center gap-2">
       <div className="flex gap-1">
         {[0, 150, 300].map((d, i) => (
-          <div key={i} className="w-1.5 h-1.5 bg-[var(--v-border-2)] rounded-full animate-bounce" style={{ animationDelay: `${d}ms` }} />
+          <div key={i} className="w-1.5 h-1.5 bg-white/30 rounded-full animate-bounce" style={{ animationDelay: `${d}ms` }} />
         ))}
       </div>
       <span
-        className="text-xs text-[var(--v-fg-4)] font-mono transition-opacity duration-300"
+        className="text-xs text-white/40 font-mono transition-opacity duration-300"
         style={{ opacity: fade ? 1 : 0 }}
       >
         {THINKING_WORDS[wordIdx]}
@@ -200,8 +168,8 @@ function CopyButton({ text, className = '' }: { text: string; className?: string
     setTimeout(() => setCopied(false), 2000);
   };
   return (
-    <button onClick={copy} type="button" className={`glass-pill glass-pill--idle gap-1.5 px-3 py-1.5 text-xs ${className}`}>
-      {copied ? <Check className="w-3 h-3 text-emerald-500 dark:text-emerald-400" /> : <Copy className="w-3 h-3" />}
+    <button onClick={copy} className={`flex items-center gap-1.5 text-xs text-white/30 hover:text-white/60 transition-colors ${className}`}>
+      {copied ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
       <span>{copied ? 'Copied' : 'Copy'}</span>
     </button>
   );
@@ -209,13 +177,13 @@ function CopyButton({ text, className = '' }: { text: string; className?: string
 
 function CodeBlock({ lang, code }: { lang: string; code: string }) {
   return (
-    <div className="rounded-lg overflow-hidden border border-[var(--v-border)] my-3 text-left">
-      <div className="flex items-center justify-between px-4 py-2 bg-[var(--v-code-hdr)] border-b border-[var(--v-border)]">
-        <span className="text-xs text-violet-600 dark:text-violet-300/70 font-mono">{lang || 'code'}</span>
+    <div className="rounded-xl overflow-hidden border border-white/[0.10] my-3 text-left">
+      <div className="flex items-center justify-between px-4 py-2 bg-[#1a1a2e] border-b border-white/[0.08]">
+        <span className="text-xs text-violet-300/70 font-mono">{lang || 'code'}</span>
         <CopyButton text={code} />
       </div>
-      <pre className="p-4 overflow-x-auto bg-[var(--v-code-bg)] text-sm font-mono leading-relaxed">
-        <code className="text-emerald-800 dark:text-emerald-300/90 whitespace-pre">{code}</code>
+      <pre className="p-4 overflow-x-auto bg-[#0f0f1a] text-sm font-mono leading-relaxed">
+        <code className="text-emerald-300/90 whitespace-pre">{code}</code>
       </pre>
     </div>
   );
@@ -236,7 +204,7 @@ function renderContent(raw: string | undefined | null) {
       <span key={i} className="whitespace-pre-wrap">
         {inlineParts.map((s, j) =>
           s.startsWith('`') && s.endsWith('`')
-            ? <code key={j} className="px-1.5 py-0.5 rounded bg-[var(--v-code-hdr)] text-violet-600 dark:text-violet-300/80 font-mono text-[0.8em] border border-[var(--v-border)]">{s.slice(1, -1)}</code>
+            ? <code key={j} className="px-1.5 py-0.5 rounded bg-[#1a1a2e] text-violet-300/80 font-mono text-[0.8em] border border-white/[0.08]">{s.slice(1, -1)}</code>
             : s
         )}
       </span>
@@ -272,12 +240,12 @@ function renderTextWithInlineTools(text: string): React.ReactNode[] {
       } else if (toolName === 'showComparison' && args.items) {
         nodes.push(<ComparisonTable key={key++} title={args.title} items={args.items} />);
       } else if (toolName === 'generateImage' && args.prompt) {
-        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(args.prompt)}?width=1024&height=1024&model=flux&nologo=true&seed=${Math.floor(Math.random() * 1000000)}`;
+        const url = args.imageUrl || `https://image.pollinations.ai/prompt/${encodeURIComponent(args.prompt)}?width=1024&height=1024&model=flux&nologo=true&seed=${Math.floor(Math.random() * 1000000)}`;
         nodes.push(
           <div key={key++} className="py-2 flex flex-col items-start gap-2">
-            <p className="text-xs text-[var(--v-fg-4)] font-mono">{args.prompt}</p>
+            <p className="text-xs text-white/40 font-mono">{args.prompt}</p>
             <ImageWithLoader src={url} alt={args.prompt} />
-            <span className="text-[10px] text-[var(--v-fg-5)] font-mono">Generated by Pollinations AI · FLUX</span>
+            <span className="text-[10px] text-white/30 font-mono">Generated by Pollinations AI · FLUX</span>
           </div>
         );
       }
@@ -326,11 +294,8 @@ const suggestionsByMode: Record<Mode, Array<{ label: string; icon: string }>> = 
 
 const toolTypes = [
   'tool-showBarChart', 'tool-showLineChart', 'tool-showPieChart', 'tool-showAreaChart', 'tool-showComparison',
-  'tool-showStats', 'tool-showBalanceSheet', 'tool-showPropertyPortfolio', 'tool-showZillowProperty', 'tool-generateImage',
+  'tool-showStats', 'tool-showBalanceSheet', 'tool-showPropertyPortfolio', 'tool-showZillowProperty', 'tool-generateImage'
 ];
-
-/** Tools that actually render in the dashboard sidebar (excludes inline-only e.g. images). */
-const sidebarDashboardToolTypes = toolTypes.filter((t) => t !== 'tool-generateImage');
 
 const toolNameMap: Record<string, string> = {
   'tool-showBarChart': 'Creating bar chart',
@@ -346,27 +311,37 @@ const toolNameMap: Record<string, string> = {
   'tool-generateImage': 'Generating image',
 };
 
-const modeActiveGlass: Record<Mode, string> = {
-  chat: 'glass-pill--active-chat',
-  search: 'glass-pill--active-search',
-  code: 'glass-pill--active-code',
-  image: 'glass-pill--active-image',
+const modeColors: Record<Mode, string> = {
+  chat: 'text-white/80 border-white/30 bg-white/[0.08]',
+  search: 'text-sky-300 border-sky-400/40 bg-sky-400/[0.08]',
+  code: 'text-emerald-300 border-emerald-400/40 bg-emerald-400/[0.08]',
+  image: 'text-violet-300 border-violet-400/40 bg-violet-400/[0.08]',
 };
 
-function ThemeToggleButton({ theme, onToggle }: { theme: 'dark' | 'light'; onToggle: () => void }) {
+const modeInactiveColors: Record<Mode, string> = {
+  chat: 'text-white/40 border-white/[0.08] bg-transparent hover:text-white/60 hover:border-white/20',
+  search: 'text-white/40 border-white/[0.08] bg-transparent hover:text-sky-300/60 hover:border-sky-400/20',
+  code: 'text-white/40 border-white/[0.08] bg-transparent hover:text-emerald-300/60 hover:border-emerald-400/20',
+  image: 'text-white/40 border-white/[0.08] bg-transparent hover:text-violet-300/60 hover:border-violet-400/20',
+};
+
+function ModeSelector({ mode, setMode, compact = false }: { mode: Mode; setMode: (m: Mode) => void; compact?: boolean }) {
   return (
-    <button
-      type="button"
-      onClick={onToggle}
-      className="glass-pill glass-pill--icon shrink-0 basis-9"
-      aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-    >
-      {theme === 'dark' ? (
-        <Sun className="w-[17px] h-[17px]" strokeWidth={1.75} absoluteStrokeWidth />
-      ) : (
-        <Moon className="w-[17px] h-[17px]" strokeWidth={1.75} absoluteStrokeWidth />
-      )}
-    </button>
+    <div className={`flex items-center gap-1 ${compact ? '' : 'justify-center'}`}>
+      {modes.map((m) => (
+        <button
+          key={m.id}
+          type="button"
+          onClick={() => setMode(m.id)}
+          className={`flex items-center gap-1.5 rounded-lg border text-xs font-medium transition-all duration-200 ${
+            compact ? 'px-2 py-1.5 sm:px-3' : 'px-3 py-1.5'
+          } ${mode === m.id ? modeColors[m.id] : modeInactiveColors[m.id]}`}
+        >
+          {m.icon}
+          <span className={compact ? 'hidden sm:inline' : ''}>{m.label}</span>
+        </button>
+      ))}
+    </div>
   );
 }
 
@@ -376,28 +351,16 @@ export default function Chat() {
   const [mode, setMode] = useState<Mode>('chat');
   const [showSidebar, setShowSidebar] = useState(false);
   const [hasDashboardItems, setHasDashboardItems] = useState(false);
-  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const mainRef = useRef<HTMLElement>(null);
   const isNearBottomRef = useRef(true);
 
   useEffect(() => {
-    const saved = localStorage.getItem('sweep-theme') as 'dark' | 'light' | null;
-    if (saved === 'light' || saved === 'dark') setTheme(saved);
-  }, []);
-
-  useEffect(() => {
-    document.documentElement.classList.toggle('dark', theme === 'dark');
-    localStorage.setItem('sweep-theme', theme);
-  }, [theme]);
-
-  useEffect(() => {
-    const outputs = messages.flatMap((message) =>
+    const outputs = messages.flatMap(message =>
       message.parts.filter(
-        (part) =>
-          sidebarDashboardToolTypes.includes(part.type) && 'state' in part && part.state === 'output-available',
-      ),
+        part => toolTypes.includes(part.type) && 'state' in part && part.state === 'output-available'
+      )
     );
     const hasItems = outputs.length > 0;
     setHasDashboardItems(hasItems);
@@ -497,63 +460,26 @@ export default function Chat() {
   const currentPlaceholder = modes.find(m => m.id === mode)?.placeholder ?? 'Ask anything...';
   const suggestions = suggestionsByMode[mode];
 
-  const toggleTheme = () => setTheme(te => (te === 'dark' ? 'light' : 'dark'));
-
-  const ModeSelector = ({ compact = false }: { compact?: boolean }) => (
-    <div
-      className={`flex max-w-full flex-nowrap items-center overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${compact ? 'gap-1' : 'gap-1.5 justify-center'}`}
-    >
-      {modes.map((m) => (
-        <button
-          key={m.id}
-          type="button"
-          onClick={() => setMode(m.id)}
-          className={`glass-pill shrink-0 text-xs font-medium ${
-            compact ? 'px-2.5 py-1.5 sm:px-3.5' : 'px-4 py-2'
-          } ${mode === m.id ? modeActiveGlass[m.id] : 'glass-pill--idle'}`}
-        >
-          {m.icon}
-          <span className={compact ? 'hidden sm:inline' : ''}>{m.label}</span>
-        </button>
-      ))}
-    </div>
-  );
-
   return (
-    <div
-      className="app-chrome-bg text-[var(--v-fg)] flex flex-col relative"
-      style={{ position: 'fixed', inset: 0, overflow: 'hidden' }}
-    >
-      <LiquidGlassBackdrop theme={theme} />
-      <div className="relative z-10 flex flex-col flex-1 min-h-0">
+    <div className="bg-[#0a0a0a] text-white flex flex-col" style={{ position: 'fixed', inset: 0, overflow: 'hidden' }}>
       {/* ── HEADER (only during chat) ── */}
       {messages.length > 0 && (
-        <header className="glass-header-bar fixed top-0 left-0 right-0 z-40">
-          <div
-            className={`flex h-14 min-w-0 items-center justify-between gap-2 px-4 sm:px-6 transition-[padding] duration-300 ${
-              showSidebar
-                ? 'w-full md:pr-[42%]'
-                : 'mx-auto w-full max-w-7xl'
-            }`}
-          >
-            <button
-              onClick={() => window.location.reload()}
-              className="group mr-2 flex min-w-0 shrink-0 items-center gap-2 sm:mr-4"
-            >
-              <span className="text-lg font-semibold tracking-tight bg-gradient-to-r dark:from-white/60 dark:via-white dark:to-white/60 from-gray-700 via-black to-gray-700 bg-clip-text text-transparent animate-gradient bg-[length:200%_100%]">
+        <header className="fixed top-0 left-0 right-0 z-40 bg-[#0a0a0a]/90 backdrop-blur-xl border-b border-white/[0.06]">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-2 min-w-0">
+            <button onClick={() => window.location.reload()} className="flex items-center gap-2 group shrink-0">
+              <span className="text-lg font-semibold tracking-tight bg-gradient-to-r from-white/60 via-white to-white/60 bg-clip-text text-transparent animate-gradient bg-[length:200%_100%]">
                 Sweep
               </span>
             </button>
 
-            <div className="flex min-w-0 flex-1 items-center justify-end gap-1.5 overflow-x-auto overflow-y-visible py-1 [-ms-overflow-style:none] [scrollbar-width:none] sm:gap-2 md:ml-2 md:flex-none md:overflow-visible [&::-webkit-scrollbar]:hidden">
-              <ThemeToggleButton theme={theme} onToggle={toggleTheme} />
-              <ModeSelector compact />
+            <div className="flex items-center gap-2 min-w-0 overflow-hidden">
+              <ModeSelector mode={mode} setMode={setMode} compact />
               {hasDashboardItems && (
                 <button
                   onClick={() => setShowSidebar(v => !v)}
-                  className="glass-pill glass-pill--idle hidden sm:inline-flex items-center gap-1.5 text-xs shrink-0 px-3.5 py-2"
+                  className="hidden sm:flex items-center gap-1.5 text-xs text-white/50 hover:text-white transition-colors px-3 py-1.5 rounded-lg border border-white/[0.08] hover:border-white/20 bg-white/[0.03] hover:bg-white/[0.06] shrink-0"
                 >
-                  <BarChart2 {...GLASS_ICON} />
+                  <BarChart2 className="w-3.5 h-3.5" />
                   {showSidebar ? 'Hide' : 'Show'} dashboard
                 </button>
               )}
@@ -568,43 +494,30 @@ export default function Chat() {
 
           {/* ── HERO (no messages) ── */}
           {messages.length === 0 ? (
-            <div className="relative flex flex-col items-center justify-center gap-8 py-20" style={{ minHeight: 'calc(100dvh - 80px)' }}>
-              <div className="absolute top-0 right-0 sm:right-2">
-                <ThemeToggleButton theme={theme} onToggle={toggleTheme} />
-              </div>
+            <div className="flex flex-col items-center justify-center gap-8 py-20" style={{ minHeight: 'calc(100dvh - 80px)' }}>
               {/* Logo */}
               <div className="text-center space-y-3">
                 <h1 className="text-6xl sm:text-7xl font-semibold tracking-tight">
-                  <span
-                    className={
-                      theme === 'dark'
-                        ? 'text-white'
-                        : 'bg-gradient-to-r from-gray-700 via-black to-gray-700 bg-clip-text text-transparent animate-gradient bg-[length:200%_100%]'
-                    }
-                  >
+                  <span className="bg-gradient-to-r from-white/50 via-white to-white/50 bg-clip-text text-transparent animate-gradient bg-[length:200%_100%]">
                     Sweep
                   </span>
                 </h1>
-                <p
-                  className={`text-sm sm:text-base font-light tracking-wide ${
-                    theme === 'dark' ? 'text-white/70' : 'text-[var(--v-fg-4)]'
-                  }`}
-                >
+                <p className="text-white/40 text-sm sm:text-base font-light tracking-wide">
                   AI for finance, data & real estate
                 </p>
               </div>
 
               {/* Mode Selector */}
-              <ModeSelector />
+              <ModeSelector mode={mode} setMode={setMode} />
 
               {/* Input */}
-              <form onSubmit={handleSubmit} className="w-full min-w-0 max-w-xl">
-                <div className="flex min-h-[3rem] w-full min-w-0 items-center gap-1 rounded-lg border border-[var(--v-input-border)] bg-[var(--v-input-bg)] p-1.5 transition-[border-color,box-shadow] focus-within:border-[var(--v-border-2)] focus-within:ring-1 focus-within:ring-[var(--v-border-2)]">
+              <form onSubmit={handleSubmit} className="w-full">
+                <div className="relative flex items-center">
                   <input
                     ref={inputRef}
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
-                    className="min-w-0 flex-1 border-0 bg-transparent px-3 py-2.5 text-sm text-[var(--v-fg)] placeholder:text-[var(--v-fg-5)] outline-none"
+                    className="w-full bg-white/[0.04] text-white rounded-2xl pl-5 pr-14 py-4 border border-white/[0.10] focus:border-white/25 focus:bg-white/[0.06] focus:outline-none placeholder-white/25 text-sm transition-all duration-200"
                     style={{ fontSize: '16px' }}
                     placeholder={currentPlaceholder}
                     autoComplete="off"
@@ -612,14 +525,9 @@ export default function Chat() {
                   <button
                     type="submit"
                     disabled={!input.trim()}
-                    className="group inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-neutral-950 text-white transition-opacity hover:opacity-90 disabled:pointer-events-none disabled:opacity-30 dark:bg-white dark:text-neutral-950"
-                    aria-label="Send"
+                    className="absolute right-3 w-8 h-8 rounded-xl bg-white/10 hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center transition-all duration-200 group"
                   >
-                    <Send
-                      className="h-[15px] w-[15px] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform"
-                      strokeWidth={1.75}
-                      absoluteStrokeWidth
-                    />
+                    <Send className="w-3.5 h-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
                   </button>
                 </div>
               </form>
@@ -631,7 +539,7 @@ export default function Chat() {
                     <button
                       key={i}
                       onClick={() => handleSuggestion(s.label)}
-                      className="glass-pill glass-pill--idle flex w-full items-center gap-2.5 justify-start px-4 py-3 text-sm text-left group"
+                      className="flex items-center gap-2.5 px-4 py-3 rounded-xl border border-white/[0.08] bg-white/[0.02] hover:bg-white/[0.06] hover:border-white/[0.16] text-white/50 hover:text-white/80 text-sm text-left transition-all duration-200 group"
                     >
                       <span className="text-base shrink-0">{s.icon}</span>
                       <span className="truncate">{s.label}</span>
@@ -648,8 +556,8 @@ export default function Chat() {
                   {/* User message */}
                   {m.role === 'user' && (
                     <div className="py-5 flex justify-end">
-                      <div className="glass-chat-bubble-user max-w-[85%] sm:max-w-[75%] px-4 py-3">
-                        <p className="text-[var(--v-fg)] text-sm leading-relaxed">
+                      <div className="max-w-[85%] sm:max-w-[75%] bg-white/[0.06] border border-white/[0.08] rounded-2xl rounded-tr-sm px-4 py-3">
+                        <p className="text-white text-sm leading-relaxed">
                           {m.parts.filter(p => p.type === 'text').map((part, i) => (
                             <span key={i}>{(part as any).text}</span>
                           ))}
@@ -661,7 +569,12 @@ export default function Chat() {
                   {/* Assistant message */}
                   {m.role === 'assistant' && (
                     <div className="py-5">
-                      <div className="min-w-0 space-y-4">
+                      {/* Sweep avatar dot */}
+                      <div className="flex items-start gap-3">
+                        <div className="w-6 h-6 rounded-full bg-gradient-to-br from-white/20 to-white/5 border border-white/10 flex items-center justify-center shrink-0 mt-0.5">
+                          <div className={`w-2 h-2 rounded-full bg-white/60 ${isLoading && idx === messages.length - 1 ? 'animate-pulse' : ''}`} />
+                        </div>
+                        <div className="flex-1 min-w-0 space-y-4">
                           {/* Thinking animation — shown before any text arrives */}
                           {isLoading && idx === messages.length - 1 && !m.parts.some(p => p.type === 'text') && loadingSteps.length === 0 && (
                             <ThinkingAnimation />
@@ -673,19 +586,19 @@ export default function Chat() {
                                 <div key={i} className="flex items-center gap-2.5">
                                   {step.status === 'complete' ? (
                                     <div className="w-4 h-4 rounded-full bg-emerald-500/20 flex items-center justify-center shrink-0">
-                                      <svg className="w-2.5 h-2.5 text-emerald-500 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <svg className="w-2.5 h-2.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                                       </svg>
                                     </div>
                                   ) : step.status === 'loading' ? (
-                                    <SmoothLoadingBar />
+                                    <div className="w-4 h-4 rounded-full border-2 border-white/15 border-t-white/60 animate-spin shrink-0" />
                                   ) : (
-                                    <div className="w-4 h-4 rounded-full bg-[var(--v-surface)] border border-[var(--v-border)] shrink-0" />
+                                    <div className="w-4 h-4 rounded-full bg-white/[0.06] border border-white/10 shrink-0" />
                                   )}
                                   <span className={`text-xs transition-colors ${
-                                    step.status === 'complete' ? 'text-emerald-600 dark:text-emerald-400' :
-                                    step.status === 'loading' ? 'text-[var(--v-fg-3)]' :
-                                    'text-[var(--v-fg-5)]'
+                                    step.status === 'complete' ? 'text-emerald-400' :
+                                    step.status === 'loading' ? 'text-white/70' :
+                                    'text-white/25'
                                   }`}>{step.name}</span>
                                 </div>
                               ))}
@@ -703,7 +616,7 @@ export default function Chat() {
                               );
                             }
                             return (
-                              <div key={i} className="text-[var(--v-fg)]/90 text-sm leading-relaxed">
+                              <div key={i} className="text-white/80 text-sm leading-relaxed">
                                 {renderContent(text)}
                               </div>
                             );
@@ -743,9 +656,9 @@ export default function Chat() {
                                 if (!part.output?.imageUrl) return null;
                                 return (
                                   <div key={part.toolCallId} className="py-2 flex flex-col items-start gap-2">
-                                    <p className="text-xs text-[var(--v-fg-4)] font-mono">{part.output.prompt}</p>
+                                    <p className="text-xs text-white/40 font-mono">{part.output.prompt}</p>
                                     <ImageWithLoader src={part.output.imageUrl} alt={part.output.prompt} />
-                                    <span className="text-[10px] text-[var(--v-fg-5)] font-mono">Generated by Pollinations AI · FLUX</span>
+                                    <span className="text-[10px] text-white/30 font-mono">Generated by Pollinations AI · FLUX</span>
                                   </div>
                                 );
                               })}
@@ -755,13 +668,14 @@ export default function Chat() {
                           <div className="md:hidden space-y-4">
                             {renderDashboardItems(m)}
                           </div>
+                        </div>
                       </div>
                     </div>
                   )}
 
                   {/* Divider between messages */}
                   {idx < messages.length - 1 && (
-                    <div className="border-b border-[var(--v-border)]" />
+                    <div className="border-b border-white/[0.04]" />
                   )}
                 </div>
               ))}
@@ -769,19 +683,15 @@ export default function Chat() {
 
               {/* Error block */}
               {error && !hasValidImage && (
-                <div className="mt-4 p-4 bg-red-500/[0.08] border border-red-500/20 rounded-lg">
-                  <p className="text-red-600 dark:text-red-400 text-sm">
+                <div className="mt-4 p-4 bg-red-500/[0.08] border border-red-500/20 rounded-xl">
+                  <p className="text-red-400 text-sm">
                     {error.message?.includes('tokens per day') || error.message?.includes('TPD')
                       ? 'Daily token limit reached — the free AI quota resets in a few hours. Try again later.'
                       : error.message?.includes('quota') || error.message?.includes('rate limit') || error.message?.includes('429')
                       ? 'Rate limit reached — please wait a moment and try again.'
                       : 'Something went wrong. Please try again.'}
                   </p>
-                  <button
-                    type="button"
-                    onClick={() => window.location.reload()}
-                    className="mt-2 glass-pill glass-pill--idle px-4 py-2 text-xs"
-                  >
+                  <button onClick={() => window.location.reload()} className="mt-2 text-xs text-white/40 hover:text-white/70 underline underline-offset-2 transition-colors">
                     Refresh page
                   </button>
                 </div>
@@ -795,36 +705,29 @@ export default function Chat() {
         {/* ── FIXED BOTTOM INPUT (chat mode) ── */}
         {messages.length > 0 && (
           <div
-            className={`fixed bottom-0 left-0 right-0 z-30 border-t border-[var(--v-border)] bg-[var(--v-bg)] pt-3 ${showSidebar ? 'md:right-[42%]' : ''}`}
+            className={`fixed bottom-0 left-0 right-0 z-30 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/95 to-transparent pt-8 ${showSidebar ? 'md:right-[42%]' : ''}`}
             style={{ paddingBottom: 'max(20px, env(safe-area-inset-bottom))' }}
           >
-            <div className="mx-auto w-full max-w-2xl space-y-2 px-3 sm:px-4">
-              <form onSubmit={handleSubmit} className="w-full min-w-0">
-                <div className="flex min-h-[2.75rem] w-full min-w-0 items-center gap-1 rounded-lg border border-[var(--v-input-border)] bg-[var(--v-input-bg)] p-1.5 transition-[border-color,box-shadow] focus-within:border-[var(--v-border-2)] focus-within:ring-1 focus-within:ring-[var(--v-border-2)]">
-                  <input
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    className="min-w-0 flex-1 border-0 bg-transparent px-3 py-2 text-sm text-[var(--v-fg)] placeholder:text-[var(--v-fg-5)] outline-none disabled:opacity-50"
-                    style={{ fontSize: '16px' }}
-                    placeholder={currentPlaceholder}
-                    disabled={isLoading}
-                    autoComplete="off"
-                  />
-                  <button
-                    type="submit"
-                    disabled={!input.trim() || isLoading}
-                    className="group inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-neutral-950 text-white transition-opacity hover:opacity-90 disabled:pointer-events-none disabled:opacity-30 dark:bg-white dark:text-neutral-950"
-                    aria-label="Send"
-                  >
-                    <Send
-                      className="h-[15px] w-[15px] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform"
-                      strokeWidth={1.75}
-                      absoluteStrokeWidth
-                    />
-                  </button>
-                </div>
+            <div className="w-full px-3 sm:px-4 space-y-2">
+              <form onSubmit={handleSubmit} className="relative flex items-center">
+                <input
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  className="w-full bg-white/[0.05] text-white rounded-2xl pl-5 pr-14 py-3.5 border border-white/[0.10] focus:border-white/25 focus:bg-white/[0.07] focus:outline-none placeholder-white/25 text-sm transition-all duration-200 disabled:opacity-50"
+                  style={{ fontSize: '16px' }}
+                  placeholder={currentPlaceholder}
+                  disabled={isLoading}
+                  autoComplete="off"
+                />
+                <button
+                  type="submit"
+                  disabled={!input.trim() || isLoading}
+                  className="absolute right-3 w-8 h-8 rounded-xl bg-white/10 hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center transition-all duration-200 group"
+                >
+                  <Send className="w-3.5 h-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                </button>
               </form>
-              <p className="text-center text-[11px] text-[var(--v-fg-5)] dark:text-white/40">
+              <p className="text-center text-[11px] text-white/20">
                 Sweep can make mistakes. Verify important information.
               </p>
             </div>
@@ -833,20 +736,18 @@ export default function Chat() {
       </main>
 
       {/* ── RIGHT SIDEBAR (desktop dashboard) ── */}
-      <aside className={`fixed right-0 top-0 z-50 hidden h-full w-[42%] flex-col border-l border-[var(--v-border)] bg-[var(--v-bg-2)] transition-transform duration-300 ease-in-out md:flex dark:border-white/12 dark:bg-[#0a0a0a] ${showSidebar ? 'translate-x-0' : 'translate-x-full'}`}>
+      <aside className={`hidden md:flex flex-col fixed top-0 right-0 h-full w-[42%] bg-[#0d0d0d] border-l border-white/[0.06] z-50 transform transition-transform duration-300 ease-in-out ${showSidebar ? 'translate-x-0' : 'translate-x-full'}`}>
         {/* Sidebar header */}
-        <div className="flex min-w-0 items-center justify-between gap-3 border-b border-[var(--v-border)] px-5 py-4 shrink-0">
-          <div className="flex min-w-0 items-center gap-2">
-            <BarChart2 className="h-4 w-4 shrink-0 text-[var(--v-fg-4)]" />
-            <span className="truncate text-sm font-medium text-[var(--v-fg-3)]">Dashboard</span>
+        <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.06] shrink-0">
+          <div className="flex items-center gap-2">
+            <BarChart2 className="w-4 h-4 text-white/40" />
+            <span className="text-sm font-medium text-white/70">Dashboard</span>
           </div>
           <button
-            type="button"
             onClick={() => setShowSidebar(false)}
-            className="glass-pill glass-pill--icon-sm glass-pill--idle shrink-0"
-            aria-label="Close dashboard"
+            className="w-7 h-7 rounded-lg hover:bg-white/[0.06] flex items-center justify-center text-white/30 hover:text-white/60 transition-colors"
           >
-            <X className="h-4 w-4" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
@@ -855,12 +756,7 @@ export default function Chat() {
           {(() => {
             const lastWithDashboard = [...messages].reverse().find(m =>
               m.role === 'assistant' &&
-              m.parts.some(
-                (part) =>
-                  sidebarDashboardToolTypes.includes(part.type) &&
-                  'state' in part &&
-                  part.state === 'output-available',
-              )
+              m.parts.some(part => toolTypes.includes(part.type) && 'state' in part && part.state === 'output-available')
             );
             return lastWithDashboard ? renderDashboardItems(lastWithDashboard) : null;
           })()}
@@ -868,9 +764,8 @@ export default function Chat() {
       </aside>
 
       {/* Credit */}
-      <div className={`fixed bottom-2 right-4 text-[10px] text-[var(--v-fg-5)] dark:text-white/35 pointer-events-none select-none z-50 font-light tracking-wide ${showSidebar ? 'md:right-[calc(42%+12px)]' : ''}`}>
+      <div className={`fixed bottom-2 right-4 text-[10px] text-white/15 pointer-events-none select-none z-50 font-light tracking-wide ${showSidebar ? 'md:right-[calc(42%+12px)]' : ''}`}>
         by Sushant Kataria
-      </div>
       </div>
     </div>
   );
