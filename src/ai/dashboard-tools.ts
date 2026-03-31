@@ -79,79 +79,17 @@ export const dashboardTools = {
   }),
 
   generateImage: tool({
-    description: "Generate an image from a text prompt using Stable Horde (free, community-powered, no API key required).",
+    description: "Generate an image from a text prompt using Pollinations AI (free, instant, no API key required).",
     inputSchema: z.object({
-      prompt: z.string().describe("Detailed image prompt"),
+      prompt: z.string().describe("Detailed image prompt (keep under 300 characters for best results)"),
     }),
     execute: async function({ prompt }) {
-      try {
-        const apiKey = process.env.STABLE_HORDE_API_KEY || '0000000000';
-
-        // Submit async generation request
-        const submitRes = await fetch('https://stablehorde.net/api/v2/generate/async', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'apikey': apiKey,
-            'Client-Agent': 'sweep-app:1.0:anonymous',
-          },
-          body: JSON.stringify({
-            prompt,
-            params: {
-              width: 512,
-              height: 512,
-              steps: 20,
-              n: 1,
-              sampler_name: 'k_euler_a',
-            },
-            models: ['Deliberate'],
-            r2: true,
-          }),
-        });
-
-        if (!submitRes.ok) {
-          const err = await submitRes.text();
-          return { error: `Failed to queue image: ${submitRes.status}` };
-        }
-
-        const { id } = await submitRes.json();
-
-        // Poll until done (max ~50s, within Vercel 60s edge limit)
-        for (let attempt = 0; attempt < 25; attempt++) {
-          await new Promise(r => setTimeout(r, 2000));
-
-          const checkRes = await fetch(`https://stablehorde.net/api/v2/generate/check/${id}`, {
-            headers: { 'Client-Agent': 'sweep-app:1.0:anonymous' },
-          });
-
-          if (!checkRes.ok) continue;
-          const check = await checkRes.json();
-          if (!check.done) continue;
-
-          // Fetch final result
-          const statusRes = await fetch(`https://stablehorde.net/api/v2/generate/status/${id}`, {
-            headers: { 'Client-Agent': 'sweep-app:1.0:anonymous' },
-          });
-
-          if (!statusRes.ok) return { error: 'Failed to retrieve generated image.' };
-          const status = await statusRes.json();
-
-          const generation = status.generations?.[0];
-          if (!generation?.img) return { error: 'No image returned.' };
-
-          // img is either a URL (r2=true) or base64
-          const imageUrl = generation.img.startsWith('http')
-            ? generation.img
-            : `data:image/webp;base64,${generation.img}`;
-
-          return { imageUrl, prompt };
-        }
-
-        return { error: 'Image generation timed out. Please try again.' };
-      } catch (error: any) {
-        return { error: `Error: ${error.message}` };
-      }
-    }
+      const seed = Math.floor(Math.random() * 1000000);
+      // Truncate long prompts to avoid overly long URLs
+      const safePrompt = prompt.length > 400 ? prompt.slice(0, 400) : prompt;
+      const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(safePrompt)}?width=1024&height=1024&model=flux&nologo=true&seed=${seed}`;
+      return { imageUrl, prompt };
+    },
   }),
   
   

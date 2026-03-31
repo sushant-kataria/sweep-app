@@ -79,12 +79,22 @@ async function downloadImage(src: string) {
 function ImageWithLoader({ src, alt }: { src: string; alt: string }) {
   const [loaded, setLoaded] = useState(false);
   const [errored, setErrored] = useState(false);
+  const [retrySrc, setRetrySrc] = useState(src);
 
   useEffect(() => {
     if (loaded || errored) return;
-    const t = setTimeout(() => setErrored(true), 60000);
+    const t = setTimeout(() => setErrored(true), 90000);
     return () => clearTimeout(t);
   }, [loaded, errored]);
+
+  const retry = () => {
+    // Append a cache-bust param to force a fresh load
+    const url = new URL(retrySrc);
+    url.searchParams.set('seed', String(Math.floor(Math.random() * 1000000)));
+    setErrored(false);
+    setLoaded(false);
+    setRetrySrc(url.toString());
+  };
 
   return (
     <div className="flex flex-col items-start gap-2">
@@ -96,13 +106,16 @@ function ImageWithLoader({ src, alt }: { src: string; alt: string }) {
           </div>
         )}
         {errored && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-1">
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
             <span className="text-xs text-white/30">Failed to load image</span>
-            <a href={src} target="_blank" rel="noopener noreferrer" className="text-[10px] text-white/20 underline">try direct link</a>
+            <button onClick={retry} className="text-[11px] text-violet-400/60 hover:text-violet-300 transition-colors underline underline-offset-2">
+              Try again
+            </button>
+            <a href={retrySrc} target="_blank" rel="noopener noreferrer" className="text-[10px] text-white/20 underline">direct link</a>
           </div>
         )}
         <img
-          src={src}
+          src={retrySrc}
           alt={alt}
           className="w-full h-full object-cover"
           style={{ opacity: loaded ? 1 : 0, transition: 'opacity 0.5s ease' }}
@@ -112,7 +125,7 @@ function ImageWithLoader({ src, alt }: { src: string; alt: string }) {
       </div>
       {loaded && (
         <button
-          onClick={() => downloadImage(src)}
+          onClick={() => downloadImage(retrySrc)}
           className="flex items-center gap-1.5 text-xs text-white/30 hover:text-white/70 transition-colors"
         >
           <Download className="w-3 h-3" />
@@ -333,12 +346,12 @@ function ModeSelector({ mode, setMode, compact = false }: { mode: Mode; setMode:
           key={m.id}
           type="button"
           onClick={() => setMode(m.id)}
-          className={`flex items-center gap-1.5 rounded-lg border text-xs font-medium transition-all duration-200 ${
-            compact ? 'px-2 py-1.5 sm:px-3' : 'px-3 py-1.5'
-          } ${mode === m.id ? modeColors[m.id] : modeInactiveColors[m.id]}`}
+          className={`flex items-center gap-1.5 rounded-lg border text-xs font-medium transition-all duration-200 px-2.5 py-1.5 ${
+            mode === m.id ? modeColors[m.id] : modeInactiveColors[m.id]
+          }`}
         >
           {m.icon}
-          <span className={compact ? 'hidden sm:inline' : ''}>{m.label}</span>
+          <span>{m.label}</span>
         </button>
       ))}
     </div>
@@ -473,7 +486,6 @@ export default function Chat() {
             </button>
 
             <div className="flex items-center gap-2 min-w-0 overflow-hidden">
-              <ModeSelector mode={mode} setMode={setMode} compact />
               {hasDashboardItems && (
                 <button
                   onClick={() => setShowSidebar(v => !v)}
@@ -709,6 +721,7 @@ export default function Chat() {
             style={{ paddingBottom: 'max(20px, env(safe-area-inset-bottom))' }}
           >
             <div className="w-full px-3 sm:px-4 space-y-2">
+              <ModeSelector mode={mode} setMode={setMode} compact />
               <form onSubmit={handleSubmit} className="relative flex items-center">
                 <input
                   value={input}
