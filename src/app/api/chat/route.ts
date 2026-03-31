@@ -6,7 +6,7 @@ import { dashboardTools } from '@/ai/dashboard-tools';
 export const runtime = 'edge';
 export const maxDuration = 60;
 
-type Mode = 'chat' | 'search' | 'code' | 'image';
+type Mode = 'chat' | 'search' | 'code';
 
 const nemotronSystemPrompts: Record<Mode, string> = {
   chat: `You are Sweep - a helpful, knowledgeable AI assistant that can answer ANY question and create visualizations.
@@ -44,7 +44,14 @@ FORMATTING RULES:
 - Use ₹ for Indian rupees, $ for USD
 - Be concise but thorough
 
-WHEN TO USE VISUALIZATION TOOLS:
+IMAGE GENERATION — CRITICAL RULE:
+If the user asks to generate, create, draw, make, or show an image/picture/photo/artwork:
+- You MUST call the generateImage tool IMMEDIATELY
+- Do NOT write text first — call the tool straight away
+- Pass a detailed, descriptive prompt to the tool (200–300 words of visual detail)
+- The tool is instant and free
+
+WHEN TO USE OTHER VISUALIZATION TOOLS:
 Use tools when they clearly improve understanding:
 - Comparing multiple data points (bar/line/pie charts)
 - Showing financial statements (balance sheets)
@@ -55,7 +62,6 @@ DON'T use tools for:
 - Simple explanations
 - Single facts or definitions
 - Conversational responses
-- Creative writing
 - Code examples
 
 AVAILABLE TOOLS:
@@ -202,43 +208,8 @@ export async function POST(req: Request) {
       return result.toUIMessageStreamResponse();
     }
 
-    // Image mode: bypass AI entirely — build Pollinations URL directly from the prompt
-    // Zero tokens used, completely free and unlimited
-    if (mode === 'image') {
-      const lastUserMessage = messages.filter(m => m.role === 'user').pop();
-      const prompt = lastUserMessage?.parts
-        ?.filter((p: any) => p.type === 'text')
-        .map((p: any) => p.text)
-        .join(' ')
-        .trim() || 'a beautiful image';
-
-      const seed = Math.floor(Math.random() * 1000000);
-      const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1024&height=1024&model=flux&nologo=true&seed=${seed}`;
-
-      // Emit a text stream with the inline function call format the client parser handles
-      const textContent = `<function(generateImage)${JSON.stringify({ prompt, imageUrl })}</function>`;
-      const msgId = `img_${seed}`;
-      const encoder = new TextEncoder();
-      const stream = new ReadableStream({
-        start(controller) {
-          controller.enqueue(encoder.encode(`f:{"messageId":"${msgId}"}\n`));
-          controller.enqueue(encoder.encode(`0:${JSON.stringify(textContent)}\n`));
-          controller.enqueue(encoder.encode(`e:{"finishReason":"stop","usage":{"promptTokens":0,"completionTokens":0}}\n`));
-          controller.enqueue(encoder.encode(`d:{"finishReason":"stop","usage":{"promptTokens":0,"completionTokens":0}}\n`));
-          controller.close();
-        }
-      });
-
-      return new Response(stream, {
-        headers: {
-          'Content-Type': 'text/event-stream; charset=utf-8',
-          'X-Vercel-AI-Data-Stream': 'v1',
-          'Cache-Control': 'no-cache',
-        }
-      });
-    }
-
     // Chat mode: with tools for charts, images, etc.
+    // (Image mode is handled client-side — no API call needed)
     const result = streamText({
       model,
       system: nemotronSystemPrompts.chat,
