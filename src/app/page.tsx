@@ -489,14 +489,18 @@ export default function Chat() {
       {/* ── HEADER (only during chat) ── */}
       {messages.length > 0 && (
         <header className="fixed top-0 left-0 right-0 z-40 bg-[var(--v-bg)]/90 backdrop-blur-xl border-b border-[var(--v-border)]">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-2 min-w-0">
+          <div
+            className={`max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-2 min-w-0 transition-[padding] duration-300 ${
+              showSidebar ? 'md:pr-[42%]' : ''
+            }`}
+          >
             <button onClick={() => window.location.reload()} className="flex items-center gap-2 group shrink-0">
               <span className="text-lg font-semibold tracking-tight bg-gradient-to-r dark:from-white/60 dark:via-white dark:to-white/60 from-gray-700 via-black to-gray-700 bg-clip-text text-transparent animate-gradient bg-[length:200%_100%]">
                 Sweep
               </span>
             </button>
 
-            <div className="flex items-center gap-2 min-w-0 overflow-hidden">
+            <div className="flex items-center justify-end gap-2 min-w-0 flex-1 md:flex-initial md:ml-4 overflow-hidden">
               <ThemeToggleButton theme={theme} onToggle={toggleTheme} />
               <ModeSelector compact />
               {hasDashboardItems && (
@@ -545,7 +549,7 @@ export default function Chat() {
                     ref={inputRef}
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
-                    className="w-full bg-[var(--v-surface)] text-[var(--v-fg)] rounded-lg pl-5 pr-14 py-4 border border-[var(--v-border)] focus:border-[var(--v-border-2)] focus:bg-[var(--v-btn-bg)] focus:outline-none placeholder:text-[var(--v-fg-5)] text-sm transition-all duration-200"
+                    className="w-full bg-[var(--v-input-bg)] text-[var(--v-fg)] rounded-lg pl-5 pr-14 py-4 border border-[var(--v-input-border)] shadow-sm dark:shadow-none focus:border-[var(--v-border-2)] focus:ring-2 focus:ring-black/5 dark:focus:ring-white/10 focus:outline-none placeholder:text-[var(--v-fg-5)] text-sm transition-all duration-200"
                     style={{ fontSize: '16px' }}
                     placeholder={currentPlaceholder}
                     autoComplete="off"
@@ -553,7 +557,7 @@ export default function Chat() {
                   <button
                     type="submit"
                     disabled={!input.trim()}
-                    className="absolute right-3 w-8 h-8 rounded-lg bg-[var(--v-btn-bg)] hover:bg-[var(--v-btn-bg-hover)] disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center transition-all duration-200 group text-[var(--v-fg)]"
+                    className="absolute right-3 w-8 h-8 rounded-lg border border-[var(--v-input-border)] bg-[var(--v-btn-bg)] hover:bg-[var(--v-btn-bg-hover)] disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center transition-all duration-200 group text-[var(--v-fg)] shadow-sm dark:shadow-none dark:border-transparent"
                   >
                     <Send className="w-3.5 h-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
                   </button>
@@ -741,7 +745,7 @@ export default function Chat() {
                 <input
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
-                  className="w-full bg-[var(--v-surface)] text-[var(--v-fg)] rounded-lg pl-5 pr-14 py-3.5 border border-[var(--v-border)] focus:border-[var(--v-border-2)] focus:bg-[var(--v-btn-bg)] focus:outline-none placeholder:text-[var(--v-fg-5)] text-sm transition-all duration-200 disabled:opacity-50"
+                  className="w-full bg-[var(--v-input-bg)] text-[var(--v-fg)] rounded-lg pl-5 pr-14 py-3.5 border border-[var(--v-input-border)] shadow-sm dark:shadow-none focus:border-[var(--v-border-2)] focus:ring-2 focus:ring-black/5 dark:focus:ring-white/10 focus:outline-none placeholder:text-[var(--v-fg-5)] text-sm transition-all duration-200 disabled:opacity-50"
                   style={{ fontSize: '16px' }}
                   placeholder={currentPlaceholder}
                   disabled={isLoading}
@@ -750,7 +754,7 @@ export default function Chat() {
                 <button
                   type="submit"
                   disabled={!input.trim() || isLoading}
-                  className="absolute right-3 w-8 h-8 rounded-lg bg-[var(--v-btn-bg)] hover:bg-[var(--v-btn-bg-hover)] disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center transition-all duration-200 group text-[var(--v-fg)]"
+                  className="absolute right-3 w-8 h-8 rounded-lg border border-[var(--v-input-border)] bg-[var(--v-btn-bg)] hover:bg-[var(--v-btn-bg-hover)] disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center transition-all duration-200 group text-[var(--v-fg)] shadow-sm dark:shadow-none dark:border-transparent"
                 >
                   <Send className="w-3.5 h-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
                 </button>

@@ -21,10 +21,10 @@ const CustomTooltip = ({ active, payload, unit }: any) => {
   if (!active || !payload?.length) return null;
   const item = payload[0];
   return (
-    <div className="bg-[#111118] border border-white/10 rounded-xl px-3 py-2.5 shadow-2xl">
-      <p className="text-white/40 text-[11px] mb-1">{item.name}</p>
-      <p className="text-white font-semibold text-sm">
-        {formatValue(item.value, unit)} <span className="text-white/40 font-normal">({(item.payload.percent * 100).toFixed(1)}%)</span>
+    <div className="rounded-xl border px-3 py-2.5 shadow-lg bg-[var(--v-chart-tooltip-bg)] border-[var(--v-chart-tooltip-border)]">
+      <p className="text-[var(--v-chart-muted)] text-[11px] mb-1">{item.name}</p>
+      <p className="text-[var(--v-chart-fg)] font-semibold text-sm">
+        {formatValue(item.value, unit)} <span className="text-[var(--v-chart-muted)] font-normal">({(item.payload.percent * 100).toFixed(1)}%)</span>
       </p>
     </div>
   );
@@ -35,8 +35,8 @@ const CustomLegend = ({ data, colors }: { data: Array<{ label: string; value: nu
     {data.map((item, i) => (
       <div key={i} className="flex items-center gap-2 min-w-0">
         <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: colors[i % colors.length] }} />
-        <span className="text-white/60 text-[11px] truncate">{item.label}</span>
-        <span className="text-white/40 text-[11px] ml-auto flex-shrink-0">{item.percent.toFixed(1)}%</span>
+        <span className="text-[var(--v-chart-tick)] text-[11px] truncate">{item.label}</span>
+        <span className="text-[var(--v-chart-muted)] text-[11px] ml-auto flex-shrink-0">{item.percent.toFixed(1)}%</span>
       </div>
     ))}
   </div>
@@ -51,8 +51,8 @@ type PieChartProProps = {
 export const PieChartPro = ({ title, data, unit }: PieChartProProps) => {
   if (!Array.isArray(data) || data.length === 0) {
     return (
-      <div className="w-full rounded-2xl bg-white/[0.03] border border-white/[0.08] p-5 h-48 flex items-center justify-center">
-        <span className="text-white/25 text-xs">No data available</span>
+      <div className="w-full rounded-2xl border p-5 h-48 flex items-center justify-center bg-[var(--v-chart-card-bg)] border-[var(--v-chart-card-border)]">
+        <span className="text-[var(--v-chart-empty)] text-xs">No data available</span>
       </div>
     );
   }
@@ -62,9 +62,9 @@ export const PieChartPro = ({ title, data, unit }: PieChartProProps) => {
   const chartData = enriched.map(d => ({ name: d.label, value: d.value, percent: d.percent / 100 }));
 
   return (
-    <div className="w-full rounded-2xl bg-white/[0.03] border border-white/[0.08] p-4">
+    <div className="w-full rounded-2xl border p-4 bg-[var(--v-chart-card-bg)] border-[var(--v-chart-card-border)]">
       {title && (
-        <p className="text-white/40 text-[11px] font-medium uppercase tracking-wider mb-4">{title}</p>
+        <p className="text-[var(--v-chart-title)] text-[11px] font-medium uppercase tracking-wider mb-4">{title}</p>
       )}
 
       <ResponsiveContainer width="100%" height={200}>
@@ -83,7 +83,8 @@ export const PieChartPro = ({ title, data, unit }: PieChartProProps) => {
               <Cell
                 key={`cell-${index}`}
                 fill={COLORS[index % COLORS.length]}
-                stroke="transparent"
+                stroke="var(--v-chart-pie-stroke)"
+                strokeWidth={1}
               />
             ))}
           </Pie>

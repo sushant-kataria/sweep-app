@@ -22,9 +22,9 @@ function formatAxisTick(v: number): string {
 const CustomTooltip = ({ active, payload, label, unit }: any) => {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-[#111118] border border-white/10 rounded-xl px-3 py-2.5 shadow-2xl">
-      <p className="text-white/40 text-[11px] mb-1">{label}</p>
-      <p className="text-white font-semibold text-sm">{formatValue(payload[0].value, unit)}</p>
+    <div className="rounded-xl border px-3 py-2.5 shadow-lg bg-[var(--v-chart-tooltip-bg)] border-[var(--v-chart-tooltip-border)]">
+      <p className="text-[var(--v-chart-muted)] text-[11px] mb-1">{label}</p>
+      <p className="text-[var(--v-chart-fg)] font-semibold text-sm">{formatValue(payload[0].value, unit)}</p>
     </div>
   );
 };
@@ -38,8 +38,8 @@ type BarChartProProps = {
 export const BarChartPro = ({ title, data, unit }: BarChartProProps) => {
   if (!Array.isArray(data) || data.length === 0) {
     return (
-      <div className="w-full rounded-2xl bg-white/[0.03] border border-white/[0.08] p-5 h-48 flex items-center justify-center">
-        <span className="text-white/25 text-xs">No data available</span>
+      <div className="w-full rounded-2xl border p-5 h-48 flex items-center justify-center bg-[var(--v-chart-card-bg)] border-[var(--v-chart-card-border)]">
+        <span className="text-[var(--v-chart-empty)] text-xs">No data available</span>
       </div>
     );
   }
@@ -47,11 +47,11 @@ export const BarChartPro = ({ title, data, unit }: BarChartProProps) => {
   const maxValue = Math.max(...data.map(d => d.value));
 
   return (
-    <div className="w-full rounded-2xl bg-white/[0.03] border border-white/[0.08] p-4">
+    <div className="w-full rounded-2xl border p-4 bg-[var(--v-chart-card-bg)] border-[var(--v-chart-card-border)]">
       {/* Header */}
       {title && (
         <div className="mb-4">
-          <p className="text-white/40 text-[11px] font-medium uppercase tracking-wider">{title}</p>
+          <p className="text-[var(--v-chart-title)] text-[11px] font-medium uppercase tracking-wider">{title}</p>
         </div>
       )}
 
@@ -64,14 +64,14 @@ export const BarChartPro = ({ title, data, unit }: BarChartProProps) => {
           barCategoryGap="28%"
         >
           <CartesianGrid
-            stroke="rgba(255,255,255,0.05)"
+            stroke="var(--v-chart-grid)"
             strokeDasharray="0"
             horizontal={false}
           />
           <XAxis
             type="number"
             domain={[0, 'auto']}
-            tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 11, fontFamily: 'inherit' }}
+            tick={{ fill: 'var(--v-chart-tick-dim)', fontSize: 11, fontFamily: 'inherit' }}
             axisLine={false}
             tickLine={false}
             tickFormatter={formatAxisTick}
@@ -81,13 +81,13 @@ export const BarChartPro = ({ title, data, unit }: BarChartProProps) => {
             type="category"
             dataKey="name"
             width={110}
-            tick={{ fill: 'rgba(255,255,255,0.6)', fontSize: 12, fontFamily: 'inherit' }}
+            tick={{ fill: 'var(--v-chart-tick)', fontSize: 12, fontFamily: 'inherit' }}
             axisLine={false}
             tickLine={false}
           />
           <Tooltip
             content={<CustomTooltip unit={unit} />}
-            cursor={{ fill: 'rgba(255,255,255,0.03)' }}
+            cursor={{ fill: 'var(--v-chart-cursor)' }}
           />
           <Bar
             dataKey="value"

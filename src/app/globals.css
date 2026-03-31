@@ -60,6 +60,27 @@
   --v-code-hdr: #f4f4f5;
   --v-code-bg: #fafafa;
 
+  /* Chat input — clearer edge in light mode */
+  --v-input-bg: #ffffff;
+  --v-input-border: #c4c4c4;
+
+  /* Dashboard charts — readable frame + axes in light mode */
+  --v-chart-card-bg: #fafafa;
+  --v-chart-card-border: #d0d0d0;
+  --v-chart-title: #737373;
+  --v-chart-muted: #737373;
+  --v-chart-fg: #171717;
+  --v-chart-empty: #a3a3a3;
+  --v-chart-grid: #e0e0e0;
+  --v-chart-tick: #404040;
+  --v-chart-tick-dim: #6b6b6b;
+  --v-chart-tooltip-bg: #ffffff;
+  --v-chart-tooltip-border: #cccccc;
+  --v-chart-cursor: rgba(0, 0, 0, 0.05);
+  --v-chart-cursor-line: rgba(0, 0, 0, 0.15);
+  --v-chart-dot-stroke: #ffffff;
+  --v-chart-pie-stroke: #e8e8e8;
+
   --radius: 0.625rem;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
@@ -109,6 +130,25 @@
   --v-btn-bg-hover: rgba(255, 255, 255, 0.16);
   --v-code-hdr: #1a1a2e;
   --v-code-bg: #0f0f1a;
+
+  --v-input-bg: rgba(255, 255, 255, 0.06);
+  --v-input-border: rgba(255, 255, 255, 0.14);
+
+  --v-chart-card-bg: rgba(255, 255, 255, 0.03);
+  --v-chart-card-border: rgba(255, 255, 255, 0.12);
+  --v-chart-title: rgba(255, 255, 255, 0.45);
+  --v-chart-muted: rgba(255, 255, 255, 0.45);
+  --v-chart-fg: #f5f5f5;
+  --v-chart-empty: rgba(255, 255, 255, 0.28);
+  --v-chart-grid: rgba(255, 255, 255, 0.08);
+  --v-chart-tick: rgba(255, 255, 255, 0.55);
+  --v-chart-tick-dim: rgba(255, 255, 255, 0.35);
+  --v-chart-tooltip-bg: #111118;
+  --v-chart-tooltip-border: rgba(255, 255, 255, 0.12);
+  --v-chart-cursor: rgba(255, 255, 255, 0.04);
+  --v-chart-cursor-line: rgba(255, 255, 255, 0.12);
+  --v-chart-dot-stroke: #000000;
+  --v-chart-pie-stroke: transparent;
 
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);

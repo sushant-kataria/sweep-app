@@ -22,9 +22,9 @@ function formatDisplay(v: number, unit?: string): string {
 const CustomTooltip = ({ active, payload, label, unit }: any) => {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-[#111118] border border-white/10 rounded-xl px-3 py-2.5 shadow-2xl">
-      <p className="text-white/40 text-[11px] mb-1">{label}</p>
-      <p className="text-white font-semibold text-sm">{formatDisplay(payload[0].value, unit)}</p>
+    <div className="rounded-xl border px-3 py-2.5 shadow-lg bg-[var(--v-chart-tooltip-bg)] border-[var(--v-chart-tooltip-border)]">
+      <p className="text-[var(--v-chart-muted)] text-[11px] mb-1">{label}</p>
+      <p className="text-[var(--v-chart-fg)] font-semibold text-sm">{formatDisplay(payload[0].value, unit)}</p>
     </div>
   );
 };
@@ -40,8 +40,8 @@ export function LineChartPro({
 }) {
   if (!Array.isArray(data) || data.length === 0) {
     return (
-      <div className="w-full rounded-2xl bg-white/[0.03] border border-white/[0.08] p-5 h-48 flex items-center justify-center">
-        <span className="text-white/25 text-xs">No data available</span>
+      <div className="w-full rounded-2xl border p-5 h-48 flex items-center justify-center bg-[var(--v-chart-card-bg)] border-[var(--v-chart-card-border)]">
+        <span className="text-[var(--v-chart-empty)] text-xs">No data available</span>
       </div>
     );
   }
@@ -55,30 +55,30 @@ export function LineChartPro({
   const gradId = `lg-${Math.random().toString(36).slice(2, 7)}`;
 
   return (
-    <div className="w-full rounded-2xl bg-white/[0.03] border border-white/[0.08] p-4">
+    <div className="w-full rounded-2xl border p-4 bg-[var(--v-chart-card-bg)] border-[var(--v-chart-card-border)]">
       {/* Header */}
       <div className="flex items-start justify-between mb-4">
         <div>
           {title && (
-            <p className="text-white/40 text-[11px] font-medium uppercase tracking-wider mb-1.5">
+            <p className="text-[var(--v-chart-title)] text-[11px] font-medium uppercase tracking-wider mb-1.5">
               {title}
             </p>
           )}
           <div className="flex items-baseline gap-2.5">
-            <span className="text-white text-2xl font-semibold tracking-tight">
+            <span className="text-[var(--v-chart-fg)] text-2xl font-semibold tracking-tight">
               {formatDisplay(last, unit)}
             </span>
             <span
               className={`text-sm font-medium px-1.5 py-0.5 rounded-md ${
                 isPositive
-                  ? 'text-emerald-400 bg-emerald-400/10'
-                  : 'text-red-400 bg-red-400/10'
+                  ? 'text-emerald-600 dark:text-emerald-400 bg-emerald-500/15 dark:bg-emerald-400/10'
+                  : 'text-red-600 dark:text-red-400 bg-red-500/15 dark:bg-red-400/10'
               }`}
             >
               {isPositive ? '▲' : '▼'} {Math.abs(changePct).toFixed(2)}%
             </span>
           </div>
-          <p className="text-white/25 text-[11px] mt-1">
+          <p className="text-[var(--v-chart-empty)] text-[11px] mt-1">
             {isPositive ? '+' : ''}{formatDisplay(change, unit)} all time
           </p>
         </div>
@@ -94,20 +94,20 @@ export function LineChartPro({
             </linearGradient>
           </defs>
           <CartesianGrid
-            stroke="rgba(255,255,255,0.05)"
+            stroke="var(--v-chart-grid)"
             strokeDasharray="0"
             vertical={false}
           />
           <XAxis
             dataKey="label"
-            tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 11, fontFamily: 'inherit' }}
+            tick={{ fill: 'var(--v-chart-tick-dim)', fontSize: 11, fontFamily: 'inherit' }}
             axisLine={false}
             tickLine={false}
             interval="preserveStartEnd"
           />
           <YAxis
             domain={['auto', 'auto']}
-            tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 11, fontFamily: 'inherit' }}
+            tick={{ fill: 'var(--v-chart-tick-dim)', fontSize: 11, fontFamily: 'inherit' }}
             axisLine={false}
             tickLine={false}
             tickCount={5}
@@ -116,7 +116,7 @@ export function LineChartPro({
           />
           <Tooltip
             content={<CustomTooltip unit={unit} />}
-            cursor={{ stroke: 'rgba(255,255,255,0.08)', strokeWidth: 1, strokeDasharray: '4 2' }}
+            cursor={{ stroke: 'var(--v-chart-cursor-line)', strokeWidth: 1, strokeDasharray: '4 2' }}
           />
           <Area
             type="monotone"
@@ -125,7 +125,7 @@ export function LineChartPro({
             strokeWidth={2}
             fill={`url(#${gradId})`}
             dot={false}
-            activeDot={{ r: 4, fill: lineColor, stroke: '#000', strokeWidth: 2 }}
+            activeDot={{ r: 4, fill: lineColor, stroke: 'var(--v-chart-dot-stroke)', strokeWidth: 2 }}
             isAnimationActive={false}
           />
         </AreaChart>

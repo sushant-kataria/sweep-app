@@ -22,9 +22,9 @@ function formatDisplay(v: number, unit?: string): string {
 const CustomTooltip = ({ active, payload, label, unit }: any) => {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-[#111118] border border-white/10 rounded-xl px-3 py-2.5 shadow-2xl">
-      <p className="text-white/40 text-[11px] mb-1">{label}</p>
-      <p className="text-white font-semibold text-sm">{formatDisplay(payload[0].value, unit)}</p>
+    <div className="rounded-xl border px-3 py-2.5 shadow-lg bg-[var(--v-chart-tooltip-bg)] border-[var(--v-chart-tooltip-border)]">
+      <p className="text-[var(--v-chart-muted)] text-[11px] mb-1">{label}</p>
+      <p className="text-[var(--v-chart-fg)] font-semibold text-sm">{formatDisplay(payload[0].value, unit)}</p>
     </div>
   );
 };
@@ -38,8 +38,8 @@ type AreaChartProProps = {
 export const AreaChartPro = ({ title, data, unit }: AreaChartProProps) => {
   if (!Array.isArray(data) || data.length === 0) {
     return (
-      <div className="w-full rounded-2xl bg-white/[0.03] border border-white/[0.08] p-5 h-48 flex items-center justify-center">
-        <span className="text-white/25 text-xs">No data available</span>
+      <div className="w-full rounded-2xl border p-5 h-48 flex items-center justify-center bg-[var(--v-chart-card-bg)] border-[var(--v-chart-card-border)]">
+        <span className="text-[var(--v-chart-empty)] text-xs">No data available</span>
       </div>
     );
   }
@@ -47,9 +47,9 @@ export const AreaChartPro = ({ title, data, unit }: AreaChartProProps) => {
   const gradId = `area-lg-${Math.random().toString(36).slice(2, 7)}`;
 
   return (
-    <div className="w-full rounded-2xl bg-white/[0.03] border border-white/[0.08] p-4">
+    <div className="w-full rounded-2xl border p-4 bg-[var(--v-chart-card-bg)] border-[var(--v-chart-card-border)]">
       {title && (
-        <p className="text-white/40 text-[11px] font-medium uppercase tracking-wider mb-4">{title}</p>
+        <p className="text-[var(--v-chart-title)] text-[11px] font-medium uppercase tracking-wider mb-4">{title}</p>
       )}
 
       <ResponsiveContainer width="100%" height={200}>
@@ -61,20 +61,20 @@ export const AreaChartPro = ({ title, data, unit }: AreaChartProProps) => {
             </linearGradient>
           </defs>
           <CartesianGrid
-            stroke="rgba(255,255,255,0.05)"
+            stroke="var(--v-chart-grid)"
             strokeDasharray="0"
             vertical={false}
           />
           <XAxis
             dataKey="label"
-            tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 11, fontFamily: 'inherit' }}
+            tick={{ fill: 'var(--v-chart-tick-dim)', fontSize: 11, fontFamily: 'inherit' }}
             axisLine={false}
             tickLine={false}
             interval="preserveStartEnd"
           />
           <YAxis
             domain={['auto', 'auto']}
-            tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 11, fontFamily: 'inherit' }}
+            tick={{ fill: 'var(--v-chart-tick-dim)', fontSize: 11, fontFamily: 'inherit' }}
             axisLine={false}
             tickLine={false}
             tickCount={5}
@@ -83,7 +83,7 @@ export const AreaChartPro = ({ title, data, unit }: AreaChartProProps) => {
           />
           <Tooltip
             content={<CustomTooltip unit={unit} />}
-            cursor={{ stroke: 'rgba(255,255,255,0.08)', strokeWidth: 1, strokeDasharray: '4 2' }}
+            cursor={{ stroke: 'var(--v-chart-cursor-line)', strokeWidth: 1, strokeDasharray: '4 2' }}
           />
           <Area
             type="monotone"
@@ -92,7 +92,7 @@ export const AreaChartPro = ({ title, data, unit }: AreaChartProProps) => {
             strokeWidth={2}
             fill={`url(#${gradId})`}
             dot={false}
-            activeDot={{ r: 4, fill: '#3b82f6', stroke: '#000', strokeWidth: 2 }}
+            activeDot={{ r: 4, fill: '#3b82f6', stroke: 'var(--v-chart-dot-stroke)', strokeWidth: 2 }}
             isAnimationActive={false}
           />
         </AreaChart>
