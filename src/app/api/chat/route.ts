@@ -165,13 +165,13 @@ EXPERTISE:
 - Security best practices and performance optimization`,
 };
 
-const groq = createOpenAI({
-  baseURL: 'https://api.groq.com/openai/v1',
-  apiKey: process.env.GROQ_API_KEY,
+const openrouter = createOpenAI({
+  baseURL: 'https://openrouter.ai/api/v1',
+  apiKey: process.env.OPENROUTER_API_KEY,
 });
 
-// llama-3.3-70b-versatile: supports tool calling, 14,400 req/day free on Groq
-const model = groq.chat('llama-3.3-70b-versatile');
+// qwen/qwen3.6-plus-preview:free — free on OpenRouter
+const model = openrouter.chat('qwen/qwen3.6-plus-preview:free');
 
 export async function POST(req: Request) {
   const { messages, mode = 'chat' }: { messages: UIMessage[]; mode?: Mode } = await req.json();
