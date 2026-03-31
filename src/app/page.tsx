@@ -722,6 +722,23 @@ export default function Chat() {
           >
             <div className="w-full px-3 sm:px-4 space-y-2">
               <ModeSelector mode={mode} setMode={setMode} compact />
+              {/* Mode suggestion chips — shown in conversation when mode has suggestions */}
+              {suggestions.length > 0 && (
+                <div className="flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-none">
+                  {suggestions.map((s, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => handleSuggestion(s.label)}
+                      disabled={isLoading}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-white/[0.08] bg-white/[0.02] hover:bg-white/[0.06] hover:border-white/[0.16] text-white/40 hover:text-white/70 text-xs whitespace-nowrap transition-all duration-200 disabled:opacity-30 disabled:cursor-not-allowed shrink-0"
+                    >
+                      <span>{s.icon}</span>
+                      <span>{s.label}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
               <form onSubmit={handleSubmit} className="relative flex items-center">
                 <input
                   value={input}
