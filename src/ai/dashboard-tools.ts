@@ -3,13 +3,6 @@ import { tool, type ToolSet } from 'ai';
 import { z } from 'zod';
 import { normalizeBalanceSheetInput } from '@/utils/normalizeBalanceSheetInput';
 
-function hasDataApiKey(): string {
-  return (
-    (typeof process !== 'undefined' && process.env.HASDATA_API_KEY?.trim()) ||
-    'e2f9b74a-b7ba-49f4-9983-03c55908da92'
-  );
-}
-
 export const dashboardTools = {
   showBarChart: tool({
     description: 'Display a bar chart for comparing values across categories',
@@ -86,16 +79,17 @@ export const dashboardTools = {
   }),
 
   generateImage: tool({
-    description: "Generate an image from a text prompt using Pollinations AI (free, no API key required).",
+    description: "Generate an image from a text prompt using Pollinations AI (free, instant, no API key required).",
     inputSchema: z.object({
-      prompt: z.string().describe("Detailed image prompt"),
+      prompt: z.string().describe("Detailed image prompt (keep under 300 characters for best results)"),
     }),
     execute: async function({ prompt }) {
-      const encodedPrompt = encodeURIComponent(prompt);
       const seed = Math.floor(Math.random() * 1000000);
-      const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&model=flux&nologo=true&seed=${seed}`;
+      // Truncate long prompts to avoid overly long URLs
+      const safePrompt = prompt.length > 400 ? prompt.slice(0, 400) : prompt;
+      const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(safePrompt)}?width=1024&height=1024&model=flux&nologo=true&seed=${seed}`;
       return { imageUrl, prompt };
-    }
+    },
   }),
   
   
@@ -197,8 +191,8 @@ export const dashboardTools = {
     }),
     execute: async function ({ zillowUrl }) {
       try {
-        const apiKey = hasDataApiKey();
-
+        const apiKey = 'e2f9b74a-b7ba-49f4-9983-03c55908da92';
+        
         // Ensure URL is complete
         let fullUrl = zillowUrl;
         if (!fullUrl.startsWith('http')) {
@@ -242,15 +236,9 @@ export const dashboardTools = {
           };
         }
   
-        // Strip excessive photos — keep only first 3 to save tokens
-        const prop = data.property;
-        if (prop?.photos && Array.isArray(prop.photos)) {
-          prop.photos = prop.photos.slice(0, 3);
-        }
-
         return {
           success: true,
-          property: prop,
+          property: data.property,
           zillowUrl: fullUrl,
         };
       } catch (error: any) {
@@ -278,21 +266,20 @@ searchZillowListings: tool({
     }),
     execute: async function ({ location, listingType, priceMin, priceMax, bedsMin, bedsMax, bathsMin }) {
       try {
-        const apiKey = hasDataApiKey();
-
+        const apiKey = 'e2f9b74a-b7ba-49f4-9983-03c55908da92';
+        
         // Build query parameters
         const params = new URLSearchParams({
-          keyword: location.trim(),
+          keyword: location,
           type: listingType,
         });
-
-        // HasData expects bracket notation — snake_case params return 400
-        if (priceMin !== undefined) params.append('price[min]', priceMin.toString());
-        if (priceMax !== undefined) params.append('price[max]', priceMax.toString());
-        if (bedsMin !== undefined) params.append('beds[min]', bedsMin.toString());
-        if (bedsMax !== undefined) params.append('beds[max]', bedsMax.toString());
-        if (bathsMin !== undefined) params.append('baths[min]', bathsMin.toString());
-
+        
+        if (priceMin !== undefined) params.append('price_min', priceMin.toString());
+        if (priceMax !== undefined) params.append('price_max', priceMax.toString());
+        if (bedsMin !== undefined) params.append('beds_min', bedsMin.toString());
+        if (bedsMax !== undefined) params.append('beds_max', bedsMax.toString());
+        if (bathsMin !== undefined) params.append('baths_min', bathsMin.toString());
+        
         const response = await fetch(
           `https://api.hasdata.com/scrape/zillow/listing?${params.toString()}`,
           {
@@ -300,42 +287,20 @@ searchZillowListings: tool({
               'Content-Type': 'application/json',
               'x-api-key': apiKey,
             },
-          },
-        );
-
-        const data = (await response.json().catch(() => null)) as Record<string, unknown> | null;
-
-        if (!response.ok) {
-          const meta = data?.requestMetadata as { id?: string; status?: string } | undefined;
-          console.error('[searchZillowListings]', response.status, meta?.id, JSON.stringify(data).slice(0, 600));
-
-          let error =
-            response.status === 401 || response.status === 403
-              ? 'Property search failed: invalid or expired API key. Set HASDATA_API_KEY to a valid HasData key.'
-              : `Failed to search properties: ${response.status}`;
-
-          if (response.status === 400 && meta?.status === 'error') {
-            error =
-              'Listings could not be loaded from the data provider (Zillow scrape failed). Try again later, use a ZIP code in your search, or check your HasData plan and dashboard at app.hasdata.com.';
-            if (meta.id) error += ` Reference: ${meta.id}.`;
           }
-
-          return {
-            error,
+        );
+  
+        if (!response.ok) {
+          return { 
+            error: `Failed to search properties: ${response.status}`,
             searchCriteria: { location, listingType, priceMin, priceMax, bedsMin },
-            properties: [],
+            properties: []
           };
         }
-
-        if (!data) {
-          return {
-            error: 'Unexpected empty response from property search.',
-            searchCriteria: { location, listingType, priceMin, priceMax, bedsMin },
-            properties: [],
-          };
-        }
+  
+        const data = await response.json();
         
-        if (!data.properties || !Array.isArray(data.properties) || data.properties.length === 0) {
+        if (!data.properties || data.properties.length === 0) {
           return { 
             error: 'No properties found matching your criteria',
             searchCriteria: { location, listingType, priceMin, priceMax, bedsMin },
@@ -376,38 +341,22 @@ searchZillowListings: tool({
   
         // Sort by price (lowest first)
         filteredProperties.sort((a: any, b: any) => a.price - b.price);
-
+  
+        // Limit to 20 results
         filteredProperties = filteredProperties.slice(0, 20);
-
+  
         if (filteredProperties.length === 0) {
-          return {
+          return { 
             error: 'No properties found matching your exact criteria. Try adjusting your filters.',
             searchCriteria: { location, listingType, priceMin, priceMax, bedsMin },
             properties: []
           };
         }
-
-        // Strip down to only essential fields — photos arrays are massive and burn tokens
-        const slim = filteredProperties.map((p: any) => ({
-          id: p.id,
-          url: p.url,
-          homeType: p.homeType,
-          status: p.status,
-          price: p.price,
-          address: p.addressRaw || p.address,
-          beds: p.beds,
-          baths: p.baths,
-          area: p.area,
-          image: p.photos?.[0] || p.image || null,
-          zestimate: p.zestimate,
-          daysOnZillow: p.daysOnZillow,
-          brokerName: p.brokerName,
-        }));
-
+  
         return {
           success: true,
-          properties: slim,
-          totalResults: slim.length,
+          properties: filteredProperties,
+          totalResults: filteredProperties.length,
           searchCriteria: { location, listingType, priceMin, priceMax, bedsMin },
         };
       } catch (error: any) {
