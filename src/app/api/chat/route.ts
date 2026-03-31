@@ -1,11 +1,12 @@
 // app/api/chat/route.ts
 import { createOpenAI } from '@ai-sdk/openai';
-import { streamText, convertToModelMessages, type UIMessage } from 'ai';
+import { streamText, convertToModelMessages, stepCountIs, type UIMessage } from 'ai';
+import { dashboardTools } from '@/ai/dashboard-tools';
 
 export const runtime = 'edge';
 export const maxDuration = 60;
 
-type Mode = 'chat' | 'search' | 'code';
+type Mode = 'chat' | 'search' | 'code' | 'image';
 
 const nemotronSystemPrompts: Record<Mode, string> = {
   chat: `You are Sweep - a helpful, knowledgeable AI assistant that can answer ANY question and create visualizations.
@@ -69,6 +70,14 @@ AVAILABLE TOOLS:
 9. generateImage - Generate any image from a text description
 10. searchZillowListings - Search US properties (Zillow API)
 11. showZillowProperty - Detailed property info (Zillow API)
+
+ACCURATE STOCK & MARKET DATA (use these exact figures):
+Apple (AAPL) historical year-end prices (split-adjusted):
+- 2018: $39, 2019: $73, 2020: $132, 2021: $178, 2022: $130, 2023: $193, 2024: $250
+
+Top US companies by market cap (2024):
+- Apple: $3.5T, Microsoft: $3.1T, NVIDIA: $3.0T, Amazon: $2.1T, Alphabet: $2.0T
+- Meta: $1.4T, Tesla: $0.8T, Berkshire: $0.9T, Broadcom: $0.7T, JPMorgan: $0.7T
 
 INDIAN MARKET DATA:
 Top Companies by Market Cap (you know these):
@@ -161,36 +170,81 @@ const openrouter = createOpenAI({
   apiKey: process.env.OPENROUTER_API_KEY,
 });
 
-// Use .chat() to force /chat/completions endpoint (OpenRouter doesn't support /responses)
-const nemotron = openrouter.chat('nvidia/llama-3.1-nemotron-ultra-253b-v1');
+// qwen/qwen3.6-plus-preview:free — free on OpenRouter
+const model = openrouter.chat('qwen/qwen3.6-plus-preview:free');
 
 export async function POST(req: Request) {
   const { messages, mode = 'chat' }: { messages: UIMessage[]; mode?: Mode } = await req.json();
 
   const onError = ({ error }: { error: unknown }) => {
-    console.error('[Nemotron stream error]', JSON.stringify(error));
+    const e = error as any;
+    // Surface 429 errors from the stream (they come via onError not catch)
+    if (e?.statusCode === 429 || e?.data?.error?.code === 'rate_limit_exceeded') {
+      const msg = e?.data?.error?.message || '';
+      const isTokenLimit = msg.includes('TPD') || msg.includes('tokens per day');
+      console.error('[Rate limit]', isTokenLimit ? 'token/day' : 'requests', msg);
+    } else {
+      console.error('[Nemotron stream error]', JSON.stringify(error));
+    }
   };
 
   try {
-    // Search and Code modes: no dashboard tools
+    // Search and Code modes: text only
     if (mode === 'search' || mode === 'code') {
       const result = streamText({
-        model: nemotron,
+        model,
         system: nemotronSystemPrompts[mode],
         messages: convertToModelMessages(messages),
-        maxTokens: 16384,
+
         maxRetries: 0,
         onError,
       });
       return result.toUIMessageStreamResponse();
     }
 
-    // Chat mode: Nemotron (tool calling not supported by this model on OpenRouter)
+    // Image mode: bypass AI entirely — build Pollinations URL directly from the prompt
+    // Zero tokens used, completely free and unlimited
+    if (mode === 'image') {
+      const lastUserMessage = messages.filter(m => m.role === 'user').pop();
+      const prompt = lastUserMessage?.parts
+        ?.filter((p: any) => p.type === 'text')
+        .map((p: any) => p.text)
+        .join(' ')
+        .trim() || 'a beautiful image';
+
+      const seed = Math.floor(Math.random() * 1000000);
+      const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1024&height=1024&model=flux&nologo=true&seed=${seed}`;
+
+      // Emit a text stream with the inline function call format the client parser handles
+      const textContent = `<function(generateImage)${JSON.stringify({ prompt, imageUrl })}</function>`;
+      const msgId = `img_${seed}`;
+      const encoder = new TextEncoder();
+      const stream = new ReadableStream({
+        start(controller) {
+          controller.enqueue(encoder.encode(`f:{"messageId":"${msgId}"}\n`));
+          controller.enqueue(encoder.encode(`0:${JSON.stringify(textContent)}\n`));
+          controller.enqueue(encoder.encode(`e:{"finishReason":"stop","usage":{"promptTokens":0,"completionTokens":0}}\n`));
+          controller.enqueue(encoder.encode(`d:{"finishReason":"stop","usage":{"promptTokens":0,"completionTokens":0}}\n`));
+          controller.close();
+        }
+      });
+
+      return new Response(stream, {
+        headers: {
+          'Content-Type': 'text/event-stream; charset=utf-8',
+          'X-Vercel-AI-Data-Stream': 'v1',
+          'Cache-Control': 'no-cache',
+        }
+      });
+    }
+
+    // Chat mode: with tools for charts, images, etc.
     const result = streamText({
-      model: nemotron,
+      model,
       system: nemotronSystemPrompts.chat,
       messages: convertToModelMessages(messages),
-      maxTokens: 16384,
+      tools: dashboardTools,
+      stopWhen: stepCountIs(10),
       maxRetries: 0,
       onError,
     });

@@ -2,7 +2,7 @@
 
 import { useChat } from '@ai-sdk/react';
 import { useState, useEffect, useRef } from 'react';
-import { Send, BarChart2, X, Search, MessageSquare, Code2 } from 'lucide-react';
+import { Send, BarChart2, X, Search, MessageSquare, Code2, Copy, Check, Wand2, Download } from 'lucide-react';
 
 import { BarChartPro } from '@/components/dashboard/bar-chart-pro';
 import { LineChartPro } from '@/components/dashboard/line-chart-pro';
@@ -15,7 +15,7 @@ import { PropertyPortfolio } from '@/components/dashboard/property-portfolio';
 import { ZillowProperty } from '@/components/dashboard/zillow-property';
 import { ZillowListings } from '@/components/dashboard/zillow-listings';
 
-type Mode = 'chat' | 'search' | 'code';
+type Mode = 'chat' | 'search' | 'code' | 'image';
 
 type ChartOutput = { chartType: string; title: string; unit?: string; data: Array<{ label: string; value: number }>; };
 type ComparisonOutput = { title: string; items: Array<{ name: string; metrics: Record<string, number | string>; }>; };
@@ -53,34 +53,212 @@ const modes: { id: Mode; label: string; icon: React.ReactNode; placeholder: stri
     icon: <Code2 className="w-3.5 h-3.5" />,
     placeholder: 'Ask a coding question...',
   },
+  {
+    id: 'image',
+    label: 'Image',
+    icon: <Wand2 className="w-3.5 h-3.5" />,
+    placeholder: 'Describe an image to generate...',
+  },
 ];
+
+async function downloadImage(src: string) {
+  try {
+    const res = await fetch(src);
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `sweep-image-${Date.now()}.jpg`;
+    a.click();
+    URL.revokeObjectURL(url);
+  } catch {
+    window.open(src, '_blank');
+  }
+}
 
 function ImageWithLoader({ src, alt }: { src: string; alt: string }) {
   const [loaded, setLoaded] = useState(false);
   const [errored, setErrored] = useState(false);
+
+  useEffect(() => {
+    if (loaded || errored) return;
+    const t = setTimeout(() => setErrored(true), 60000);
+    return () => clearTimeout(t);
+  }, [loaded, errored]);
+
   return (
-    <div className="relative w-full max-w-sm rounded-xl overflow-hidden border border-white/10 bg-white/[0.03]" style={{ aspectRatio: '1' }}>
-      {!loaded && !errored && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
-          <div className="w-5 h-5 rounded-full border-2 border-white/15 border-t-white/50 animate-spin" />
-          <span className="text-[10px] text-white/25 font-mono">generating...</span>
-        </div>
+    <div className="flex flex-col items-start gap-2">
+      <div className="relative w-full max-w-sm rounded-xl overflow-hidden border border-white/10 bg-white/[0.03]" style={{ aspectRatio: '1' }}>
+        {!loaded && !errored && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
+            <div className="w-5 h-5 rounded-full border-2 border-white/15 border-t-white/50 animate-spin" />
+            <span className="text-[10px] text-white/25 font-mono">generating image...</span>
+          </div>
+        )}
+        {errored && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-1">
+            <span className="text-xs text-white/30">Failed to load image</span>
+            <a href={src} target="_blank" rel="noopener noreferrer" className="text-[10px] text-white/20 underline">try direct link</a>
+          </div>
+        )}
+        <img
+          src={src}
+          alt={alt}
+          className="w-full h-full object-cover"
+          style={{ opacity: loaded ? 1 : 0, transition: 'opacity 0.5s ease' }}
+          onLoad={() => setLoaded(true)}
+          onError={() => setErrored(true)}
+        />
+      </div>
+      {loaded && (
+        <button
+          onClick={() => downloadImage(src)}
+          className="flex items-center gap-1.5 text-xs text-white/30 hover:text-white/70 transition-colors"
+        >
+          <Download className="w-3 h-3" />
+          <span>Download</span>
+        </button>
       )}
-      {errored && (
-        <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-xs text-white/30">Failed to load image</span>
-        </div>
-      )}
-      <img
-        src={src}
-        alt={alt}
-        className="w-full h-full object-cover"
-        style={{ opacity: loaded ? 1 : 0, transition: 'opacity 0.5s ease' }}
-        onLoad={() => setLoaded(true)}
-        onError={() => setErrored(true)}
-      />
     </div>
   );
+}
+
+const THINKING_WORDS = [
+  'Analyzing...', 'Thinking...', 'Interpreting...', 'Researching...',
+  'Processing...', 'Understanding...', 'Reasoning...', 'Computing...',
+];
+
+function ThinkingAnimation() {
+  const [wordIdx, setWordIdx] = useState(0);
+  const [fade, setFade] = useState(true);
+
+  useEffect(() => {
+    const iv = setInterval(() => {
+      setFade(false);
+      setTimeout(() => {
+        setWordIdx(i => (i + 1) % THINKING_WORDS.length);
+        setFade(true);
+      }, 300);
+    }, 1600);
+    return () => clearInterval(iv);
+  }, []);
+
+  return (
+    <div className="flex items-center gap-2">
+      <div className="flex gap-1">
+        {[0, 150, 300].map((d, i) => (
+          <div key={i} className="w-1.5 h-1.5 bg-white/30 rounded-full animate-bounce" style={{ animationDelay: `${d}ms` }} />
+        ))}
+      </div>
+      <span
+        className="text-xs text-white/40 font-mono transition-opacity duration-300"
+        style={{ opacity: fade ? 1 : 0 }}
+      >
+        {THINKING_WORDS[wordIdx]}
+      </span>
+    </div>
+  );
+}
+
+function CopyButton({ text, className = '' }: { text: string; className?: string }) {
+  const [copied, setCopied] = useState(false);
+  const copy = () => {
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+  return (
+    <button onClick={copy} className={`flex items-center gap-1.5 text-xs text-white/30 hover:text-white/60 transition-colors ${className}`}>
+      {copied ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+      <span>{copied ? 'Copied' : 'Copy'}</span>
+    </button>
+  );
+}
+
+function CodeBlock({ lang, code }: { lang: string; code: string }) {
+  return (
+    <div className="rounded-xl overflow-hidden border border-white/[0.10] my-3 text-left">
+      <div className="flex items-center justify-between px-4 py-2 bg-[#1a1a2e] border-b border-white/[0.08]">
+        <span className="text-xs text-violet-300/70 font-mono">{lang || 'code'}</span>
+        <CopyButton text={code} />
+      </div>
+      <pre className="p-4 overflow-x-auto bg-[#0f0f1a] text-sm font-mono leading-relaxed">
+        <code className="text-emerald-300/90 whitespace-pre">{code}</code>
+      </pre>
+    </div>
+  );
+}
+
+function renderContent(raw: string | undefined | null) {
+  if (!raw) return null;
+  // Strip bold/italic/headings then split on fenced code blocks
+  const text = raw.replace(/\*\*(.*?)\*\*/g, '$1').replace(/\*(.*?)\*/g, '$1').replace(/^#{1,6}\s+/gm, '');
+  const parts = text.split(/(```[\s\S]*?```)/g);
+  return parts.map((part, i) => {
+    const m = part.match(/^```(\w*)\n?([\s\S]*?)```$/);
+    if (m) return <CodeBlock key={i} lang={m[1]} code={m[2].replace(/\n$/, '')} />;
+    if (!part) return null;
+    // Inline code
+    const inlineParts = part.split(/(`[^`]+`)/g);
+    return (
+      <span key={i} className="whitespace-pre-wrap">
+        {inlineParts.map((s, j) =>
+          s.startsWith('`') && s.endsWith('`')
+            ? <code key={j} className="px-1.5 py-0.5 rounded bg-[#1a1a2e] text-violet-300/80 font-mono text-[0.8em] border border-white/[0.08]">{s.slice(1, -1)}</code>
+            : s
+        )}
+      </span>
+    );
+  });
+}
+
+// Render text that may contain <function(toolName){...json...}</function> patterns
+// This handles cases where Llama outputs tool calls as text instead of proper tool calls
+function renderTextWithInlineTools(text: string): React.ReactNode[] {
+  const nodes: React.ReactNode[] = [];
+  const regex = /<function\((\w+)\)([\s\S]*?)<\/function>/g;
+  let lastIndex = 0;
+  let match;
+  let key = 0;
+
+  while ((match = regex.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      const before = text.slice(lastIndex, match.index).trim();
+      if (before) nodes.push(<div key={key++}>{renderContent(before)}</div>);
+    }
+    try {
+      const toolName = match[1];
+      const args = JSON.parse(match[2]);
+      if ((toolName === 'showBarChart' || toolName === 'showLineChart' || toolName === 'showPieChart' || toolName === 'showAreaChart') && args.items) {
+        const chartData = args.items.map((it: any) => ({ label: it.label, value: it.value }));
+        if (toolName === 'showBarChart') nodes.push(<BarChartPro key={key++} title={args.title} data={chartData} unit={args.unit} />);
+        else if (toolName === 'showLineChart') nodes.push(<LineChartPro key={key++} title={args.title} data={chartData} unit={args.unit} />);
+        else if (toolName === 'showPieChart') nodes.push(<PieChartPro key={key++} title={args.title} data={chartData} unit={args.unit} />);
+        else if (toolName === 'showAreaChart') nodes.push(<AreaChartPro key={key++} title={args.title} data={chartData} unit={args.unit} />);
+      } else if (toolName === 'showStats' && args.stats) {
+        nodes.push(<StatsCard key={key++} title={args.title} stats={args.stats} />);
+      } else if (toolName === 'showComparison' && args.items) {
+        nodes.push(<ComparisonTable key={key++} title={args.title} items={args.items} />);
+      } else if (toolName === 'generateImage' && args.prompt) {
+        const url = args.imageUrl || `https://image.pollinations.ai/prompt/${encodeURIComponent(args.prompt)}?width=1024&height=1024&model=flux&nologo=true&seed=${Math.floor(Math.random() * 1000000)}`;
+        nodes.push(
+          <div key={key++} className="py-2 flex flex-col items-start gap-2">
+            <p className="text-xs text-white/40 font-mono">{args.prompt}</p>
+            <ImageWithLoader src={url} alt={args.prompt} />
+            <span className="text-[10px] text-white/30 font-mono">Generated by Pollinations AI · FLUX</span>
+          </div>
+        );
+      }
+    } catch { /* skip malformed function call */ }
+    lastIndex = match.index + match[0].length;
+  }
+
+  if (lastIndex < text.length) {
+    const remaining = text.slice(lastIndex).trim();
+    if (remaining) nodes.push(<div key={key++}>{renderContent(remaining)}</div>);
+  }
+
+  return nodes;
 }
 
 const suggestionsByMode: Record<Mode, Array<{ label: string; icon: string }>> = {
@@ -104,6 +282,13 @@ const suggestionsByMode: Record<Mode, Array<{ label: string; icon: string }>> = 
     { label: 'Implement binary search in TypeScript', icon: '🔍' },
     { label: 'Docker compose for Next.js + Postgres', icon: '🐳' },
     { label: 'Async/await vs Promise chaining', icon: '⚡' },
+  ],
+  image: [
+    { label: 'Futuristic city at night with neon lights', icon: '🌃' },
+    { label: 'Cyberpunk portrait of a samurai', icon: '⚔️' },
+    { label: 'Cozy cabin in snowy mountains', icon: '🏔️' },
+    { label: 'Abstract art in vibrant colors', icon: '🎨' },
+    { label: 'Golden retriever puppy playing in a park', icon: '🐶' },
   ],
 };
 
@@ -130,13 +315,35 @@ const modeColors: Record<Mode, string> = {
   chat: 'text-white/80 border-white/30 bg-white/[0.08]',
   search: 'text-sky-300 border-sky-400/40 bg-sky-400/[0.08]',
   code: 'text-emerald-300 border-emerald-400/40 bg-emerald-400/[0.08]',
+  image: 'text-violet-300 border-violet-400/40 bg-violet-400/[0.08]',
 };
 
 const modeInactiveColors: Record<Mode, string> = {
   chat: 'text-white/40 border-white/[0.08] bg-transparent hover:text-white/60 hover:border-white/20',
   search: 'text-white/40 border-white/[0.08] bg-transparent hover:text-sky-300/60 hover:border-sky-400/20',
   code: 'text-white/40 border-white/[0.08] bg-transparent hover:text-emerald-300/60 hover:border-emerald-400/20',
+  image: 'text-white/40 border-white/[0.08] bg-transparent hover:text-violet-300/60 hover:border-violet-400/20',
 };
+
+function ModeSelector({ mode, setMode, compact = false }: { mode: Mode; setMode: (m: Mode) => void; compact?: boolean }) {
+  return (
+    <div className={`flex items-center gap-1 ${compact ? '' : 'justify-center'}`}>
+      {modes.map((m) => (
+        <button
+          key={m.id}
+          type="button"
+          onClick={() => setMode(m.id)}
+          className={`flex items-center gap-1.5 rounded-lg border text-xs font-medium transition-all duration-200 ${
+            compact ? 'px-2 py-1.5 sm:px-3' : 'px-3 py-1.5'
+          } ${mode === m.id ? modeColors[m.id] : modeInactiveColors[m.id]}`}
+        >
+          {m.icon}
+          <span className={compact ? 'hidden sm:inline' : ''}>{m.label}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
 
 export default function Chat() {
   const { messages, sendMessage, status, error } = useChat();
@@ -146,6 +353,8 @@ export default function Chat() {
   const [hasDashboardItems, setHasDashboardItems] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const mainRef = useRef<HTMLElement>(null);
+  const isNearBottomRef = useRef(true);
 
   useEffect(() => {
     const outputs = messages.flatMap(message =>
@@ -159,37 +368,31 @@ export default function Chat() {
     else setShowSidebar(true);
   }, [messages]);
 
+  // Track whether user is near the bottom
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const el = mainRef.current;
+    if (!el) return;
+    const onScroll = () => {
+      const threshold = 120;
+      isNearBottomRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < threshold;
+    };
+    el.addEventListener('scroll', onScroll, { passive: true });
+    return () => el.removeEventListener('scroll', onScroll);
+  }, []);
+
+  // Only auto-scroll when user is near the bottom
+  useEffect(() => {
+    if (isNearBottomRef.current) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
   }, [messages, status]);
 
-  const isTextPart = (part: any): part is { type: 'text'; text: string } =>
-    part.type === 'text' && 'text' in part;
-
-  // AUTO-RETRY LOGIC
-  useEffect(() => {
-    const lastAssistant = messages[messages.length - 1];
-    if (
-      lastAssistant?.role === 'assistant' &&
-      lastAssistant.parts.some(part => {
-        if (!isTextPart(part)) return false;
-        const text = part.text.toLowerCase();
-        const errorPatterns = [
-          "could not be displayed", "incorrectly formatted",
-          "i encountered an issue with the provided data", "data format error",
-          "unable to display", "failed to display", "error displaying"
-        ];
-        return errorPatterns.some(p => text.includes(p)) && !part.text.includes("[auto-retried]");
-      })
-    ) {
-      sendMessage({ text: "retry [auto-retried]" });
-    }
-  }, [messages, sendMessage]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim()) return;
     setShowSidebar(false);
+    isNearBottomRef.current = true; // force scroll on new message
     sendMessage({ text: input }, { body: { mode } });
     setInput('');
   };
@@ -214,11 +417,6 @@ export default function Chat() {
       }
     });
 
-    if (status === 'streaming') {
-      const hasText = lastMessage.parts.some(p => p.type === 'text');
-      if (hasText) steps.push({ name: 'Writing response', status: 'loading' });
-      else if (steps.length === 0) steps.push({ name: 'Thinking', status: 'loading' });
-    }
     return steps;
   };
 
@@ -247,20 +445,7 @@ export default function Chat() {
         return <ZillowProperty key={callId} property={o.property} zillowUrl={o.zillowUrl} error={o.error} />;
       }
       if (part.type === 'tool-generateImage') {
-        if (part.output.imageUrl) {
-          return (
-            <div key={callId} className="py-2 flex flex-col items-start gap-2">
-              <p className="text-xs text-white/40 font-mono">{part.output.prompt}</p>
-              <ImageWithLoader src={part.output.imageUrl} alt={part.output.prompt} />
-              <span className="text-[10px] text-white/30 font-mono">Generated by Stable Horde · Community AI</span>
-            </div>
-          );
-        }
-        if (part.output.error && !part.output.imageUrl) {
-          const errLower = part.output.error.toLowerCase();
-          if (errLower.includes("rate limit") || errLower.includes("429") || errLower.includes("quota")) return null;
-          return <div key={callId} className="text-red-400 text-sm p-3 bg-red-500/10 rounded-lg border border-red-500/20">{part.output.error}</div>;
-        }
+        // Images are rendered inline in the chat — skip here to avoid duplicates
         return null;
       }
       return null;
@@ -275,42 +460,24 @@ export default function Chat() {
   const currentPlaceholder = modes.find(m => m.id === mode)?.placeholder ?? 'Ask anything...';
   const suggestions = suggestionsByMode[mode];
 
-  const ModeSelector = ({ compact = false }: { compact?: boolean }) => (
-    <div className={`flex items-center gap-1 ${compact ? '' : 'justify-center'}`}>
-      {modes.map((m) => (
-        <button
-          key={m.id}
-          type="button"
-          onClick={() => setMode(m.id)}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all duration-200 ${
-            mode === m.id ? modeColors[m.id] : modeInactiveColors[m.id]
-          }`}
-        >
-          {m.icon}
-          {m.label}
-        </button>
-      ))}
-    </div>
-  );
-
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white flex flex-col">
+    <div className="bg-[#0a0a0a] text-white flex flex-col" style={{ position: 'fixed', inset: 0, overflow: 'hidden' }}>
       {/* ── HEADER (only during chat) ── */}
       {messages.length > 0 && (
         <header className="fixed top-0 left-0 right-0 z-40 bg-[#0a0a0a]/90 backdrop-blur-xl border-b border-white/[0.06]">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
-            <button onClick={() => window.location.reload()} className="flex items-center gap-2 group">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-2 min-w-0">
+            <button onClick={() => window.location.reload()} className="flex items-center gap-2 group shrink-0">
               <span className="text-lg font-semibold tracking-tight bg-gradient-to-r from-white/60 via-white to-white/60 bg-clip-text text-transparent animate-gradient bg-[length:200%_100%]">
                 Sweep
               </span>
             </button>
 
-            <div className="flex items-center gap-3">
-              <ModeSelector compact />
+            <div className="flex items-center gap-2 min-w-0 overflow-hidden">
+              <ModeSelector mode={mode} setMode={setMode} compact />
               {hasDashboardItems && (
                 <button
                   onClick={() => setShowSidebar(v => !v)}
-                  className="flex items-center gap-1.5 text-xs text-white/50 hover:text-white transition-colors px-3 py-1.5 rounded-lg border border-white/[0.08] hover:border-white/20 bg-white/[0.03] hover:bg-white/[0.06]"
+                  className="hidden sm:flex items-center gap-1.5 text-xs text-white/50 hover:text-white transition-colors px-3 py-1.5 rounded-lg border border-white/[0.08] hover:border-white/20 bg-white/[0.03] hover:bg-white/[0.06] shrink-0"
                 >
                   <BarChart2 className="w-3.5 h-3.5" />
                   {showSidebar ? 'Hide' : 'Show'} dashboard
@@ -322,12 +489,12 @@ export default function Chat() {
       )}
 
       {/* ── MAIN CONTENT ── */}
-      <main className={`flex-1 transition-all duration-300 ease-in-out ${showSidebar ? 'md:mr-[42%]' : ''} ${messages.length > 0 ? 'pt-14' : ''}`}>
-        <div className="max-w-2xl mx-auto px-4 sm:px-6 pb-36">
+      <main ref={mainRef} className={`flex-1 overflow-y-auto transition-all duration-300 ease-in-out ${showSidebar ? 'md:mr-[42%]' : ''} ${messages.length > 0 ? 'pt-14' : ''}`}>
+        <div className="w-full max-w-2xl mx-auto px-4 sm:px-6 pb-36">
 
           {/* ── HERO (no messages) ── */}
           {messages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center min-h-screen gap-8 py-20">
+            <div className="flex flex-col items-center justify-center gap-8 py-20" style={{ minHeight: 'calc(100dvh - 80px)' }}>
               {/* Logo */}
               <div className="text-center space-y-3">
                 <h1 className="text-6xl sm:text-7xl font-semibold tracking-tight">
@@ -341,19 +508,19 @@ export default function Chat() {
               </div>
 
               {/* Mode Selector */}
-              <ModeSelector />
+              <ModeSelector mode={mode} setMode={setMode} />
 
               {/* Input */}
-              <form onSubmit={handleSubmit} className="w-full max-w-lg">
+              <form onSubmit={handleSubmit} className="w-full">
                 <div className="relative flex items-center">
                   <input
                     ref={inputRef}
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     className="w-full bg-white/[0.04] text-white rounded-2xl pl-5 pr-14 py-4 border border-white/[0.10] focus:border-white/25 focus:bg-white/[0.06] focus:outline-none placeholder-white/25 text-sm transition-all duration-200"
+                    style={{ fontSize: '16px' }}
                     placeholder={currentPlaceholder}
                     autoComplete="off"
-                    autoFocus
                   />
                   <button
                     type="submit"
@@ -366,7 +533,7 @@ export default function Chat() {
               </form>
 
               {/* Suggestion chips */}
-              <div className="w-full max-w-lg">
+              <div className="w-full">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {suggestions.map((s, i) => (
                     <button
@@ -405,15 +572,62 @@ export default function Chat() {
                       {/* Sweep avatar dot */}
                       <div className="flex items-start gap-3">
                         <div className="w-6 h-6 rounded-full bg-gradient-to-br from-white/20 to-white/5 border border-white/10 flex items-center justify-center shrink-0 mt-0.5">
-                          <div className="w-2 h-2 rounded-full bg-white/60" />
+                          <div className={`w-2 h-2 rounded-full bg-white/60 ${isLoading && idx === messages.length - 1 ? 'animate-pulse' : ''}`} />
                         </div>
                         <div className="flex-1 min-w-0 space-y-4">
-                          {/* Text parts */}
-                          {m.parts.filter(p => p.type === 'text').map((part, i) => (
-                            <p key={i} className="text-white/80 text-sm leading-relaxed whitespace-pre-wrap">
-                              {(part as any).text}
-                            </p>
-                          ))}
+                          {/* Thinking animation — shown before any text arrives */}
+                          {isLoading && idx === messages.length - 1 && !m.parts.some(p => p.type === 'text') && loadingSteps.length === 0 && (
+                            <ThinkingAnimation />
+                          )}
+                          {/* Tool loading steps — shown inline */}
+                          {isLoading && idx === messages.length - 1 && loadingSteps.length > 0 && (
+                            <div className="space-y-2.5">
+                              {loadingSteps.map((step, i) => (
+                                <div key={i} className="flex items-center gap-2.5">
+                                  {step.status === 'complete' ? (
+                                    <div className="w-4 h-4 rounded-full bg-emerald-500/20 flex items-center justify-center shrink-0">
+                                      <svg className="w-2.5 h-2.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                                      </svg>
+                                    </div>
+                                  ) : step.status === 'loading' ? (
+                                    <div className="w-4 h-4 rounded-full border-2 border-white/15 border-t-white/60 animate-spin shrink-0" />
+                                  ) : (
+                                    <div className="w-4 h-4 rounded-full bg-white/[0.06] border border-white/10 shrink-0" />
+                                  )}
+                                  <span className={`text-xs transition-colors ${
+                                    step.status === 'complete' ? 'text-emerald-400' :
+                                    step.status === 'loading' ? 'text-white/70' :
+                                    'text-white/25'
+                                  }`}>{step.name}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          {/* Text parts — with inline tool call fallback parser */}
+                          {m.parts.filter(p => p.type === 'text').map((part, i) => {
+                            const text = (part as any).text as string;
+                            const hasInlineTool = /<function\(\w+\)/.test(text);
+                            if (hasInlineTool) {
+                              return (
+                                <div key={i} className="space-y-4">
+                                  {renderTextWithInlineTools(text)}
+                                </div>
+                              );
+                            }
+                            return (
+                              <div key={i} className="text-white/80 text-sm leading-relaxed">
+                                {renderContent(text)}
+                              </div>
+                            );
+                          })}
+                          {/* Copy message button — only on completed messages */}
+                          {!(isLoading && idx === messages.length - 1) && m.parts.some(p => p.type === 'text') && (
+                            <CopyButton
+                              text={m.parts.filter(p => p.type === 'text').map(p => (p as any).text).join('')}
+                              className="mt-1"
+                            />
+                          )}
 
                           {/* Zillow listings inline */}
                           {m.parts.map((part: any) => {
@@ -435,7 +649,22 @@ export default function Chat() {
                             return null;
                           })}
 
-                          {/* Dashboard items (mobile only — desktop goes to sidebar) */}
+                          {/* Images always inline; other dashboard items mobile only (desktop → sidebar) */}
+                          {m.parts.some((p: any) => p.type === 'tool-generateImage' && p.state === 'output-available') && (
+                            <div className="space-y-4">
+                              {m.parts.filter((p: any) => p.type === 'tool-generateImage').map((part: any) => {
+                                if (!part.output?.imageUrl) return null;
+                                return (
+                                  <div key={part.toolCallId} className="py-2 flex flex-col items-start gap-2">
+                                    <p className="text-xs text-white/40 font-mono">{part.output.prompt}</p>
+                                    <ImageWithLoader src={part.output.imageUrl} alt={part.output.prompt} />
+                                    <span className="text-[10px] text-white/30 font-mono">Generated by Pollinations AI · FLUX</span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                          {/* Charts on mobile */}
                           <div className="md:hidden space-y-4">
                             {renderDashboardItems(m)}
                           </div>
@@ -451,60 +680,14 @@ export default function Chat() {
                 </div>
               ))}
 
-              {/* ── LOADING STATE ── */}
-              {(isLoading || loadingSteps.some(s => s.status === 'loading')) && loadingSteps.length > 0 && (
-                <div className="py-5">
-                  <div className="flex items-start gap-3">
-                    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-white/20 to-white/5 border border-white/10 flex items-center justify-center shrink-0 mt-0.5">
-                      <div className="w-2 h-2 rounded-full bg-white/60 animate-pulse" />
-                    </div>
-                    <div className="flex-1 space-y-2.5 pt-0.5">
-                      {loadingSteps.map((step, i) => (
-                        <div key={i} className="flex items-center gap-2.5">
-                          {step.status === 'complete' ? (
-                            <div className="w-4 h-4 rounded-full bg-emerald-500/20 flex items-center justify-center shrink-0">
-                              <svg className="w-2.5 h-2.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                              </svg>
-                            </div>
-                          ) : step.status === 'loading' ? (
-                            <div className="w-4 h-4 rounded-full border-2 border-white/15 border-t-white/60 animate-spin shrink-0" />
-                          ) : (
-                            <div className="w-4 h-4 rounded-full bg-white/[0.06] border border-white/10 shrink-0" />
-                          )}
-                          <span className={`text-xs transition-colors ${
-                            step.status === 'complete' ? 'text-emerald-400' :
-                            step.status === 'loading' ? 'text-white/70' :
-                            'text-white/25'
-                          }`}>
-                            {step.name}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Simple thinking dots */}
-              {isLoading && loadingSteps.length === 0 && (
-                <div className="py-5 flex items-center gap-3">
-                  <div className="w-6 h-6 rounded-full bg-gradient-to-br from-white/20 to-white/5 border border-white/10 flex items-center justify-center shrink-0">
-                    <div className="w-2 h-2 rounded-full bg-white/60 animate-pulse" />
-                  </div>
-                  <div className="flex gap-1 pt-1">
-                    {[0, 150, 300].map((delay, i) => (
-                      <div key={i} className="w-1.5 h-1.5 bg-white/30 rounded-full animate-bounce" style={{ animationDelay: `${delay}ms` }} />
-                    ))}
-                  </div>
-                </div>
-              )}
 
               {/* Error block */}
               {error && !hasValidImage && (
                 <div className="mt-4 p-4 bg-red-500/[0.08] border border-red-500/20 rounded-xl">
                   <p className="text-red-400 text-sm">
-                    {error.message?.includes('quota') || error.message?.includes('rate limit') || error.message?.includes('429')
+                    {error.message?.includes('tokens per day') || error.message?.includes('TPD')
+                      ? 'Daily token limit reached — the free AI quota resets in a few hours. Try again later.'
+                      : error.message?.includes('quota') || error.message?.includes('rate limit') || error.message?.includes('429')
                       ? 'Rate limit reached — please wait a moment and try again.'
                       : 'Something went wrong. Please try again.'}
                   </p>
@@ -522,15 +705,16 @@ export default function Chat() {
         {/* ── FIXED BOTTOM INPUT (chat mode) ── */}
         {messages.length > 0 && (
           <div
-            className="fixed bottom-0 left-0 right-0 z-30 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/95 to-transparent pt-8 pb-5 sm:pb-6"
-            style={{ right: showSidebar ? 'calc(42%)' : '0' }}
+            className={`fixed bottom-0 left-0 right-0 z-30 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/95 to-transparent pt-8 ${showSidebar ? 'md:right-[42%]' : ''}`}
+            style={{ paddingBottom: 'max(20px, env(safe-area-inset-bottom))' }}
           >
-            <div className="max-w-2xl mx-auto px-4 sm:px-6 space-y-2">
+            <div className="w-full px-3 sm:px-4 space-y-2">
               <form onSubmit={handleSubmit} className="relative flex items-center">
                 <input
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   className="w-full bg-white/[0.05] text-white rounded-2xl pl-5 pr-14 py-3.5 border border-white/[0.10] focus:border-white/25 focus:bg-white/[0.07] focus:outline-none placeholder-white/25 text-sm transition-all duration-200 disabled:opacity-50"
+                  style={{ fontSize: '16px' }}
                   placeholder={currentPlaceholder}
                   disabled={isLoading}
                   autoComplete="off"
@@ -580,7 +764,7 @@ export default function Chat() {
       </aside>
 
       {/* Credit */}
-      <div className="fixed bottom-2 right-4 text-[10px] text-white/15 pointer-events-none select-none z-50 font-light tracking-wide" style={{ right: showSidebar ? 'calc(42% + 12px)' : '16px' }}>
+      <div className={`fixed bottom-2 right-4 text-[10px] text-white/15 pointer-events-none select-none z-50 font-light tracking-wide ${showSidebar ? 'md:right-[calc(42%+12px)]' : ''}`}>
         by Sushant Kataria
       </div>
     </div>
