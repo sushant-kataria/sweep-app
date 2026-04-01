@@ -612,12 +612,7 @@ export default function Chat() {
                   {/* Assistant message */}
                   {m.role === 'assistant' && (
                     <div className="py-5">
-                      {/* Sweep avatar dot */}
-                      <div className="flex items-start gap-3">
-                        <div className="w-6 h-6 rounded-full bg-gradient-to-br from-[var(--v-border-2)] to-[var(--v-surface)] border border-[var(--v-border)] flex items-center justify-center shrink-0 mt-0.5">
-                          <div className={`w-2 h-2 rounded-full bg-[var(--v-fg-3)] dark:bg-white/60 ${isLoading && idx === messages.length - 1 ? 'animate-pulse' : ''}`} />
-                        </div>
-                        <div className="flex-1 min-w-0 space-y-4">
+                      <div className="min-w-0 space-y-4">
                           {/* Thinking animation — shown before any text arrives */}
                           {isLoading && idx === messages.length - 1 && !m.parts.some(p => p.type === 'text') && loadingSteps.length === 0 && (
                             <ThinkingAnimation />
@@ -711,7 +706,6 @@ export default function Chat() {
                           <div className="md:hidden space-y-4">
                             {renderDashboardItems(m)}
                           </div>
-                        </div>
                       </div>
                     </div>
                   )}

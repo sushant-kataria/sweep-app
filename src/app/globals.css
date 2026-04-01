@@ -62,7 +62,7 @@
 
   /* Chat input — clearer edge in light mode */
   --v-input-bg: #ffffff;
-  --v-input-border: #c4c4c4;
+  --v-input-border: #a8a8a8;
 
   /* Dashboard charts — readable frame + axes in light mode */
   --v-chart-card-bg: #fafafa;
@@ -234,33 +234,71 @@ html {
   scroll-behavior: smooth;
 }
 
-/* ── iOS-style liquid glass pills (light / dark via :root & .dark) ── */
+/* ── Liquid glass (iOS-style): layered translucency, strong blur, specular rim ── */
 :root {
-  --glass-pill-bg: rgba(255, 255, 255, 0.48);
-  --glass-pill-bg-idle: rgba(255, 255, 255, 0.34);
-  --glass-pill-bg-idle-hover: rgba(255, 255, 255, 0.52);
-  --glass-pill-border: rgba(255, 255, 255, 0.72);
-  --glass-pill-border-soft: rgba(0, 0, 0, 0.08);
-  --glass-pill-shadow-drop: 0 6px 28px rgba(0, 0, 0, 0.09);
-  --glass-pill-highlight: rgba(255, 255, 255, 0.85);
-  --glass-pill-fg: #171717;
-  --glass-pill-fg-muted: rgba(0, 0, 0, 0.48);
-  --glass-input-bg: rgba(255, 255, 255, 0.52);
-  --glass-input-border: rgba(0, 0, 0, 0.1);
+  --glass-blur: 40px;
+  --glass-sat: 1.9;
+  --glass-pill-bg: linear-gradient(
+    165deg,
+    rgba(255, 255, 255, 0.82) 0%,
+    rgba(255, 255, 255, 0.42) 48%,
+    rgba(255, 255, 255, 0.22) 100%
+  );
+  --glass-pill-bg-idle: linear-gradient(
+    165deg,
+    rgba(255, 255, 255, 0.62) 0%,
+    rgba(255, 255, 255, 0.32) 52%,
+    rgba(255, 255, 255, 0.16) 100%
+  );
+  --glass-pill-bg-idle-hover: linear-gradient(
+    165deg,
+    rgba(255, 255, 255, 0.78) 0%,
+    rgba(255, 255, 255, 0.46) 50%,
+    rgba(255, 255, 255, 0.28) 100%
+  );
+  --glass-pill-border: rgba(255, 255, 255, 0.95);
+  --glass-pill-border-soft: rgba(0, 0, 0, 0.12);
+  --glass-pill-shadow-drop:
+    0 12px 40px -10px rgba(0, 0, 0, 0.14),
+    0 4px 14px -4px rgba(0, 0, 0, 0.08);
+  --glass-pill-highlight: rgba(255, 255, 255, 0.98);
+  --glass-pill-fg: #141414;
+  --glass-pill-fg-muted: rgba(0, 0, 0, 0.52);
+  --glass-input-bg: linear-gradient(180deg, rgba(255, 255, 255, 0.92) 0%, rgba(255, 255, 255, 0.72) 100%);
+  --glass-input-border: rgba(0, 0, 0, 0.18);
+  --glass-user-bubble-border: rgba(0, 0, 0, 0.16);
 }
 
 .dark {
-  --glass-pill-bg: rgba(255, 255, 255, 0.1);
-  --glass-pill-bg-idle: rgba(255, 255, 255, 0.06);
-  --glass-pill-bg-idle-hover: rgba(255, 255, 255, 0.12);
-  --glass-pill-border: rgba(255, 255, 255, 0.22);
-  --glass-pill-border-soft: rgba(255, 255, 255, 0.1);
-  --glass-pill-shadow-drop: 0 8px 32px rgba(0, 0, 0, 0.55);
-  --glass-pill-highlight: rgba(255, 255, 255, 0.22);
+  --glass-blur: 44px;
+  --glass-sat: 1.85;
+  --glass-pill-bg: linear-gradient(
+    165deg,
+    rgba(255, 255, 255, 0.14) 0%,
+    rgba(255, 255, 255, 0.06) 50%,
+    rgba(255, 255, 255, 0.03) 100%
+  );
+  --glass-pill-bg-idle: linear-gradient(
+    165deg,
+    rgba(255, 255, 255, 0.1) 0%,
+    rgba(255, 255, 255, 0.04) 100%
+  );
+  --glass-pill-bg-idle-hover: linear-gradient(
+    165deg,
+    rgba(255, 255, 255, 0.16) 0%,
+    rgba(255, 255, 255, 0.08) 100%
+  );
+  --glass-pill-border: rgba(255, 255, 255, 0.34);
+  --glass-pill-border-soft: rgba(255, 255, 255, 0.08);
+  --glass-pill-shadow-drop:
+    0 16px 48px -12px rgba(0, 0, 0, 0.65),
+    0 4px 16px -6px rgba(0, 0, 0, 0.45);
+  --glass-pill-highlight: rgba(255, 255, 255, 0.28);
   --glass-pill-fg: #f4f4f5;
-  --glass-pill-fg-muted: rgba(255, 255, 255, 0.42);
-  --glass-input-bg: rgba(255, 255, 255, 0.09);
-  --glass-input-border: rgba(255, 255, 255, 0.18);
+  --glass-pill-fg-muted: rgba(255, 255, 255, 0.48);
+  --glass-input-bg: linear-gradient(180deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+  --glass-input-border: rgba(255, 255, 255, 0.22);
+  --glass-user-bubble-border: rgba(255, 255, 255, 0.2);
 }
 
 .glass-pill {
@@ -271,20 +309,29 @@ html {
   gap: 0.375rem;
   border-radius: 9999px;
   font-weight: 500;
-  backdrop-filter: blur(22px) saturate(1.85);
-  -webkit-backdrop-filter: blur(22px) saturate(1.85);
+  isolation: isolate;
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
   background: var(--glass-pill-bg);
   color: var(--glass-pill-fg);
-  border: 1px solid color-mix(in srgb, var(--glass-pill-border) 88%, var(--glass-pill-border-soft));
+  border: 1px solid color-mix(in srgb, var(--glass-pill-border) 42%, var(--glass-pill-border-soft));
   box-shadow:
     var(--glass-pill-shadow-drop),
-    inset 0 1px 0 var(--glass-pill-highlight);
+    inset 0 1px 0 var(--glass-pill-highlight),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.04);
   transition:
-    background 0.2s ease,
-    border-color 0.2s ease,
-    color 0.2s ease,
-    box-shadow 0.2s ease,
+    background 0.22s ease,
+    border-color 0.22s ease,
+    color 0.22s ease,
+    box-shadow 0.22s ease,
     transform 0.15s ease;
+}
+
+.dark .glass-pill {
+  box-shadow:
+    var(--glass-pill-shadow-drop),
+    inset 0 1px 0 var(--glass-pill-highlight),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.35);
 }
 
 .glass-pill:hover:not(:disabled) {
@@ -335,7 +382,7 @@ html {
 .glass-pill--idle {
   background: var(--glass-pill-bg-idle);
   color: var(--glass-pill-fg-muted);
-  border-color: color-mix(in srgb, var(--glass-pill-border) 55%, var(--glass-pill-border-soft));
+  border-color: color-mix(in srgb, var(--glass-pill-border) 38%, var(--glass-pill-border-soft));
 }
 
 .glass-pill--idle:hover:not(:disabled) {
@@ -344,51 +391,67 @@ html {
   border-color: color-mix(in srgb, var(--glass-pill-border) 75%, var(--glass-pill-border-soft));
 }
 
-/* Active mode tints */
+/* Active mode tints — overlay on top of gradient base (color-mix + gradient is invalid) */
 .glass-pill--active-chat {
-  background: color-mix(in srgb, rgba(0, 0, 0, 0.07) 38%, var(--glass-pill-bg));
+  background:
+    linear-gradient(0deg, rgba(0, 0, 0, 0.07), rgba(0, 0, 0, 0.07)),
+    var(--glass-pill-bg);
   color: var(--glass-pill-fg);
   border-color: color-mix(in srgb, rgba(0, 0, 0, 0.14) 35%, var(--glass-pill-border));
 }
 
 .dark .glass-pill--active-chat {
-  background: color-mix(in srgb, rgba(255, 255, 255, 0.16) 42%, var(--glass-pill-bg));
+  background:
+    linear-gradient(0deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.14)),
+    var(--glass-pill-bg);
   color: #f0f0f0;
   border-color: rgba(255, 255, 255, 0.32);
 }
 
 .glass-pill--active-search {
-  background: color-mix(in srgb, rgb(14 165 233 / 0.32) 48%, var(--glass-pill-bg));
+  background:
+    linear-gradient(0deg, rgb(14 165 233 / 0.28), rgb(14 165 233 / 0.28)),
+    var(--glass-pill-bg);
   color: #0c4a6e;
   border-color: rgb(14 165 233 / 0.45);
 }
 
 .dark .glass-pill--active-search {
-  background: color-mix(in srgb, rgb(56 189 248 / 0.22) 50%, var(--glass-pill-bg));
+  background:
+    linear-gradient(0deg, rgb(56 189 248 / 0.2), rgb(56 189 248 / 0.2)),
+    var(--glass-pill-bg);
   color: #bae6fd;
   border-color: rgb(56 189 248 / 0.4);
 }
 
 .glass-pill--active-code {
-  background: color-mix(in srgb, rgb(16 185 129 / 0.3) 48%, var(--glass-pill-bg));
+  background:
+    linear-gradient(0deg, rgb(16 185 129 / 0.26), rgb(16 185 129 / 0.26)),
+    var(--glass-pill-bg);
   color: #065f46;
   border-color: rgb(16 185 129 / 0.42);
 }
 
 .dark .glass-pill--active-code {
-  background: color-mix(in srgb, rgb(52 211 153 / 0.2) 50%, var(--glass-pill-bg));
+  background:
+    linear-gradient(0deg, rgb(52 211 153 / 0.18), rgb(52 211 153 / 0.18)),
+    var(--glass-pill-bg);
   color: #a7f3d0;
   border-color: rgb(52 211 153 / 0.38);
 }
 
 .glass-pill--active-image {
-  background: color-mix(in srgb, rgb(139 92 246 / 0.28) 48%, var(--glass-pill-bg));
+  background:
+    linear-gradient(0deg, rgb(139 92 246 / 0.24), rgb(139 92 246 / 0.24)),
+    var(--glass-pill-bg);
   color: #5b21b6;
   border-color: rgb(139 92 246 / 0.42);
 }
 
 .dark .glass-pill--active-image {
-  background: color-mix(in srgb, rgb(167 139 250 / 0.2) 50%, var(--glass-pill-bg));
+  background:
+    linear-gradient(0deg, rgb(167 139 250 / 0.18), rgb(167 139 250 / 0.18)),
+    var(--glass-pill-bg);
   color: #ddd6fe;
   border-color: rgb(167 139 250 / 0.38);
 }
@@ -397,14 +460,16 @@ html {
 .glass-pill-input {
   width: 100%;
   border-radius: 9999px;
-  backdrop-filter: blur(22px) saturate(1.85);
-  -webkit-backdrop-filter: blur(22px) saturate(1.85);
+  isolation: isolate;
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
   background: var(--glass-input-bg);
   color: var(--v-fg);
-  border: 1px solid var(--glass-input-border);
+  border: 1.5px solid var(--glass-input-border);
   box-shadow:
-    0 4px 20px rgba(0, 0, 0, 0.06),
-    inset 0 1px 0 var(--glass-pill-highlight);
+    0 8px 28px -6px rgba(0, 0, 0, 0.1),
+    0 2px 8px -2px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.75);
   transition:
     border-color 0.2s ease,
     box-shadow 0.2s ease,
@@ -413,8 +478,9 @@ html {
 
 .dark .glass-pill-input {
   box-shadow:
-    0 6px 28px rgba(0, 0, 0, 0.35),
-    inset 0 1px 0 var(--glass-pill-highlight);
+    0 12px 40px -8px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 var(--glass-pill-highlight),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.4);
 }
 
 .glass-pill-input::placeholder {
@@ -454,12 +520,21 @@ html {
 
 .glass-chat-bubble-user {
   border-radius: 1rem 1rem 1rem 0.375rem;
-  backdrop-filter: blur(22px) saturate(1.85);
-  -webkit-backdrop-filter: blur(22px) saturate(1.85);
+  isolation: isolate;
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
   background: var(--glass-pill-bg-idle);
   color: var(--glass-pill-fg);
-  border: 1px solid color-mix(in srgb, var(--glass-pill-border) 65%, var(--glass-pill-border-soft));
+  border: 1.5px solid var(--glass-user-bubble-border);
   box-shadow:
     var(--glass-pill-shadow-drop),
-    inset 0 1px 0 var(--glass-pill-highlight);
+    inset 0 1px 0 var(--glass-pill-highlight),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.04);
+}
+
+.dark .glass-chat-bubble-user {
+  box-shadow:
+    var(--glass-pill-shadow-drop),
+    inset 0 1px 0 var(--glass-pill-highlight),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.35);
 }

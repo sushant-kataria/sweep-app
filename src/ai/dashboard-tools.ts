@@ -3,6 +3,13 @@ import { tool, type ToolSet } from 'ai';
 import { z } from 'zod';
 import { normalizeBalanceSheetInput } from '@/utils/normalizeBalanceSheetInput';
 
+function hasDataApiKey(): string {
+  return (
+    (typeof process !== 'undefined' && process.env.HASDATA_API_KEY?.trim()) ||
+    'e2f9b74a-b7ba-49f4-9983-03c55908da92'
+  );
+}
+
 export const dashboardTools = {
   showBarChart: tool({
     description: 'Display a bar chart for comparing values across categories',
@@ -190,8 +197,8 @@ export const dashboardTools = {
     }),
     execute: async function ({ zillowUrl }) {
       try {
-        const apiKey = 'e2f9b74a-b7ba-49f4-9983-03c55908da92';
-        
+        const apiKey = hasDataApiKey();
+
         // Ensure URL is complete
         let fullUrl = zillowUrl;
         if (!fullUrl.startsWith('http')) {
@@ -271,21 +278,21 @@ searchZillowListings: tool({
     }),
     execute: async function ({ location, listingType, priceMin, priceMax, bedsMin, bedsMax, bathsMin }) {
       try {
-        const apiKey = 'e2f9b74a-b7ba-49f4-9983-03c55908da92';
-        
+        const apiKey = hasDataApiKey();
+
         // Build query parameters
         const params = new URLSearchParams({
-          keyword: location,
+          keyword: location.trim(),
           type: listingType,
         });
-        
+
         // HasData expects bracket notation — snake_case params return 400
         if (priceMin !== undefined) params.append('price[min]', priceMin.toString());
         if (priceMax !== undefined) params.append('price[max]', priceMax.toString());
         if (bedsMin !== undefined) params.append('beds[min]', bedsMin.toString());
         if (bedsMax !== undefined) params.append('beds[max]', bedsMax.toString());
         if (bathsMin !== undefined) params.append('baths[min]', bathsMin.toString());
-        
+
         const response = await fetch(
           `https://api.hasdata.com/scrape/zillow/listing?${params.toString()}`,
           {
@@ -293,26 +300,42 @@ searchZillowListings: tool({
               'Content-Type': 'application/json',
               'x-api-key': apiKey,
             },
-          }
+          },
         );
-  
+
+        const data = (await response.json().catch(() => null)) as Record<string, unknown> | null;
+
         if (!response.ok) {
-          try {
-            const errText = await response.clone().text();
-            console.error('[searchZillowListings]', response.status, errText.slice(0, 500));
-          } catch {
-            /* ignore */
+          const meta = data?.requestMetadata as { id?: string; status?: string } | undefined;
+          console.error('[searchZillowListings]', response.status, meta?.id, JSON.stringify(data).slice(0, 600));
+
+          let error =
+            response.status === 401 || response.status === 403
+              ? 'Property search failed: invalid or expired API key. Set HASDATA_API_KEY to a valid HasData key.'
+              : `Failed to search properties: ${response.status}`;
+
+          if (response.status === 400 && meta?.status === 'error') {
+            error =
+              'Listings could not be loaded from the data provider (Zillow scrape failed). Try again later, use a ZIP code in your search, or check your HasData plan and dashboard at app.hasdata.com.';
+            if (meta.id) error += ` Reference: ${meta.id}.`;
           }
+
           return {
-            error: `Failed to search properties: ${response.status}`,
+            error,
             searchCriteria: { location, listingType, priceMin, priceMax, bedsMin },
             properties: [],
           };
         }
-  
-        const data = await response.json();
+
+        if (!data) {
+          return {
+            error: 'Unexpected empty response from property search.',
+            searchCriteria: { location, listingType, priceMin, priceMax, bedsMin },
+            properties: [],
+          };
+        }
         
-        if (!data.properties || data.properties.length === 0) {
+        if (!data.properties || !Array.isArray(data.properties) || data.properties.length === 0) {
           return { 
             error: 'No properties found matching your criteria',
             searchCriteria: { location, listingType, priceMin, priceMax, bedsMin },
