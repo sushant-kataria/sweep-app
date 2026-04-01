@@ -1,7 +1,7 @@
 /**
- * Visual backdrop from Figma Make: Apple Liquid Glass UI Design
- * https://www.figma.com/make/j5uSWQrbH0XxgNUCsPFiOe/Apple-Liquid-Glass-UI-Design
- * (animated gradient + floating orbs, ported from FloatingOrbs + App shell)
+ * Backdrop aligned with Apple Design Resources — iOS & iPadOS 26 UI Kit (cover aesthetic).
+ * https://www.figma.com/design/DgPEQVTTV1rGxj1AQ3qBn7/iOS-and-iPadOS-26--Community-?node-id=221-56229
+ * Deep blue → cobalt → teal/cyan layered planes, cool orbs, fine grain (frosted-glass texture).
  */
 export function LiquidGlassBackdrop({ theme }: { theme: 'light' | 'dark' }) {
   return (
@@ -11,11 +11,12 @@ export function LiquidGlassBackdrop({ theme }: { theme: 'light' | 'dark' }) {
     >
       <div className="liquid-glass-gradient absolute inset-0" />
       <div className="liquid-glass-orbs">
-        <div className="liquid-glass-orb liquid-glass-orb--violet" />
-        <div className="liquid-glass-orb liquid-glass-orb--blue" />
-        <div className="liquid-glass-orb liquid-glass-orb--pink" />
-        <div className="liquid-glass-orb liquid-glass-orb--cyan" />
+        <div className="liquid-glass-orb liquid-glass-orb--navy" />
+        <div className="liquid-glass-orb liquid-glass-orb--cobalt" />
+        <div className="liquid-glass-orb liquid-glass-orb--teal" />
+        <div className="liquid-glass-orb liquid-glass-orb--aqua" />
       </div>
+      <div className="liquid-glass-grain absolute inset-0" />
     </div>
   );
 }
