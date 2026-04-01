@@ -358,7 +358,7 @@ function ThemeToggleButton({ theme, onToggle }: { theme: 'dark' | 'light'; onTog
     <button
       type="button"
       onClick={onToggle}
-      className="glass-pill glass-pill--icon shrink-0"
+      className="glass-pill glass-pill--icon shrink-0 basis-9"
       aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
     >
       {theme === 'dark' ? (
@@ -500,13 +500,15 @@ export default function Chat() {
   const toggleTheme = () => setTheme(te => (te === 'dark' ? 'light' : 'dark'));
 
   const ModeSelector = ({ compact = false }: { compact?: boolean }) => (
-    <div className={`flex flex-wrap items-center ${compact ? 'gap-1' : 'gap-1.5 justify-center'}`}>
+    <div
+      className={`flex max-w-full flex-nowrap items-center overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${compact ? 'gap-1' : 'gap-1.5 justify-center'}`}
+    >
       {modes.map((m) => (
         <button
           key={m.id}
           type="button"
           onClick={() => setMode(m.id)}
-          className={`glass-pill text-xs font-medium ${
+          className={`glass-pill shrink-0 text-xs font-medium ${
             compact ? 'px-2.5 py-1.5 sm:px-3.5' : 'px-4 py-2'
           } ${mode === m.id ? modeActiveGlass[m.id] : 'glass-pill--idle'}`}
         >
@@ -528,20 +530,22 @@ export default function Chat() {
       {messages.length > 0 && (
         <header className="glass-header-bar fixed top-0 left-0 right-0 z-40">
           <div
-            className={`max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-2 min-w-0 transition-[padding] duration-300 ${
-              showSidebar ? 'md:pr-[42%]' : ''
+            className={`flex h-14 min-w-0 items-center justify-between gap-2 px-4 sm:px-6 transition-[padding] duration-300 ${
+              showSidebar
+                ? 'w-full md:pr-[42%]'
+                : 'mx-auto w-full max-w-7xl'
             }`}
           >
             <button
               onClick={() => window.location.reload()}
-              className="flex items-center gap-2 group shrink-0 mr-3 sm:mr-5 min-w-0"
+              className="group mr-2 flex min-w-0 shrink-0 items-center gap-2 sm:mr-4"
             >
               <span className="text-lg font-semibold tracking-tight bg-gradient-to-r dark:from-white/60 dark:via-white dark:to-white/60 from-gray-700 via-black to-gray-700 bg-clip-text text-transparent animate-gradient bg-[length:200%_100%]">
                 Sweep
               </span>
             </button>
 
-            <div className="flex items-center justify-end gap-1.5 sm:gap-2 min-w-0 flex-1 md:flex-initial md:ml-2 overflow-hidden">
+            <div className="flex min-w-0 flex-1 items-center justify-end gap-1.5 overflow-x-auto overflow-y-visible py-1 [-ms-overflow-style:none] [scrollbar-width:none] sm:gap-2 md:ml-2 md:flex-none md:overflow-visible [&::-webkit-scrollbar]:hidden">
               <ThemeToggleButton theme={theme} onToggle={toggleTheme} />
               <ModeSelector compact />
               {hasDashboardItems && (
@@ -574,7 +578,7 @@ export default function Chat() {
                   <span
                     className={
                       theme === 'dark'
-                        ? 'text-white drop-shadow-[0_4px_32px_rgba(0,0,0,0.35)]'
+                        ? 'text-white'
                         : 'bg-gradient-to-r from-gray-700 via-black to-gray-700 bg-clip-text text-transparent animate-gradient bg-[length:200%_100%]'
                     }
                   >
@@ -594,13 +598,13 @@ export default function Chat() {
               <ModeSelector />
 
               {/* Input */}
-              <form onSubmit={handleSubmit} className="w-full">
-                <div className="relative flex items-center">
+              <form onSubmit={handleSubmit} className="w-full min-w-0 max-w-xl">
+                <div className="flex min-h-[3rem] w-full min-w-0 items-center gap-1 rounded-lg border border-[var(--v-input-border)] bg-[var(--v-input-bg)] p-1.5 transition-[border-color,box-shadow] focus-within:border-[var(--v-border-2)] focus-within:ring-1 focus-within:ring-[var(--v-border-2)]">
                   <input
                     ref={inputRef}
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
-                    className="glass-pill-input pl-5 pr-14 py-4 text-sm"
+                    className="min-w-0 flex-1 border-0 bg-transparent px-3 py-2.5 text-sm text-[var(--v-fg)] placeholder:text-[var(--v-fg-5)] outline-none"
                     style={{ fontSize: '16px' }}
                     placeholder={currentPlaceholder}
                     autoComplete="off"
@@ -608,10 +612,11 @@ export default function Chat() {
                   <button
                     type="submit"
                     disabled={!input.trim()}
-                    className="absolute right-2 glass-pill glass-pill--send group"
+                    className="group inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-neutral-950 text-white transition-opacity hover:opacity-90 disabled:pointer-events-none disabled:opacity-30 dark:bg-white dark:text-neutral-950"
+                    aria-label="Send"
                   >
                     <Send
-                      className="w-[15px] h-[15px] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform"
+                      className="h-[15px] w-[15px] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform"
                       strokeWidth={1.75}
                       absoluteStrokeWidth
                     />
@@ -790,31 +795,34 @@ export default function Chat() {
         {/* ── FIXED BOTTOM INPUT (chat mode) ── */}
         {messages.length > 0 && (
           <div
-            className={`fixed bottom-0 left-0 right-0 z-30 bg-gradient-to-t from-[var(--v-bg)] via-[var(--v-bg)]/95 to-transparent dark:from-[var(--v-bg)] dark:via-[var(--v-bg)]/88 dark:to-transparent pt-8 ${showSidebar ? 'md:right-[42%]' : ''}`}
+            className={`fixed bottom-0 left-0 right-0 z-30 border-t border-[var(--v-border)] bg-[var(--v-bg)] pt-3 ${showSidebar ? 'md:right-[42%]' : ''}`}
             style={{ paddingBottom: 'max(20px, env(safe-area-inset-bottom))' }}
           >
-            <div className="w-full px-3 sm:px-4 space-y-2">
-              <form onSubmit={handleSubmit} className="relative flex items-center">
-                <input
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  className="glass-pill-input pl-5 pr-14 py-3.5 text-sm disabled:opacity-50"
-                  style={{ fontSize: '16px' }}
-                  placeholder={currentPlaceholder}
-                  disabled={isLoading}
-                  autoComplete="off"
-                />
-                <button
-                  type="submit"
-                  disabled={!input.trim() || isLoading}
-                  className="absolute right-2 glass-pill glass-pill--send group"
-                >
-                  <Send
-                    className="w-[15px] h-[15px] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform"
-                    strokeWidth={1.75}
-                    absoluteStrokeWidth
+            <div className="mx-auto w-full max-w-2xl space-y-2 px-3 sm:px-4">
+              <form onSubmit={handleSubmit} className="w-full min-w-0">
+                <div className="flex min-h-[2.75rem] w-full min-w-0 items-center gap-1 rounded-lg border border-[var(--v-input-border)] bg-[var(--v-input-bg)] p-1.5 transition-[border-color,box-shadow] focus-within:border-[var(--v-border-2)] focus-within:ring-1 focus-within:ring-[var(--v-border-2)]">
+                  <input
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    className="min-w-0 flex-1 border-0 bg-transparent px-3 py-2 text-sm text-[var(--v-fg)] placeholder:text-[var(--v-fg-5)] outline-none disabled:opacity-50"
+                    style={{ fontSize: '16px' }}
+                    placeholder={currentPlaceholder}
+                    disabled={isLoading}
+                    autoComplete="off"
                   />
-                </button>
+                  <button
+                    type="submit"
+                    disabled={!input.trim() || isLoading}
+                    className="group inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-neutral-950 text-white transition-opacity hover:opacity-90 disabled:pointer-events-none disabled:opacity-30 dark:bg-white dark:text-neutral-950"
+                    aria-label="Send"
+                  >
+                    <Send
+                      className="h-[15px] w-[15px] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform"
+                      strokeWidth={1.75}
+                      absoluteStrokeWidth
+                    />
+                  </button>
+                </div>
               </form>
               <p className="text-center text-[11px] text-[var(--v-fg-5)] dark:text-white/40">
                 Sweep can make mistakes. Verify important information.
@@ -825,19 +833,20 @@ export default function Chat() {
       </main>
 
       {/* ── RIGHT SIDEBAR (desktop dashboard) ── */}
-      <aside className={`hidden md:flex flex-col fixed top-0 right-0 h-full w-[42%] bg-[var(--v-bg-2)] border-l border-[var(--v-border)] dark:bg-black/25 dark:backdrop-blur-[30px] dark:border-white/12 dark:shadow-[0_8px_40px_0_rgba(0,0,0,0.12)] z-50 transform transition-transform duration-300 ease-in-out ${showSidebar ? 'translate-x-0' : 'translate-x-full'}`}>
+      <aside className={`fixed right-0 top-0 z-50 hidden h-full w-[42%] flex-col border-l border-[var(--v-border)] bg-[var(--v-bg-2)] transition-transform duration-300 ease-in-out md:flex dark:border-white/12 dark:bg-[#0a0a0a] ${showSidebar ? 'translate-x-0' : 'translate-x-full'}`}>
         {/* Sidebar header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--v-border)] shrink-0">
-          <div className="flex items-center gap-2">
-            <BarChart2 className="w-4 h-4 text-[var(--v-fg-4)]" />
-            <span className="text-sm font-medium text-[var(--v-fg-3)]">Dashboard</span>
+        <div className="flex min-w-0 items-center justify-between gap-3 border-b border-[var(--v-border)] px-5 py-4 shrink-0">
+          <div className="flex min-w-0 items-center gap-2">
+            <BarChart2 className="h-4 w-4 shrink-0 text-[var(--v-fg-4)]" />
+            <span className="truncate text-sm font-medium text-[var(--v-fg-3)]">Dashboard</span>
           </div>
           <button
+            type="button"
             onClick={() => setShowSidebar(false)}
-            className="glass-pill glass-pill--icon-sm glass-pill--idle"
+            className="glass-pill glass-pill--icon-sm glass-pill--idle shrink-0"
             aria-label="Close dashboard"
           >
-            <X className="w-4 h-4" />
+            <X className="h-4 w-4" />
           </button>
         </div>
 
