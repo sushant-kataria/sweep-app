@@ -2,7 +2,27 @@
 
 import { useChat } from '@ai-sdk/react';
 import { useState, useEffect, useRef } from 'react';
-import { Send, BarChart2, X, Search, MessageSquare, Code2, Copy, Check, Wand2, Download, Sun, Moon } from 'lucide-react';
+import {
+  Send,
+  BarChart2,
+  X,
+  Search,
+  MessageSquare,
+  Code2,
+  Copy,
+  Check,
+  Image as LucideImage,
+  Download,
+  Sun,
+  Moon,
+} from 'lucide-react';
+
+/** ~17pt SF Symbol–like stroke; Lucide is used because SF Symbols are not licensed for web. */
+const GLASS_ICON = {
+  className: 'w-[15px] h-[15px] shrink-0',
+  strokeWidth: 1.75,
+  absoluteStrokeWidth: true as const,
+};
 
 import { BarChartPro } from '@/components/dashboard/bar-chart-pro';
 import { LineChartPro } from '@/components/dashboard/line-chart-pro';
@@ -38,25 +58,25 @@ const modes: { id: Mode; label: string; icon: React.ReactNode; placeholder: stri
   {
     id: 'chat',
     label: 'Chat',
-    icon: <MessageSquare className="w-3.5 h-3.5" />,
+    icon: <MessageSquare {...GLASS_ICON} />,
     placeholder: 'Ask anything...',
   },
   {
     id: 'search',
     label: 'Search',
-    icon: <Search className="w-3.5 h-3.5" />,
+    icon: <Search {...GLASS_ICON} />,
     placeholder: 'Search for information...',
   },
   {
     id: 'code',
     label: 'Code',
-    icon: <Code2 className="w-3.5 h-3.5" />,
+    icon: <Code2 {...GLASS_ICON} />,
     placeholder: 'Ask a coding question...',
   },
   {
     id: 'image',
     label: 'Image',
-    icon: <Wand2 className="w-3.5 h-3.5" />,
+    icon: <LucideImage {...GLASS_ICON} />,
     placeholder: 'Describe an image to generate...',
   },
 ];
@@ -340,7 +360,11 @@ function ThemeToggleButton({ theme, onToggle }: { theme: 'dark' | 'light'; onTog
       className="glass-pill glass-pill--icon shrink-0"
       aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
     >
-      {theme === 'dark' ? <Sun className="w-4 h-4" strokeWidth={1.5} /> : <Moon className="w-4 h-4" strokeWidth={1.5} />}
+      {theme === 'dark' ? (
+        <Sun className="w-[17px] h-[17px]" strokeWidth={1.75} absoluteStrokeWidth />
+      ) : (
+        <Moon className="w-[17px] h-[17px]" strokeWidth={1.75} absoluteStrokeWidth />
+      )}
     </button>
   );
 }
@@ -493,10 +517,13 @@ export default function Chat() {
   );
 
   return (
-    <div className="bg-[var(--v-bg)] text-[var(--v-fg)] flex flex-col" style={{ position: 'fixed', inset: 0, overflow: 'hidden' }}>
+    <div
+      className="app-chrome-bg text-[var(--v-fg)] flex flex-col"
+      style={{ position: 'fixed', inset: 0, overflow: 'hidden' }}
+    >
       {/* ── HEADER (only during chat) ── */}
       {messages.length > 0 && (
-        <header className="fixed top-0 left-0 right-0 z-40 bg-[var(--v-bg)]/90 backdrop-blur-xl border-b border-[var(--v-border)]">
+        <header className="glass-header-bar fixed top-0 left-0 right-0 z-40">
           <div
             className={`max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-2 min-w-0 transition-[padding] duration-300 ${
               showSidebar ? 'md:pr-[42%]' : ''
@@ -519,7 +546,7 @@ export default function Chat() {
                   onClick={() => setShowSidebar(v => !v)}
                   className="glass-pill glass-pill--idle hidden sm:inline-flex items-center gap-1.5 text-xs shrink-0 px-3.5 py-2"
                 >
-                  <BarChart2 className="w-3.5 h-3.5" />
+                  <BarChart2 {...GLASS_ICON} />
                   {showSidebar ? 'Hide' : 'Show'} dashboard
                 </button>
               )}
@@ -570,7 +597,11 @@ export default function Chat() {
                     disabled={!input.trim()}
                     className="absolute right-2 glass-pill glass-pill--send group"
                   >
-                    <Send className="w-3.5 h-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                    <Send
+                      className="w-[15px] h-[15px] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform"
+                      strokeWidth={1.75}
+                      absoluteStrokeWidth
+                    />
                   </button>
                 </div>
               </form>
@@ -765,7 +796,11 @@ export default function Chat() {
                   disabled={!input.trim() || isLoading}
                   className="absolute right-2 glass-pill glass-pill--send group"
                 >
-                  <Send className="w-3.5 h-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                  <Send
+                    className="w-[15px] h-[15px] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform"
+                    strokeWidth={1.75}
+                    absoluteStrokeWidth
+                  />
                 </button>
               </form>
               <p className="text-center text-[11px] text-[var(--v-fg-5)]">
