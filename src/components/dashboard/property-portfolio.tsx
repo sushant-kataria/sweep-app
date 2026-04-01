@@ -1,4 +1,4 @@
-// components/dashboard/property-portfolio.tsx (COMPLETE FILE)
+// components/dashboard/property-portfolio.tsx
 'use client';
 
 type Property = {
@@ -54,106 +54,132 @@ export const PropertyPortfolio = ({ properties }: PropertyPortfolioProps) => {
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
-      case 'active': return 'text-green-400';
-      case 'rented': return 'text-blue-400';
-      case 'for sale': return 'text-yellow-400';
-      case 'sold': return 'text-gray-400';
-      default: return 'text-white';
+      case 'active':
+        return 'text-emerald-600 dark:text-emerald-400';
+      case 'rented':
+        return 'text-sky-600 dark:text-sky-400';
+      case 'for sale':
+        return 'text-amber-600 dark:text-amber-400';
+      case 'sold':
+        return 'text-neutral-500 dark:text-neutral-400';
+      default:
+        return 'text-[var(--v-chart-fg)]';
     }
   };
 
   return (
-    <div className="bg-black border border-white/20 rounded p-4 space-y-4">
-      <div className="border-b border-white/10 pb-3">
-        <h3 className="text-white font-mono text-sm mb-3">property portfolio dashboard</h3>
-        
-        {/* Summary Stats */}
+    <div className="space-y-4 rounded-lg border border-[var(--v-chart-card-border)] bg-white p-4 text-[var(--v-chart-fg)] dark:bg-[var(--v-chart-card-bg)]">
+      <div className="border-b border-[var(--v-chart-card-border)] pb-3">
+        <h3 className="mb-3 font-mono text-sm font-semibold text-[var(--v-chart-fg)]">
+          property portfolio dashboard
+        </h3>
+
         <div className="grid grid-cols-2 gap-3 text-xs">
-          <div className="bg-white/5 rounded p-2">
-            <div className="text-white/60 mb-1">total properties</div>
-            <div className="text-white font-bold text-lg">{properties.length}</div>
+          <div className="rounded bg-neutral-100/80 p-2 dark:bg-white/[0.06]">
+            <div className="mb-1 text-[var(--v-chart-muted)]">total properties</div>
+            <div className="text-lg font-bold text-[var(--v-chart-fg)]">{properties.length}</div>
           </div>
-          <div className="bg-white/5 rounded p-2">
-            <div className="text-white/60 mb-1">portfolio value</div>
-            <div className="text-white font-bold text-lg">{formatCurrency(totalPortfolioValue)}</div>
+          <div className="rounded bg-neutral-100/80 p-2 dark:bg-white/[0.06]">
+            <div className="mb-1 text-[var(--v-chart-muted)]">portfolio value</div>
+            <div className="text-lg font-bold text-[var(--v-chart-fg)]">
+              {formatCurrency(totalPortfolioValue)}
+            </div>
           </div>
-          <div className="bg-white/5 rounded p-2">
-            <div className="text-white/60 mb-1">total appreciation</div>
-            <div className={`font-bold text-lg ${totalAppreciation >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+          <div className="rounded bg-neutral-100/80 p-2 dark:bg-white/[0.06]">
+            <div className="mb-1 text-[var(--v-chart-muted)]">total appreciation</div>
+            <div
+              className={`text-lg font-bold ${totalAppreciation >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}
+            >
               {formatCurrency(totalAppreciation)}
             </div>
           </div>
-          <div className="bg-white/5 rounded p-2">
-            <div className="text-white/60 mb-1">monthly income</div>
-            <div className="text-white font-bold text-lg">{formatCurrency(totalMonthlyIncome)}</div>
+          <div className="rounded bg-neutral-100/80 p-2 dark:bg-white/[0.06]">
+            <div className="mb-1 text-[var(--v-chart-muted)]">monthly income</div>
+            <div className="text-lg font-bold text-[var(--v-chart-fg)]">
+              {formatCurrency(totalMonthlyIncome)}
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Individual Properties */}
-      <div className="space-y-3 max-h-96 overflow-y-auto">
+      <div className="max-h-96 space-y-3 overflow-y-auto">
         {properties.map((property) => {
-          const appreciation = parseFloat(calculateAppreciation(property.purchasePrice, property.currentValue));
-          
+          const appreciation = parseFloat(
+            calculateAppreciation(property.purchasePrice, property.currentValue)
+          );
+
           return (
-            <div key={property.id} className="bg-white/5 border border-white/10 rounded p-3 space-y-2">
-              {/* Header */}
-              <div className="flex justify-between items-start">
+            <div
+              key={property.id}
+              className="space-y-2 rounded border border-[var(--v-chart-card-border)] bg-neutral-100/50 p-3 dark:bg-white/[0.05]"
+            >
+              <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <div className="text-white font-bold text-sm">{property.address}</div>
-                  <div className="text-white/60 text-xs mt-0.5">
+                  <div className="text-sm font-bold text-[var(--v-chart-fg)]">{property.address}</div>
+                  <div className="mt-0.5 text-xs text-[var(--v-chart-muted)]">
                     owner: {property.ownerName} | id: {property.id}
                   </div>
                 </div>
-                <div className={`text-xs font-bold px-2 py-1 rounded ${getStatusColor(property.status)}`}>
+                <div className={`rounded px-2 py-1 text-xs font-bold ${getStatusColor(property.status)}`}>
                   {property.status}
                 </div>
               </div>
 
-              {/* Property Details */}
               <div className="grid grid-cols-2 gap-2 text-xs">
                 <div>
-                  <span className="text-white/60">type: </span>
-                  <span className="text-white">{property.propertyType}</span>
+                  <span className="text-[var(--v-chart-muted)]">type: </span>
+                  <span className="text-[var(--v-chart-fg)]">{property.propertyType}</span>
                 </div>
                 <div>
-                  <span className="text-white/60">built: </span>
-                  <span className="text-white">{property.yearBuilt} ({calculateAge(property.yearBuilt)} yrs old)</span>
+                  <span className="text-[var(--v-chart-muted)]">built: </span>
+                  <span className="text-[var(--v-chart-fg)]">
+                    {property.yearBuilt} ({calculateAge(property.yearBuilt)} yrs old)
+                  </span>
                 </div>
                 <div>
-                  <span className="text-white/60">size: </span>
-                  <span className="text-white">{property.squareFeet.toLocaleString()} sqft</span>
+                  <span className="text-[var(--v-chart-muted)]">size: </span>
+                  <span className="text-[var(--v-chart-fg)]">
+                    {property.squareFeet.toLocaleString()} sqft
+                  </span>
                 </div>
                 {property.bedrooms && property.bathrooms && (
                   <div>
-                    <span className="text-white/60">beds/baths: </span>
-                    <span className="text-white">{property.bedrooms}bd / {property.bathrooms}ba</span>
+                    <span className="text-[var(--v-chart-muted)]">beds/baths: </span>
+                    <span className="text-[var(--v-chart-fg)]">
+                      {property.bedrooms}bd / {property.bathrooms}ba
+                    </span>
                   </div>
                 )}
               </div>
 
-              {/* Financial Details */}
-              <div className="grid grid-cols-2 gap-2 text-xs border-t border-white/10 pt-2">
+              <div className="grid grid-cols-2 gap-2 border-t border-[var(--v-chart-card-border)] pt-2 text-xs">
                 <div>
-                  <div className="text-white/60">purchase price</div>
-                  <div className="text-white font-bold">{formatCurrency(property.purchasePrice)}</div>
-                  <div className="text-white/40 text-xs">
+                  <div className="text-[var(--v-chart-muted)]">purchase price</div>
+                  <div className="font-bold text-[var(--v-chart-fg)]">
+                    {formatCurrency(property.purchasePrice)}
+                  </div>
+                  <div className="text-[var(--v-chart-empty)]">
                     {property.purchaseDate} ({calculateYearsOwned(property.purchaseDate)} yrs)
                   </div>
                 </div>
                 <div>
-                  <div className="text-white/60">current value</div>
-                  <div className="text-white font-bold">{formatCurrency(property.currentValue)}</div>
-                  <div className={`text-xs ${appreciation >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                    {appreciation >= 0 ? '+' : ''}{appreciation}% appreciation
+                  <div className="text-[var(--v-chart-muted)]">current value</div>
+                  <div className="font-bold text-[var(--v-chart-fg)]">
+                    {formatCurrency(property.currentValue)}
+                  </div>
+                  <div
+                    className={`text-xs ${appreciation >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}
+                  >
+                    {appreciation >= 0 ? '+' : ''}
+                    {appreciation}% appreciation
                   </div>
                 </div>
                 {property.rentalIncome && (
                   <div className="col-span-2 mt-2">
-                    <div className="text-white/60">rental income</div>
-                    <div className="text-white font-bold">
+                    <div className="text-[var(--v-chart-muted)]">rental income</div>
+                    <div className="font-bold text-[var(--v-chart-fg)]">
                       {formatCurrency(property.rentalIncome)}/month
-                      <span className="text-white/60 font-normal text-xs ml-2">
+                      <span className="ml-2 text-xs font-normal text-[var(--v-chart-muted)]">
                         ({formatCurrency(property.rentalIncome * 12)}/year)
                       </span>
                     </div>

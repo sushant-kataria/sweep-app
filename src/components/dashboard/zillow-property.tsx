@@ -7,37 +7,43 @@ type ZillowPropertyProps = {
   error?: string;
 };
 
+const shell =
+  'rounded-lg border border-[var(--v-chart-card-border)] bg-white text-[var(--v-chart-fg)] dark:bg-[var(--v-chart-card-bg)]';
+
+const nested = 'rounded bg-neutral-100/80 dark:bg-white/[0.06]';
+
 export const ZillowProperty = ({ property, zillowUrl, error }: ZillowPropertyProps) => {
-    if (error) {
-        return (
-          <div className="bg-black border border-white/20 rounded p-4">
-            <h3 className="text-white font-mono text-sm mb-2">zillow property data</h3>
-            <div className="text-red-400 text-xs mb-3">{error}</div>
-            <div className="text-white/60 text-xs mt-2">
-              <div className="mb-2">URL: {zillowUrl}</div>
-              <div className="bg-white/5 rounded p-2 mt-2 text-xs">
-                <div className="text-white/80 mb-1">Possible issues:</div>
-                <ul className="list-disc list-inside text-white/60 space-y-1">
-                  <li>Property may have been removed from Zillow</li>
-                  <li>Property URL might be incorrect</li>
-                  <li>API rate limit reached (try again in a moment)</li>
-                </ul>
-              </div>
-            </div>
-            <button
-              onClick={() => window.open(zillowUrl, '_blank')}
-              className="mt-3 text-xs text-white/60 hover:text-white underline"
-            >
-              view original listing on zillow →
-            </button>
+  if (error) {
+    return (
+      <div className={`${shell} space-y-3 p-4`}>
+        <h3 className="font-mono text-sm font-semibold text-[var(--v-chart-fg)]">zillow property data</h3>
+        <div className="text-xs text-red-600 dark:text-red-400">{error}</div>
+        <div className="mt-2 text-xs text-[var(--v-chart-muted)]">
+          <div className="mb-2">URL: {zillowUrl}</div>
+          <div className={`${nested} mt-2 p-2 text-xs`}>
+            <div className="mb-1 text-[var(--v-chart-tick)]">Possible issues:</div>
+            <ul className="list-inside list-disc space-y-1 text-[var(--v-chart-muted)]">
+              <li>Property may have been removed from Zillow</li>
+              <li>Property URL might be incorrect</li>
+              <li>API rate limit reached (try again in a moment)</li>
+            </ul>
           </div>
-        );
-      }
+        </div>
+        <button
+          type="button"
+          onClick={() => window.open(zillowUrl, '_blank')}
+          className="mt-1 text-xs text-[var(--v-chart-muted)] underline hover:text-[var(--v-chart-fg)]"
+        >
+          view original listing on zillow →
+        </button>
+      </div>
+    );
+  }
 
   if (!property) {
     return (
-      <div className="bg-black border border-white/20 rounded p-4">
-        <div className="text-white/60 text-xs">No property data available</div>
+      <div className={`${shell} p-4`}>
+        <div className="text-xs text-[var(--v-chart-muted)]">No property data available</div>
       </div>
     );
   }
@@ -60,135 +66,130 @@ export const ZillowProperty = ({ property, zillowUrl, error }: ZillowPropertyPro
   };
 
   return (
-    <div className="bg-black border border-white/20 rounded p-4 space-y-4">
-      {/* Header */}
-      <div className="border-b border-white/10 pb-3">
-        <div className="flex justify-between items-start mb-2">
+    <div className={`${shell} space-y-4 p-4`}>
+      <div className="border-b border-[var(--v-chart-card-border)] pb-3">
+        <div className="mb-2 flex items-start justify-between">
           <div className="flex-1">
-            <h3 className="text-white font-mono text-sm font-bold">{property.addressRaw}</h3>
-            <div className="text-white/60 text-xs mt-1">
+            <h3 className="font-mono text-sm font-bold text-[var(--v-chart-fg)]">{property.addressRaw}</h3>
+            <div className="mt-1 text-xs text-[var(--v-chart-muted)]">
               {property.address?.city}, {property.address?.state} {property.address?.zipcode}
             </div>
           </div>
           <div className="text-right">
-            <div className="text-white font-bold text-lg">{formatCurrency(property.price)}</div>
-            <div className="text-white/60 text-xs">{property.status}</div>
+            <div className="text-lg font-bold text-[var(--v-chart-fg)]">{formatCurrency(property.price)}</div>
+            <div className="text-xs text-[var(--v-chart-muted)]">{property.status}</div>
           </div>
         </div>
       </div>
 
-      {/* Main Property Image */}
       {property.image && (
-        <div className="rounded overflow-hidden border border-white/10">
-          <img 
-            src={property.image} 
-            alt={property.addressRaw}
-            className="w-full h-48 object-cover"
-          />
+        <div className="overflow-hidden rounded border border-[var(--v-chart-card-border)]">
+          <img src={property.image} alt={property.addressRaw} className="h-48 w-full object-cover" />
         </div>
       )}
 
-      {/* Key Stats */}
       <div className="grid grid-cols-3 gap-2 text-xs">
         {property.beds && (
-          <div className="bg-white/5 rounded p-2 text-center">
-            <div className="text-white/60">beds</div>
-            <div className="text-white font-bold text-lg">{property.beds}</div>
+          <div className={`${nested} p-2 text-center`}>
+            <div className="text-[var(--v-chart-muted)]">beds</div>
+            <div className="text-lg font-bold text-[var(--v-chart-fg)]">{property.beds}</div>
           </div>
         )}
         {property.baths && (
-          <div className="bg-white/5 rounded p-2 text-center">
-            <div className="text-white/60">baths</div>
-            <div className="text-white font-bold text-lg">{property.baths}</div>
+          <div className={`${nested} p-2 text-center`}>
+            <div className="text-[var(--v-chart-muted)]">baths</div>
+            <div className="text-lg font-bold text-[var(--v-chart-fg)]">{property.baths}</div>
           </div>
         )}
         {property.area && (
-          <div className="bg-white/5 rounded p-2 text-center">
-            <div className="text-white/60">sqft</div>
-            <div className="text-white font-bold text-lg">{property.area.toLocaleString()}</div>
+          <div className={`${nested} p-2 text-center`}>
+            <div className="text-[var(--v-chart-muted)]">sqft</div>
+            <div className="text-lg font-bold text-[var(--v-chart-fg)]">{property.area.toLocaleString()}</div>
           </div>
         )}
       </div>
 
-      {/* Property Details */}
-      <div className="grid grid-cols-2 gap-2 text-xs border-t border-white/10 pt-3">
+      <div className="grid grid-cols-2 gap-2 border-t border-[var(--v-chart-card-border)] pt-3 text-xs">
         {property.homeType && (
           <div>
-            <span className="text-white/60">type: </span>
-            <span className="text-white">{property.homeType}</span>
+            <span className="text-[var(--v-chart-muted)]">type: </span>
+            <span className="text-[var(--v-chart-fg)]">{property.homeType}</span>
           </div>
         )}
         {property.yearBuilt && (
           <div>
-            <span className="text-white/60">built: </span>
-            <span className="text-white">{property.yearBuilt}</span>
+            <span className="text-[var(--v-chart-muted)]">built: </span>
+            <span className="text-[var(--v-chart-fg)]">{property.yearBuilt}</span>
           </div>
         )}
         {property.lotSize && (
           <div>
-            <span className="text-white/60">lot size: </span>
-            <span className="text-white">{property.lotSize} {property.lotAreaUnits}</span>
+            <span className="text-[var(--v-chart-muted)]">lot size: </span>
+            <span className="text-[var(--v-chart-fg)]">
+              {property.lotSize} {property.lotAreaUnits}
+            </span>
           </div>
         )}
         {property.county && (
           <div>
-            <span className="text-white/60">county: </span>
-            <span className="text-white">{property.county}</span>
+            <span className="text-[var(--v-chart-muted)]">county: </span>
+            <span className="text-[var(--v-chart-fg)]">{property.county}</span>
           </div>
         )}
       </div>
 
-      {/* Zestimate */}
       {(property.zestimate || property.rentZestimate) && (
-        <div className="grid grid-cols-2 gap-2 text-xs border-t border-white/10 pt-3">
+        <div className="grid grid-cols-2 gap-2 border-t border-[var(--v-chart-card-border)] pt-3 text-xs">
           {property.zestimate && (
-            <div className="bg-white/5 rounded p-2">
-              <div className="text-white/60 mb-1">zestimate</div>
-              <div className="text-white font-bold">{formatCurrency(property.zestimate)}</div>
+            <div className={`${nested} p-2`}>
+              <div className="mb-1 text-[var(--v-chart-muted)]">zestimate</div>
+              <div className="font-bold text-[var(--v-chart-fg)]">{formatCurrency(property.zestimate)}</div>
             </div>
           )}
           {property.rentZestimate && (
-            <div className="bg-white/5 rounded p-2">
-              <div className="text-white/60 mb-1">rent zestimate</div>
-              <div className="text-white font-bold">{formatCurrency(property.rentZestimate)}/mo</div>
+            <div className={`${nested} p-2`}>
+              <div className="mb-1 text-[var(--v-chart-muted)]">rent zestimate</div>
+              <div className="font-bold text-[var(--v-chart-fg)]">
+                {formatCurrency(property.rentZestimate)}/mo
+              </div>
             </div>
           )}
         </div>
       )}
 
-      {/* Agent Info */}
       {(property.agentName || property.brokerName) && (
-        <div className="border-t border-white/10 pt-3">
-          <div className="text-white/60 text-xs mb-2">listing agent</div>
-          <div className="bg-white/5 rounded p-2 text-xs">
-            {property.agentName && (
-              <div className="text-white font-bold">{property.agentName}</div>
-            )}
-            {property.brokerName && (
-              <div className="text-white/60 mt-1">{property.brokerName}</div>
-            )}
+        <div className="border-t border-[var(--v-chart-card-border)] pt-3">
+          <div className="mb-2 text-xs text-[var(--v-chart-muted)]">listing agent</div>
+          <div className={`${nested} p-2 text-xs`}>
+            {property.agentName && <div className="font-bold text-[var(--v-chart-fg)]">{property.agentName}</div>}
+            {property.brokerName && <div className="mt-1 text-[var(--v-chart-muted)]">{property.brokerName}</div>}
             {property.agentPhoneNumber && (
-              <div className="text-white mt-1">{property.agentPhoneNumber}</div>
+              <div className="mt-1 text-[var(--v-chart-fg)]">{property.agentPhoneNumber}</div>
             )}
           </div>
         </div>
       )}
 
-      {/* Price History */}
       {property.priceHistory && property.priceHistory.length > 0 && (
-        <div className="border-t border-white/10 pt-3">
-          <div className="text-white/60 text-xs mb-2">price history</div>
-          <div className="space-y-1 max-h-32 overflow-y-auto">
+        <div className="border-t border-[var(--v-chart-card-border)] pt-3">
+          <div className="mb-2 text-xs text-[var(--v-chart-muted)]">price history</div>
+          <div className="max-h-32 space-y-1 overflow-y-auto">
             {property.priceHistory.slice(0, 5).map((history: any, i: number) => (
-              <div key={i} className="bg-white/5 rounded p-2 text-xs flex justify-between items-center">
+              <div key={i} className={`${nested} flex items-center justify-between p-2 text-xs`}>
                 <div>
-                  <div className="text-white">{history.event}</div>
-                  <div className="text-white/60">{formatDate(history.time)}</div>
+                  <div className="text-[var(--v-chart-fg)]">{history.event}</div>
+                  <div className="text-[var(--v-chart-muted)]">{formatDate(history.time)}</div>
                 </div>
                 <div className="text-right">
-                  <div className="text-white font-bold">{formatCurrency(history.price)}</div>
+                  <div className="font-bold text-[var(--v-chart-fg)]">{formatCurrency(history.price)}</div>
                   {history.priceChangeRate && (
-                    <div className={`${history.priceChangeRate > 0 ? 'text-green-400' : 'text-red-400'}`}>
+                    <div
+                      className={
+                        history.priceChangeRate > 0
+                          ? 'text-emerald-600 dark:text-emerald-400'
+                          : 'text-red-600 dark:text-red-400'
+                      }
+                    >
                       {(history.priceChangeRate * 100).toFixed(1)}%
                     </div>
                   )}
@@ -199,23 +200,21 @@ export const ZillowProperty = ({ property, zillowUrl, error }: ZillowPropertyPro
         </div>
       )}
 
-      {/* Description */}
       {property.description && (
-        <div className="border-t border-white/10 pt-3">
-          <div className="text-white/60 text-xs mb-2">description</div>
-          <div className="text-white text-xs leading-relaxed max-h-32 overflow-y-auto">
+        <div className="border-t border-[var(--v-chart-card-border)] pt-3">
+          <div className="mb-2 text-xs text-[var(--v-chart-muted)]">description</div>
+          <div className="max-h-32 overflow-y-auto text-xs leading-relaxed text-[var(--v-chart-tick)]">
             {property.description}
           </div>
         </div>
       )}
 
-      {/* View on Zillow Link */}
-      <div className="border-t border-white/10 pt-3">
-        <a 
+      <div className="border-t border-[var(--v-chart-card-border)] pt-3">
+        <a
           href={property.url || zillowUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-white/60 hover:text-white text-xs underline"
+          className="text-xs text-[var(--v-chart-muted)] underline hover:text-[var(--v-chart-fg)]"
         >
           view full listing on zillow →
         </a>
