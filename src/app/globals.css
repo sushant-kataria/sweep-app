@@ -234,11 +234,7 @@ html {
   scroll-behavior: smooth;
 }
 
-/*
- * iOS & iPadOS 26 UI Kit — Apple Design Resources (Figma community)
- * Materials tuned from Home Screen Search + Dock (node 754-62883) and cover palette (221-56229).
- * https://www.figma.com/design/DgPEQVTTV1rGxj1AQ3qBn7/iOS-and-iPadOS-26--Community-
- */
+/* App shell backdrop: achromatic only (dark gray / white). Glass UI tokens follow below. */
 .app-chrome-bg {
   background-color: var(--v-bg);
 }
@@ -262,36 +258,27 @@ html {
     0 8px 32px rgba(0, 0, 0, 0.22);
 }
 
-/* ── iOS 26 kit: blue → cobalt → teal (cover art), orbs + grain ── */
+/* ── Neutral shell backdrop (no chroma): dark gray / white + subtle depth orbs ── */
 .liquid-glass-gradient {
   will-change: background-position;
 }
 
 .liquid-glass-backdrop--dark .liquid-glass-gradient {
   background: linear-gradient(
-    122deg,
-    #001f3d 0%,
-    #002d62 14%,
-    #004080 32%,
-    #0056b3 52%,
-    #0078a8 72%,
-    #00a3b8 88%,
-    #2ec4b6 100%
+    125deg,
+    #070707 0%,
+    #0c0c0c 28%,
+    #101010 55%,
+    #0a0a0a 78%,
+    #121212 100%
   );
-  background-size: 400% 400%;
-  animation: liquid-glass-bg-pan 22s ease infinite;
+  background-size: 320% 320%;
+  animation: liquid-glass-bg-pan 28s ease infinite;
 }
 
 .liquid-glass-backdrop--light .liquid-glass-gradient {
-  background: linear-gradient(
-    125deg,
-    oklch(0.96 0.02 250) 0%,
-    oklch(0.94 0.035 230) 38%,
-    oklch(0.93 0.04 210) 72%,
-    oklch(0.95 0.03 200) 100%
-  );
-  background-size: 240% 240%;
-  animation: liquid-glass-bg-pan 32s ease infinite;
+  background: #ffffff;
+  animation: none;
 }
 
 /* Fine grain — stippled “frosted” regions on the kit cover */
@@ -304,8 +291,8 @@ html {
 }
 
 .liquid-glass-backdrop--light .liquid-glass-grain {
-  opacity: 0.038;
-  mix-blend-mode: soft-light;
+  opacity: 0.022;
+  mix-blend-mode: multiply;
 }
 
 @keyframes liquid-glass-bg-pan {
@@ -337,7 +324,7 @@ html {
   height: 26rem;
   top: 8%;
   left: 12%;
-  background: radial-gradient(circle, rgba(0, 45, 98, 0.55) 0%, transparent 68%);
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.055) 0%, transparent 68%);
   filter: blur(64px);
   animation: liquid-glass-orb-a 20s ease-in-out infinite;
 }
@@ -347,7 +334,7 @@ html {
   height: 21rem;
   top: 48%;
   right: 8%;
-  background: radial-gradient(circle, rgba(0, 86, 179, 0.42) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(0, 0, 0, 0.5) 0%, transparent 70%);
   filter: blur(58px);
   animation: liquid-glass-orb-b 19s ease-in-out infinite;
 }
@@ -357,7 +344,7 @@ html {
   height: 17rem;
   bottom: 16%;
   left: 28%;
-  background: radial-gradient(circle, rgba(0, 180, 200, 0.35) 0%, transparent 72%);
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.04) 0%, transparent 72%);
   filter: blur(52px);
   animation: liquid-glass-orb-c 16s ease-in-out infinite;
 }
@@ -367,7 +354,7 @@ html {
   height: 19rem;
   top: 36%;
   left: 58%;
-  background: radial-gradient(circle, rgba(46, 196, 182, 0.28) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.045) 0%, transparent 70%);
   filter: blur(56px);
   animation: liquid-glass-orb-d 23s ease-in-out infinite;
 }
@@ -377,7 +364,7 @@ html {
   height: 22rem;
   top: 6%;
   left: 10%;
-  background: radial-gradient(circle, rgba(0, 56, 120, 0.1) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(0, 0, 0, 0.018) 0%, transparent 70%);
   filter: blur(56px);
   animation: liquid-glass-orb-a 24s ease-in-out infinite;
 }
@@ -387,7 +374,7 @@ html {
   height: 18rem;
   top: 46%;
   right: 6%;
-  background: radial-gradient(circle, rgba(0, 110, 190, 0.09) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(0, 0, 0, 0.014) 0%, transparent 70%);
   filter: blur(54px);
   animation: liquid-glass-orb-b 21s ease-in-out infinite;
 }
@@ -397,7 +384,7 @@ html {
   height: 15rem;
   bottom: 14%;
   left: 26%;
-  background: radial-gradient(circle, rgba(0, 150, 170, 0.08) 0%, transparent 72%);
+  background: radial-gradient(circle, rgba(0, 0, 0, 0.012) 0%, transparent 72%);
   filter: blur(48px);
   animation: liquid-glass-orb-c 18s ease-in-out infinite;
 }
@@ -407,7 +394,7 @@ html {
   height: 17rem;
   top: 34%;
   left: 52%;
-  background: radial-gradient(circle, rgba(20, 170, 160, 0.07) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(0, 0, 0, 0.015) 0%, transparent 70%);
   filter: blur(50px);
   animation: liquid-glass-orb-d 26s ease-in-out infinite;
 }
@@ -455,7 +442,7 @@ html {
 @media (prefers-reduced-motion: reduce) {
   .liquid-glass-gradient {
     animation: none !important;
-    background-position: 40% 50%;
+    background-position: 50% 50%;
   }
 
   .liquid-glass-orb {

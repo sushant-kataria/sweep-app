@@ -1,7 +1,6 @@
 /**
- * Wallpaper-style backdrop — iOS & iPadOS 26 UI Kit (Apple Design Resources).
- * Cover palette: https://www.figma.com/design/DgPEQVTTV1rGxj1AQ3qBn7/iOS-and-iPadOS-26--Community-?node-id=221-56229
- * Home screen ref (Search / Dock glass): node 754-62883 — same file.
+ * Shell backdrop only: neutral dark grays (dark theme) or white (light theme).
+ * Subtle animated orbs for depth; optional grain. Glass controls stay in globals.css.
  */
 export function LiquidGlassBackdrop({ theme }: { theme: 'light' | 'dark' }) {
   return (

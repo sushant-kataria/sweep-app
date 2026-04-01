@@ -790,7 +790,7 @@ export default function Chat() {
         {/* ── FIXED BOTTOM INPUT (chat mode) ── */}
         {messages.length > 0 && (
           <div
-            className={`fixed bottom-0 left-0 right-0 z-30 bg-gradient-to-t from-[var(--v-bg)] via-[var(--v-bg)]/95 to-transparent dark:from-[#001a2e]/90 dark:via-sky-950/40 dark:to-transparent pt-8 ${showSidebar ? 'md:right-[42%]' : ''}`}
+            className={`fixed bottom-0 left-0 right-0 z-30 bg-gradient-to-t from-[var(--v-bg)] via-[var(--v-bg)]/95 to-transparent dark:from-[var(--v-bg)] dark:via-[var(--v-bg)]/88 dark:to-transparent pt-8 ${showSidebar ? 'md:right-[42%]' : ''}`}
             style={{ paddingBottom: 'max(20px, env(safe-area-inset-bottom))' }}
           >
             <div className="w-full px-3 sm:px-4 space-y-2">
