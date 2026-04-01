@@ -34,6 +34,7 @@ import { BalanceSheet } from '@/components/dashboard/balance-sheet';
 import { PropertyPortfolio } from '@/components/dashboard/property-portfolio';
 import { ZillowProperty } from '@/components/dashboard/zillow-property';
 import { ZillowListings } from '@/components/dashboard/zillow-listings';
+import { LiquidGlassBackdrop } from '@/components/liquid-glass/LiquidGlassBackdrop';
 
 type Mode = 'chat' | 'search' | 'code' | 'image';
 
@@ -518,9 +519,11 @@ export default function Chat() {
 
   return (
     <div
-      className="app-chrome-bg text-[var(--v-fg)] flex flex-col"
+      className="app-chrome-bg text-[var(--v-fg)] flex flex-col relative"
       style={{ position: 'fixed', inset: 0, overflow: 'hidden' }}
     >
+      <LiquidGlassBackdrop theme={theme} />
+      <div className="relative z-10 flex flex-col flex-1 min-h-0">
       {/* ── HEADER (only during chat) ── */}
       {messages.length > 0 && (
         <header className="glass-header-bar fixed top-0 left-0 right-0 z-40">
@@ -568,11 +571,21 @@ export default function Chat() {
               {/* Logo */}
               <div className="text-center space-y-3">
                 <h1 className="text-6xl sm:text-7xl font-semibold tracking-tight">
-                  <span className="bg-gradient-to-r dark:from-white/50 dark:via-white dark:to-white/50 from-gray-700 via-black to-gray-700 bg-clip-text text-transparent animate-gradient bg-[length:200%_100%]">
+                  <span
+                    className={
+                      theme === 'dark'
+                        ? 'text-white drop-shadow-[0_4px_32px_rgba(0,0,0,0.35)]'
+                        : 'bg-gradient-to-r from-gray-700 via-black to-gray-700 bg-clip-text text-transparent animate-gradient bg-[length:200%_100%]'
+                    }
+                  >
                     Sweep
                   </span>
                 </h1>
-                <p className="text-[var(--v-fg-4)] text-sm sm:text-base font-light tracking-wide">
+                <p
+                  className={`text-sm sm:text-base font-light tracking-wide ${
+                    theme === 'dark' ? 'text-white/70' : 'text-[var(--v-fg-4)]'
+                  }`}
+                >
                   AI for finance, data & real estate
                 </p>
               </div>
@@ -777,7 +790,7 @@ export default function Chat() {
         {/* ── FIXED BOTTOM INPUT (chat mode) ── */}
         {messages.length > 0 && (
           <div
-            className={`fixed bottom-0 left-0 right-0 z-30 bg-gradient-to-t from-[var(--v-bg)] via-[var(--v-bg)]/95 to-transparent dark:from-black dark:via-black/95 pt-8 ${showSidebar ? 'md:right-[42%]' : ''}`}
+            className={`fixed bottom-0 left-0 right-0 z-30 bg-gradient-to-t from-[var(--v-bg)] via-[var(--v-bg)]/95 to-transparent dark:from-indigo-950/85 dark:via-purple-950/45 dark:to-transparent pt-8 ${showSidebar ? 'md:right-[42%]' : ''}`}
             style={{ paddingBottom: 'max(20px, env(safe-area-inset-bottom))' }}
           >
             <div className="w-full px-3 sm:px-4 space-y-2">
@@ -803,7 +816,7 @@ export default function Chat() {
                   />
                 </button>
               </form>
-              <p className="text-center text-[11px] text-[var(--v-fg-5)]">
+              <p className="text-center text-[11px] text-[var(--v-fg-5)] dark:text-white/40">
                 Sweep can make mistakes. Verify important information.
               </p>
             </div>
@@ -812,7 +825,7 @@ export default function Chat() {
       </main>
 
       {/* ── RIGHT SIDEBAR (desktop dashboard) ── */}
-      <aside className={`hidden md:flex flex-col fixed top-0 right-0 h-full w-[42%] bg-[var(--v-bg-2)] border-l border-[var(--v-border)] z-50 transform transition-transform duration-300 ease-in-out ${showSidebar ? 'translate-x-0' : 'translate-x-full'}`}>
+      <aside className={`hidden md:flex flex-col fixed top-0 right-0 h-full w-[42%] bg-[var(--v-bg-2)] border-l border-[var(--v-border)] dark:bg-white/[0.08] dark:backdrop-blur-2xl dark:border-white/15 z-50 transform transition-transform duration-300 ease-in-out ${showSidebar ? 'translate-x-0' : 'translate-x-full'}`}>
         {/* Sidebar header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--v-border)] shrink-0">
           <div className="flex items-center gap-2">
@@ -846,8 +859,9 @@ export default function Chat() {
       </aside>
 
       {/* Credit */}
-      <div className={`fixed bottom-2 right-4 text-[10px] text-[var(--v-fg-5)] pointer-events-none select-none z-50 font-light tracking-wide ${showSidebar ? 'md:right-[calc(42%+12px)]' : ''}`}>
+      <div className={`fixed bottom-2 right-4 text-[10px] text-[var(--v-fg-5)] dark:text-white/35 pointer-events-none select-none z-50 font-light tracking-wide ${showSidebar ? 'md:right-[calc(42%+12px)]' : ''}`}>
         by Sushant Kataria
+      </div>
       </div>
     </div>
   );

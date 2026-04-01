@@ -235,23 +235,11 @@ html {
 }
 
 /*
- * Figma MCP note: Community files (e.g. iOS Liquid Glass kits) are not readable until you
- * duplicate them into your team, then paste the design URL for get_design_context.
+ * Backdrop: Figma Make — Apple Liquid Glass UI Design
+ * https://www.figma.com/make/j5uSWQrbH0XxgNUCsPFiOe/Apple-Liquid-Glass-UI-Design
  */
 .app-chrome-bg {
   background-color: var(--v-bg);
-  /* Chromatic mesh so backdrop-filter has something to “refract” (flat white = invisible glass). */
-  background-image:
-    radial-gradient(ellipse 130% 90% at 6% -8%, oklch(0.72 0.14 280 / 0.16), transparent 58%),
-    radial-gradient(ellipse 95% 75% at 96% 4%, oklch(0.78 0.11 230 / 0.14), transparent 52%),
-    radial-gradient(ellipse 85% 55% at 52% 106%, oklch(0.82 0.09 320 / 0.11), transparent 48%);
-}
-
-.dark .app-chrome-bg {
-  background-image:
-    radial-gradient(ellipse 125% 88% at 4% 2%, oklch(0.42 0.22 280 / 0.45), transparent 58%),
-    radial-gradient(ellipse 100% 72% at 98% 12%, oklch(0.38 0.14 250 / 0.38), transparent 52%),
-    radial-gradient(ellipse 80% 50% at 48% 104%, oklch(0.48 0.16 310 / 0.28), transparent 50%);
 }
 
 .glass-header-bar {
@@ -263,8 +251,189 @@ html {
 }
 
 .dark .glass-header-bar {
-  background: color-mix(in srgb, var(--v-bg) 42%, transparent);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  /* Match Make file nav glass: bg-white/10, border-white/20 */
+  background: rgba(255, 255, 255, 0.1);
+  border-bottom-color: rgba(255, 255, 255, 0.18);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    0 8px 32px 0 rgba(31, 38, 135, 0.12);
+}
+
+/* ── Figma Make: full-screen gradient + FloatingOrbs (CSS, no motion lib) ── */
+.liquid-glass-gradient {
+  will-change: background-position;
+}
+
+.liquid-glass-backdrop--dark .liquid-glass-gradient {
+  background: linear-gradient(125deg, #6366f1 0%, #a855f7 45%, #ec4899 90%);
+  background-size: 400% 400%;
+  animation: liquid-glass-bg-pan 18s ease infinite;
+}
+
+.liquid-glass-backdrop--light .liquid-glass-gradient {
+  background: linear-gradient(
+    125deg,
+    oklch(0.94 0.045 280) 0%,
+    oklch(0.95 0.04 310) 45%,
+    oklch(0.97 0.03 350) 100%
+  );
+  background-size: 220% 220%;
+  animation: liquid-glass-bg-pan 28s ease infinite;
+}
+
+@keyframes liquid-glass-bg-pan {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.liquid-glass-orbs {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.liquid-glass-orb {
+  position: absolute;
+  border-radius: 9999px;
+  pointer-events: none;
+}
+
+.liquid-glass-backdrop--dark .liquid-glass-orb--violet {
+  width: 24rem;
+  height: 24rem;
+  top: 10%;
+  left: 20%;
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.3) 0%, transparent 70%);
+  filter: blur(60px);
+  animation: liquid-glass-orb-a 20s ease-in-out infinite;
+}
+
+.liquid-glass-backdrop--dark .liquid-glass-orb--blue {
+  width: 20rem;
+  height: 20rem;
+  top: 50%;
+  right: 15%;
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.3) 0%, transparent 70%);
+  filter: blur(60px);
+  animation: liquid-glass-orb-b 18s ease-in-out infinite;
+}
+
+.liquid-glass-backdrop--dark .liquid-glass-orb--pink {
+  width: 16rem;
+  height: 16rem;
+  bottom: 20%;
+  left: 30%;
+  background: radial-gradient(circle, rgba(236, 72, 153, 0.25) 0%, transparent 70%);
+  filter: blur(50px);
+  animation: liquid-glass-orb-c 15s ease-in-out infinite;
+}
+
+.liquid-glass-backdrop--dark .liquid-glass-orb--cyan {
+  width: 18rem;
+  height: 18rem;
+  top: 40%;
+  left: 60%;
+  background: radial-gradient(circle, rgba(34, 211, 238, 0.2) 0%, transparent 70%);
+  filter: blur(55px);
+  animation: liquid-glass-orb-d 22s ease-in-out infinite;
+}
+
+.liquid-glass-backdrop--light .liquid-glass-orb--violet {
+  width: 22rem;
+  height: 22rem;
+  top: 8%;
+  left: 15%;
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.12) 0%, transparent 70%);
+  filter: blur(56px);
+  animation: liquid-glass-orb-a 22s ease-in-out infinite;
+}
+
+.liquid-glass-backdrop--light .liquid-glass-orb--blue {
+  width: 18rem;
+  height: 18rem;
+  top: 48%;
+  right: 10%;
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.11) 0%, transparent 70%);
+  filter: blur(56px);
+  animation: liquid-glass-orb-b 20s ease-in-out infinite;
+}
+
+.liquid-glass-backdrop--light .liquid-glass-orb--pink {
+  width: 15rem;
+  height: 15rem;
+  bottom: 18%;
+  left: 28%;
+  background: radial-gradient(circle, rgba(236, 72, 153, 0.1) 0%, transparent 70%);
+  filter: blur(48px);
+  animation: liquid-glass-orb-c 17s ease-in-out infinite;
+}
+
+.liquid-glass-backdrop--light .liquid-glass-orb--cyan {
+  width: 17rem;
+  height: 17rem;
+  top: 38%;
+  left: 55%;
+  background: radial-gradient(circle, rgba(34, 211, 238, 0.09) 0%, transparent 70%);
+  filter: blur(52px);
+  animation: liquid-glass-orb-d 24s ease-in-out infinite;
+}
+
+@keyframes liquid-glass-orb-a {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  50% {
+    transform: translate(100px, 50px);
+  }
+}
+
+@keyframes liquid-glass-orb-b {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  50% {
+    transform: translate(-80px, 80px);
+  }
+}
+
+@keyframes liquid-glass-orb-c {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  50% {
+    transform: translate(60px, -60px);
+  }
+}
+
+@keyframes liquid-glass-orb-d {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  50% {
+    transform: translate(-50px, 70px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .liquid-glass-gradient {
+    animation: none !important;
+    background-position: 40% 50%;
+  }
+
+  .liquid-glass-orb {
+    animation: none !important;
+  }
 }
 
 /* ── Liquid glass (iOS-style): layered translucency, strong blur, specular rim ── */
@@ -323,9 +492,11 @@ html {
   );
   --glass-pill-border: rgba(255, 255, 255, 0.34);
   --glass-pill-border-soft: rgba(255, 255, 255, 0.08);
+  /* Figma Make GlassCard: shadow-[0_8px_32px_0_rgba(31,38,135,0.15)] + depth */
   --glass-pill-shadow-drop:
-    0 16px 48px -12px rgba(0, 0, 0, 0.65),
-    0 4px 16px -6px rgba(0, 0, 0, 0.45);
+    0 8px 32px 0 rgba(31, 38, 135, 0.15),
+    0 16px 48px -12px rgba(0, 0, 0, 0.5),
+    0 4px 16px -6px rgba(0, 0, 0, 0.4);
   --glass-pill-highlight: rgba(255, 255, 255, 0.28);
   --glass-pill-fg: #f4f4f5;
   --glass-pill-fg-muted: rgba(255, 255, 255, 0.48);
