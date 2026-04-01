@@ -235,8 +235,9 @@ html {
 }
 
 /*
- * Backdrop: iOS & iPadOS 26 UI Kit (Apple Design Resources) — cover palette & materials
- * https://www.figma.com/design/DgPEQVTTV1rGxj1AQ3qBn7/iOS-and-iPadOS-26--Community-?node-id=221-56229
+ * iOS & iPadOS 26 UI Kit — Apple Design Resources (Figma community)
+ * Materials tuned from Home Screen Search + Dock (node 754-62883) and cover palette (221-56229).
+ * https://www.figma.com/design/DgPEQVTTV1rGxj1AQ3qBn7/iOS-and-iPadOS-26--Community-
  */
 .app-chrome-bg {
   background-color: var(--v-bg);
@@ -251,11 +252,14 @@ html {
 }
 
 .dark .glass-header-bar {
-  background: rgba(255, 255, 255, 0.1);
-  border-bottom-color: rgba(255, 255, 255, 0.18);
+  /* Home Screen — same translucency family as Search / Dock (dark fill + blur ~30px) */
+  background: rgba(0, 0, 0, 0.26);
+  backdrop-filter: blur(30px) saturate(1.75);
+  -webkit-backdrop-filter: blur(30px) saturate(1.75);
+  border-bottom-color: rgba(255, 255, 255, 0.12);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.24),
-    0 8px 32px 0 rgba(0, 45, 98, 0.2);
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 8px 32px rgba(0, 0, 0, 0.22);
 }
 
 /* ── iOS 26 kit: blue → cobalt → teal (cover art), orbs + grain ── */
@@ -495,37 +499,23 @@ html {
 }
 
 .dark {
-  --glass-blur: 52px;
-  --glass-sat: 1.95;
-  --glass-pill-bg: linear-gradient(
-    165deg,
-    rgba(255, 255, 255, 0.14) 0%,
-    rgba(255, 255, 255, 0.06) 50%,
-    rgba(255, 255, 255, 0.03) 100%
-  );
-  --glass-pill-bg-idle: linear-gradient(
-    165deg,
-    rgba(255, 255, 255, 0.1) 0%,
-    rgba(255, 255, 255, 0.04) 100%
-  );
-  --glass-pill-bg-idle-hover: linear-gradient(
-    165deg,
-    rgba(255, 255, 255, 0.16) 0%,
-    rgba(255, 255, 255, 0.08) 100%
-  );
-  --glass-pill-border: rgba(255, 255, 255, 0.34);
-  --glass-pill-border-soft: rgba(255, 255, 255, 0.08);
-  /* iOS 26 kit: cool depth (navy tint, not violet) */
+  /* Figma 754:62883 — Search Field / Dock: backdrop-blur 30px, fill rgba(0,0,0,0.4) + screen layer ~0.2 */
+  --glass-blur: 30px;
+  --glass-sat: 1.75;
+  --glass-pill-bg: rgba(0, 0, 0, 0.3);
+  --glass-pill-bg-idle: rgba(0, 0, 0, 0.22);
+  --glass-pill-bg-idle-hover: rgba(0, 0, 0, 0.38);
+  --glass-pill-border: rgba(255, 255, 255, 0.15);
+  --glass-pill-border-soft: rgba(255, 255, 255, 0.06);
   --glass-pill-shadow-drop:
-    0 8px 32px 0 rgba(0, 45, 98, 0.22),
-    0 16px 48px -12px rgba(0, 0, 0, 0.5),
-    0 4px 16px -6px rgba(0, 0, 0, 0.38);
-  --glass-pill-highlight: rgba(255, 255, 255, 0.28);
+    0 8px 28px rgba(0, 0, 0, 0.38),
+    0 2px 12px rgba(0, 0, 0, 0.25);
+  --glass-pill-highlight: rgba(255, 255, 255, 0.2);
   --glass-pill-fg: #f4f4f5;
-  --glass-pill-fg-muted: rgba(255, 255, 255, 0.48);
-  --glass-input-bg: linear-gradient(180deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
-  --glass-input-border: rgba(255, 255, 255, 0.22);
-  --glass-user-bubble-border: rgba(255, 255, 255, 0.2);
+  --glass-pill-fg-muted: rgba(255, 255, 255, 0.55);
+  --glass-input-bg: rgba(0, 0, 0, 0.34);
+  --glass-input-border: rgba(255, 255, 255, 0.14);
+  --glass-user-bubble-border: rgba(255, 255, 255, 0.14);
 }
 
 .glass-pill {
@@ -581,14 +571,9 @@ html {
 }
 
 .dark .glass-pill::before {
-  background: linear-gradient(
-    165deg,
-    rgba(255, 255, 255, 0.22) 0%,
-    rgba(255, 255, 255, 0.06) 42%,
-    transparent 65%
-  );
-  opacity: 0.85;
-  mix-blend-mode: plus-lighter;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.16) 0%, transparent 52%);
+  opacity: 0.5;
+  mix-blend-mode: soft-light;
 }
 
 .glass-pill > * {
@@ -764,14 +749,13 @@ html {
 }
 
 .dark .glass-pill-input {
-  background-image:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.14) 0%, transparent 48%),
-    var(--glass-input-bg);
-  background-blend-mode: plus-lighter, normal;
+  background-color: rgba(0, 0, 0, 0.36);
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.09) 0%, transparent 48%);
+  background-blend-mode: soft-light;
   box-shadow:
-    0 12px 40px -8px rgba(0, 0, 0, 0.55),
-    inset 0 1px 0 var(--glass-pill-highlight),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.4);
+    0 4px 24px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.28);
 }
 
 .glass-pill-input::placeholder {
@@ -834,12 +818,11 @@ html {
 }
 
 .dark .glass-chat-bubble-user {
-  background-image:
-    linear-gradient(165deg, rgba(255, 255, 255, 0.12) 0%, transparent 58%),
-    var(--glass-pill-bg-idle);
-  background-blend-mode: plus-lighter, normal;
+  background-color: rgba(0, 0, 0, 0.28);
+  background-image: linear-gradient(165deg, rgba(255, 255, 255, 0.07) 0%, transparent 55%);
+  background-blend-mode: soft-light;
   box-shadow:
     var(--glass-pill-shadow-drop),
-    inset 0 1px 0 var(--glass-pill-highlight),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.35);
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.3);
 }

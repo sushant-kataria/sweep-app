@@ -825,7 +825,7 @@ export default function Chat() {
       </main>
 
       {/* ── RIGHT SIDEBAR (desktop dashboard) ── */}
-      <aside className={`hidden md:flex flex-col fixed top-0 right-0 h-full w-[42%] bg-[var(--v-bg-2)] border-l border-[var(--v-border)] dark:bg-white/[0.08] dark:backdrop-blur-2xl dark:border-white/15 z-50 transform transition-transform duration-300 ease-in-out ${showSidebar ? 'translate-x-0' : 'translate-x-full'}`}>
+      <aside className={`hidden md:flex flex-col fixed top-0 right-0 h-full w-[42%] bg-[var(--v-bg-2)] border-l border-[var(--v-border)] dark:bg-black/25 dark:backdrop-blur-[30px] dark:border-white/12 dark:shadow-[0_8px_40px_0_rgba(0,0,0,0.12)] z-50 transform transition-transform duration-300 ease-in-out ${showSidebar ? 'translate-x-0' : 'translate-x-full'}`}>
         {/* Sidebar header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--v-border)] shrink-0">
           <div className="flex items-center gap-2">

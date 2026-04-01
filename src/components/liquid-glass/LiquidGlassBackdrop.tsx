@@ -1,7 +1,7 @@
 /**
- * Backdrop aligned with Apple Design Resources — iOS & iPadOS 26 UI Kit (cover aesthetic).
- * https://www.figma.com/design/DgPEQVTTV1rGxj1AQ3qBn7/iOS-and-iPadOS-26--Community-?node-id=221-56229
- * Deep blue → cobalt → teal/cyan layered planes, cool orbs, fine grain (frosted-glass texture).
+ * Wallpaper-style backdrop — iOS & iPadOS 26 UI Kit (Apple Design Resources).
+ * Cover palette: https://www.figma.com/design/DgPEQVTTV1rGxj1AQ3qBn7/iOS-and-iPadOS-26--Community-?node-id=221-56229
+ * Home screen ref (Search / Dock glass): node 754-62883 — same file.
  */
 export function LiquidGlassBackdrop({ theme }: { theme: 'light' | 'dark' }) {
   return (
