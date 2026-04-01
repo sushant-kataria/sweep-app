@@ -279,11 +279,12 @@ searchZillowListings: tool({
           type: listingType,
         });
         
-        if (priceMin !== undefined) params.append('price_min', priceMin.toString());
-        if (priceMax !== undefined) params.append('price_max', priceMax.toString());
-        if (bedsMin !== undefined) params.append('beds_min', bedsMin.toString());
-        if (bedsMax !== undefined) params.append('beds_max', bedsMax.toString());
-        if (bathsMin !== undefined) params.append('baths_min', bathsMin.toString());
+        // HasData expects bracket notation — snake_case params return 400
+        if (priceMin !== undefined) params.append('price[min]', priceMin.toString());
+        if (priceMax !== undefined) params.append('price[max]', priceMax.toString());
+        if (bedsMin !== undefined) params.append('beds[min]', bedsMin.toString());
+        if (bedsMax !== undefined) params.append('beds[max]', bedsMax.toString());
+        if (bathsMin !== undefined) params.append('baths[min]', bathsMin.toString());
         
         const response = await fetch(
           `https://api.hasdata.com/scrape/zillow/listing?${params.toString()}`,
@@ -296,10 +297,16 @@ searchZillowListings: tool({
         );
   
         if (!response.ok) {
-          return { 
+          try {
+            const errText = await response.clone().text();
+            console.error('[searchZillowListings]', response.status, errText.slice(0, 500));
+          } catch {
+            /* ignore */
+          }
+          return {
             error: `Failed to search properties: ${response.status}`,
             searchCriteria: { location, listingType, priceMin, priceMax, bedsMin },
-            properties: []
+            properties: [],
           };
         }
   
@@ -347,8 +354,7 @@ searchZillowListings: tool({
         // Sort by price (lowest first)
         filteredProperties.sort((a: any, b: any) => a.price - b.price);
 
-        // Limit to 10 results (was 20 — fewer = less tokens)
-        filteredProperties = filteredProperties.slice(0, 10);
+        filteredProperties = filteredProperties.slice(0, 20);
 
         if (filteredProperties.length === 0) {
           return {

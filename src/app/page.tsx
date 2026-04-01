@@ -76,6 +76,17 @@ async function downloadImage(src: string) {
   }
 }
 
+function SmoothLoadingBar({ wide }: { wide?: boolean }) {
+  return (
+    <div
+      className={`relative h-1 overflow-hidden rounded-full bg-[var(--v-border)] shrink-0 ${wide ? 'w-14' : 'w-10'}`}
+      aria-hidden
+    >
+      <div className="absolute inset-y-0 w-[42%] rounded-full bg-gradient-to-r from-transparent via-[var(--v-fg-3)] to-transparent opacity-85 dark:via-white/45 tool-loading-shimmer" />
+    </div>
+  );
+}
+
 function ImageWithLoader({ src, alt }: { src: string; alt: string }) {
   const [loaded, setLoaded] = useState(false);
   const [errored, setErrored] = useState(false);
@@ -90,8 +101,8 @@ function ImageWithLoader({ src, alt }: { src: string; alt: string }) {
     <div className="flex flex-col items-start gap-2">
       <div className="relative w-full max-w-sm rounded-lg overflow-hidden border border-[var(--v-border)] bg-[var(--v-surface)]" style={{ aspectRatio: '1' }}>
         {!loaded && !errored && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
-            <div className="w-5 h-5 rounded-full border-2 border-[var(--v-border)] border-t-[var(--v-fg-3)] animate-spin" />
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
+            <SmoothLoadingBar wide />
             <span className="text-[10px] text-[var(--v-fg-5)] font-mono">generating image...</span>
           </div>
         )}
@@ -113,7 +124,7 @@ function ImageWithLoader({ src, alt }: { src: string; alt: string }) {
       {loaded && (
         <button
           onClick={() => downloadImage(src)}
-          className="flex items-center gap-1.5 text-xs text-[var(--v-fg-4)] hover:text-[var(--v-fg-3)] transition-colors"
+          className="glass-pill glass-pill--idle gap-1.5 px-3 py-1.5 text-xs"
         >
           <Download className="w-3 h-3" />
           <span>Download</span>
@@ -168,7 +179,7 @@ function CopyButton({ text, className = '' }: { text: string; className?: string
     setTimeout(() => setCopied(false), 2000);
   };
   return (
-    <button onClick={copy} className={`flex items-center gap-1.5 text-xs text-[var(--v-fg-4)] hover:text-[var(--v-fg-3)] transition-colors ${className}`}>
+    <button onClick={copy} type="button" className={`glass-pill glass-pill--idle gap-1.5 px-3 py-1.5 text-xs ${className}`}>
       {copied ? <Check className="w-3 h-3 text-emerald-500 dark:text-emerald-400" /> : <Copy className="w-3 h-3" />}
       <span>{copied ? 'Copied' : 'Copy'}</span>
     </button>
@@ -294,8 +305,11 @@ const suggestionsByMode: Record<Mode, Array<{ label: string; icon: string }>> = 
 
 const toolTypes = [
   'tool-showBarChart', 'tool-showLineChart', 'tool-showPieChart', 'tool-showAreaChart', 'tool-showComparison',
-  'tool-showStats', 'tool-showBalanceSheet', 'tool-showPropertyPortfolio', 'tool-showZillowProperty', 'tool-generateImage'
+  'tool-showStats', 'tool-showBalanceSheet', 'tool-showPropertyPortfolio', 'tool-showZillowProperty', 'tool-generateImage',
 ];
+
+/** Tools that actually render in the dashboard sidebar (excludes inline-only e.g. images). */
+const sidebarDashboardToolTypes = toolTypes.filter((t) => t !== 'tool-generateImage');
 
 const toolNameMap: Record<string, string> = {
   'tool-showBarChart': 'Creating bar chart',
@@ -311,18 +325,11 @@ const toolNameMap: Record<string, string> = {
   'tool-generateImage': 'Generating image',
 };
 
-const modeColors: Record<Mode, string> = {
-  chat: 'dark:text-[#ededed] text-black dark:border-[#3a3a3a] border-black/20 dark:bg-white/[0.06] bg-black/[0.06]',
-  search: 'dark:text-sky-400 text-sky-600 dark:border-sky-500/30 border-sky-400/40 dark:bg-sky-500/[0.08] bg-sky-50',
-  code: 'dark:text-emerald-400 text-emerald-600 dark:border-emerald-500/30 border-emerald-400/40 dark:bg-emerald-500/[0.08] bg-emerald-50',
-  image: 'dark:text-violet-400 text-violet-600 dark:border-violet-500/30 border-violet-400/40 dark:bg-violet-500/[0.08] bg-violet-50',
-};
-
-const modeInactiveColors: Record<Mode, string> = {
-  chat: 'dark:text-[#555] text-[#999] dark:border-[#262626] border-[#eaeaea] bg-transparent hover:dark:text-[#737373] hover:text-neutral-600 hover:dark:border-[#3a3a3a] hover:border-neutral-300',
-  search: 'dark:text-[#555] text-[#999] dark:border-[#262626] border-[#eaeaea] bg-transparent hover:dark:text-sky-300/70 hover:text-sky-600 hover:dark:border-sky-400/25 hover:border-sky-400/35',
-  code: 'dark:text-[#555] text-[#999] dark:border-[#262626] border-[#eaeaea] bg-transparent hover:dark:text-emerald-300/70 hover:text-emerald-600 hover:dark:border-emerald-400/25 hover:border-emerald-400/35',
-  image: 'dark:text-[#555] text-[#999] dark:border-[#262626] border-[#eaeaea] bg-transparent hover:dark:text-violet-300/70 hover:text-violet-600 hover:dark:border-violet-400/25 hover:border-violet-400/35',
+const modeActiveGlass: Record<Mode, string> = {
+  chat: 'glass-pill--active-chat',
+  search: 'glass-pill--active-search',
+  code: 'glass-pill--active-code',
+  image: 'glass-pill--active-image',
 };
 
 function ThemeToggleButton({ theme, onToggle }: { theme: 'dark' | 'light'; onToggle: () => void }) {
@@ -330,7 +337,7 @@ function ThemeToggleButton({ theme, onToggle }: { theme: 'dark' | 'light'; onTog
     <button
       type="button"
       onClick={onToggle}
-      className="flex items-center justify-center w-9 h-9 rounded-lg border border-[var(--v-border)] bg-[var(--v-surface)] hover:bg-[var(--v-btn-bg)] text-[var(--v-fg)] transition-colors shrink-0"
+      className="glass-pill glass-pill--icon shrink-0"
       aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
     >
       {theme === 'dark' ? <Sun className="w-4 h-4" strokeWidth={1.5} /> : <Moon className="w-4 h-4" strokeWidth={1.5} />}
@@ -361,10 +368,11 @@ export default function Chat() {
   }, [theme]);
 
   useEffect(() => {
-    const outputs = messages.flatMap(message =>
+    const outputs = messages.flatMap((message) =>
       message.parts.filter(
-        part => toolTypes.includes(part.type) && 'state' in part && part.state === 'output-available'
-      )
+        (part) =>
+          sidebarDashboardToolTypes.includes(part.type) && 'state' in part && part.state === 'output-available',
+      ),
     );
     const hasItems = outputs.length > 0;
     setHasDashboardItems(hasItems);
@@ -467,15 +475,15 @@ export default function Chat() {
   const toggleTheme = () => setTheme(te => (te === 'dark' ? 'light' : 'dark'));
 
   const ModeSelector = ({ compact = false }: { compact?: boolean }) => (
-    <div className={`flex items-center gap-1 ${compact ? '' : 'justify-center'}`}>
+    <div className={`flex flex-wrap items-center ${compact ? 'gap-1' : 'gap-1.5 justify-center'}`}>
       {modes.map((m) => (
         <button
           key={m.id}
           type="button"
           onClick={() => setMode(m.id)}
-          className={`flex items-center gap-1.5 rounded-lg border text-xs font-medium transition-all duration-200 ${
-            compact ? 'px-2 py-1.5 sm:px-3' : 'px-3 py-1.5'
-          } ${mode === m.id ? modeColors[m.id] : modeInactiveColors[m.id]}`}
+          className={`glass-pill text-xs font-medium ${
+            compact ? 'px-2.5 py-1.5 sm:px-3.5' : 'px-4 py-2'
+          } ${mode === m.id ? modeActiveGlass[m.id] : 'glass-pill--idle'}`}
         >
           {m.icon}
           <span className={compact ? 'hidden sm:inline' : ''}>{m.label}</span>
@@ -494,19 +502,22 @@ export default function Chat() {
               showSidebar ? 'md:pr-[42%]' : ''
             }`}
           >
-            <button onClick={() => window.location.reload()} className="flex items-center gap-2 group shrink-0">
+            <button
+              onClick={() => window.location.reload()}
+              className="flex items-center gap-2 group shrink-0 mr-3 sm:mr-5 min-w-0"
+            >
               <span className="text-lg font-semibold tracking-tight bg-gradient-to-r dark:from-white/60 dark:via-white dark:to-white/60 from-gray-700 via-black to-gray-700 bg-clip-text text-transparent animate-gradient bg-[length:200%_100%]">
                 Sweep
               </span>
             </button>
 
-            <div className="flex items-center justify-end gap-2 min-w-0 flex-1 md:flex-initial md:ml-4 overflow-hidden">
+            <div className="flex items-center justify-end gap-1.5 sm:gap-2 min-w-0 flex-1 md:flex-initial md:ml-2 overflow-hidden">
               <ThemeToggleButton theme={theme} onToggle={toggleTheme} />
               <ModeSelector compact />
               {hasDashboardItems && (
                 <button
                   onClick={() => setShowSidebar(v => !v)}
-                  className="hidden sm:flex items-center gap-1.5 text-xs text-[var(--v-fg-3)] hover:text-[var(--v-fg)] transition-colors px-3 py-1.5 rounded-lg border border-[var(--v-border)] hover:border-[var(--v-border-2)] bg-[var(--v-surface)] hover:bg-[var(--v-btn-bg)] shrink-0"
+                  className="glass-pill glass-pill--idle hidden sm:inline-flex items-center gap-1.5 text-xs shrink-0 px-3.5 py-2"
                 >
                   <BarChart2 className="w-3.5 h-3.5" />
                   {showSidebar ? 'Hide' : 'Show'} dashboard
@@ -549,7 +560,7 @@ export default function Chat() {
                     ref={inputRef}
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
-                    className="w-full bg-[var(--v-input-bg)] text-[var(--v-fg)] rounded-lg pl-5 pr-14 py-4 border border-[var(--v-input-border)] shadow-sm dark:shadow-none focus:border-[var(--v-border-2)] focus:ring-2 focus:ring-black/5 dark:focus:ring-white/10 focus:outline-none placeholder:text-[var(--v-fg-5)] text-sm transition-all duration-200"
+                    className="glass-pill-input pl-5 pr-14 py-4 text-sm"
                     style={{ fontSize: '16px' }}
                     placeholder={currentPlaceholder}
                     autoComplete="off"
@@ -557,7 +568,7 @@ export default function Chat() {
                   <button
                     type="submit"
                     disabled={!input.trim()}
-                    className="absolute right-3 w-8 h-8 rounded-lg border border-[var(--v-input-border)] bg-[var(--v-btn-bg)] hover:bg-[var(--v-btn-bg-hover)] disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center transition-all duration-200 group text-[var(--v-fg)] shadow-sm dark:shadow-none dark:border-transparent"
+                    className="absolute right-2 glass-pill glass-pill--send group"
                   >
                     <Send className="w-3.5 h-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
                   </button>
@@ -571,7 +582,7 @@ export default function Chat() {
                     <button
                       key={i}
                       onClick={() => handleSuggestion(s.label)}
-                      className="flex items-center gap-2.5 px-4 py-3 rounded-lg border border-[var(--v-border)] bg-[var(--v-surface)] hover:bg-[var(--v-btn-bg)] hover:border-[var(--v-border-2)] text-[var(--v-fg-3)] hover:text-[var(--v-fg)] text-sm text-left transition-all duration-200 group"
+                      className="glass-pill glass-pill--idle flex w-full items-center gap-2.5 justify-start px-4 py-3 text-sm text-left group"
                     >
                       <span className="text-base shrink-0">{s.icon}</span>
                       <span className="truncate">{s.label}</span>
@@ -588,7 +599,7 @@ export default function Chat() {
                   {/* User message */}
                   {m.role === 'user' && (
                     <div className="py-5 flex justify-end">
-                      <div className="max-w-[85%] sm:max-w-[75%] bg-[var(--v-surface)] border border-[var(--v-border)] rounded-lg rounded-tr-sm px-4 py-3">
+                      <div className="glass-chat-bubble-user max-w-[85%] sm:max-w-[75%] px-4 py-3">
                         <p className="text-[var(--v-fg)] text-sm leading-relaxed">
                           {m.parts.filter(p => p.type === 'text').map((part, i) => (
                             <span key={i}>{(part as any).text}</span>
@@ -623,7 +634,7 @@ export default function Chat() {
                                       </svg>
                                     </div>
                                   ) : step.status === 'loading' ? (
-                                    <div className="w-4 h-4 rounded-full border-2 border-[var(--v-border)] border-t-[var(--v-fg-3)] animate-spin shrink-0" />
+                                    <SmoothLoadingBar />
                                   ) : (
                                     <div className="w-4 h-4 rounded-full bg-[var(--v-surface)] border border-[var(--v-border)] shrink-0" />
                                   )}
@@ -723,7 +734,11 @@ export default function Chat() {
                       ? 'Rate limit reached — please wait a moment and try again.'
                       : 'Something went wrong. Please try again.'}
                   </p>
-                  <button onClick={() => window.location.reload()} className="mt-2 text-xs text-[var(--v-fg-4)] hover:text-[var(--v-fg-3)] underline underline-offset-2 transition-colors">
+                  <button
+                    type="button"
+                    onClick={() => window.location.reload()}
+                    className="mt-2 glass-pill glass-pill--idle px-4 py-2 text-xs"
+                  >
                     Refresh page
                   </button>
                 </div>
@@ -745,7 +760,7 @@ export default function Chat() {
                 <input
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
-                  className="w-full bg-[var(--v-input-bg)] text-[var(--v-fg)] rounded-lg pl-5 pr-14 py-3.5 border border-[var(--v-input-border)] shadow-sm dark:shadow-none focus:border-[var(--v-border-2)] focus:ring-2 focus:ring-black/5 dark:focus:ring-white/10 focus:outline-none placeholder:text-[var(--v-fg-5)] text-sm transition-all duration-200 disabled:opacity-50"
+                  className="glass-pill-input pl-5 pr-14 py-3.5 text-sm disabled:opacity-50"
                   style={{ fontSize: '16px' }}
                   placeholder={currentPlaceholder}
                   disabled={isLoading}
@@ -754,7 +769,7 @@ export default function Chat() {
                 <button
                   type="submit"
                   disabled={!input.trim() || isLoading}
-                  className="absolute right-3 w-8 h-8 rounded-lg border border-[var(--v-input-border)] bg-[var(--v-btn-bg)] hover:bg-[var(--v-btn-bg-hover)] disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center transition-all duration-200 group text-[var(--v-fg)] shadow-sm dark:shadow-none dark:border-transparent"
+                  className="absolute right-2 glass-pill glass-pill--send group"
                 >
                   <Send className="w-3.5 h-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
                 </button>
@@ -777,7 +792,8 @@ export default function Chat() {
           </div>
           <button
             onClick={() => setShowSidebar(false)}
-            className="w-7 h-7 rounded-lg hover:bg-[var(--v-btn-bg)] flex items-center justify-center text-[var(--v-fg-4)] hover:text-[var(--v-fg-3)] transition-colors"
+            className="glass-pill glass-pill--icon-sm glass-pill--idle"
+            aria-label="Close dashboard"
           >
             <X className="w-4 h-4" />
           </button>
@@ -788,7 +804,12 @@ export default function Chat() {
           {(() => {
             const lastWithDashboard = [...messages].reverse().find(m =>
               m.role === 'assistant' &&
-              m.parts.some(part => toolTypes.includes(part.type) && 'state' in part && part.state === 'output-available')
+              m.parts.some(
+                (part) =>
+                  sidebarDashboardToolTypes.includes(part.type) &&
+                  'state' in part &&
+                  part.state === 'output-available',
+              )
             );
             return lastWithDashboard ? renderDashboardItems(lastWithDashboard) : null;
           })()}
