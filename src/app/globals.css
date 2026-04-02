@@ -192,6 +192,51 @@
   }
 }
 
+/* ── Vercel-inspired design tokens ── */
+:root {
+  --v-bg:        #ffffff;
+  --v-bg-2:      #fafafa;
+  --v-surface:   #fafafa;
+  --v-surface-2: #f5f5f5;
+  --v-border:    #eaeaea;
+  --v-border-2:  #c9c9c9;
+  --v-fg:        #000000;
+  --v-fg-2:      #444444;
+  --v-fg-3:      #666666;
+  --v-fg-4:      #888888;
+  --v-fg-5:      #aaaaaa;
+  --v-btn-bg:    #000000;
+  --v-btn-fg:    #ffffff;
+  --v-input-bg:  #ffffff;
+  --v-input-bd:  #eaeaea;
+  --v-code-bg:   #f6f8fa;
+  --v-code-hdr:  #f0f2f4;
+  --v-error-bg:  rgba(220,38,38,0.06);
+  --v-error-bd:  rgba(220,38,38,0.18);
+}
+
+.dark {
+  --v-bg:        #000000;
+  --v-bg-2:      #0a0a0a;
+  --v-surface:   #111111;
+  --v-surface-2: #1a1a1a;
+  --v-border:    #262626;
+  --v-border-2:  #3a3a3a;
+  --v-fg:        #ededed;
+  --v-fg-2:      #c4c4c4;
+  --v-fg-3:      #888888;
+  --v-fg-4:      #555555;
+  --v-fg-5:      #333333;
+  --v-btn-bg:    #ededed;
+  --v-btn-fg:    #000000;
+  --v-input-bg:  #0a0a0a;
+  --v-input-bd:  #262626;
+  --v-code-bg:   #0d0d0d;
+  --v-code-hdr:  #111111;
+  --v-error-bg:  rgba(239,68,68,0.08);
+  --v-error-bd:  rgba(239,68,68,0.2);
+}
+
 /* Custom Gradient Animation for Sweep Text */
 @keyframes gradient {
   0% { background-position: 0% 50%; }
@@ -203,10 +248,10 @@
   animation: gradient 4s ease infinite;
 }
 
-/* Thin custom scrollbar for sidebar */
+/* Thin custom scrollbar */
 .scrollbar-thin {
   scrollbar-width: thin;
-  scrollbar-color: rgba(255,255,255,0.08) transparent;
+  scrollbar-color: var(--v-border-2) transparent;
 }
 .scrollbar-thin::-webkit-scrollbar {
   width: 4px;
@@ -215,18 +260,24 @@
   background: transparent;
 }
 .scrollbar-thin::-webkit-scrollbar-thumb {
-  background: rgba(255,255,255,0.08);
+  background: var(--v-border-2);
   border-radius: 99px;
 }
 .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-  background: rgba(255,255,255,0.15);
+  background: var(--v-fg-4);
 }
 
-/* Hide scrollbar on mobile for cleaner look */
+/* Hide scrollbar for horizontal chip rows */
+.scrollbar-none {
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbar on mobile */
 @media (max-width: 768px) {
-  html {
-    overflow-x: hidden;
-  }
+  html { overflow-x: hidden; }
 }
 
 /* Smooth scroll globally */
