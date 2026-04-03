@@ -176,8 +176,8 @@ const openrouter = createOpenAI({
   apiKey: process.env.OPENROUTER_API_KEY,
 });
 
-// qwen/qwen3.6-plus-preview:free — free on OpenRouter
-const model = openrouter.chat('qwen/qwen3.6-plus-preview:free');
+// qwen/qwen3.6-plus:free — free on OpenRouter
+const model = openrouter.chat('qwen/qwen3.6-plus:free');
 
 export async function POST(req: Request) {
   const { messages, mode = 'chat' }: { messages: UIMessage[]; mode?: Mode } = await req.json();
