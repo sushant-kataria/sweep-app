@@ -2,7 +2,7 @@
 
 import { useChat } from '@ai-sdk/react';
 import { useState, useEffect, useRef } from 'react';
-import { Send, BarChart2, X, Search, MessageSquare, Code2, Copy, Check, Wand2, Download } from 'lucide-react';
+import { Send, BarChart2, X, Search, MessageSquare, Code2, Copy, Check, Wand2, Download, Sun, Moon } from 'lucide-react';
 
 import { BarChartPro } from '@/components/dashboard/bar-chart-pro';
 import { LineChartPro } from '@/components/dashboard/line-chart-pro';
@@ -98,20 +98,20 @@ function ImageWithLoader({ src, alt }: { src: string; alt: string }) {
 
   return (
     <div className="flex flex-col items-start gap-2">
-      <div className="relative w-full max-w-sm rounded-xl overflow-hidden border border-white/10 bg-white/[0.03]" style={{ aspectRatio: '1' }}>
+      <div className="relative w-full max-w-sm rounded-lg overflow-hidden border border-[var(--v-border)] bg-[var(--v-surface)]" style={{ aspectRatio: '1' }}>
         {!loaded && !errored && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
-            <div className="w-5 h-5 rounded-full border-2 border-white/15 border-t-white/50 animate-spin" />
-            <span className="text-[10px] text-white/25 font-mono">generating image...</span>
+            <div className="w-5 h-5 rounded-full border-2 border-[var(--v-border)] border-t-[var(--v-fg-3)] animate-spin" />
+            <span className="text-[10px] text-[var(--v-fg-5)] font-mono">generating image...</span>
           </div>
         )}
         {errored && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
-            <span className="text-xs text-white/30">Failed to load image</span>
+            <span className="text-xs text-[var(--v-fg-4)]">Failed to load image</span>
             <button onClick={retry} className="text-[11px] text-violet-400/60 hover:text-violet-300 transition-colors underline underline-offset-2">
               Try again
             </button>
-            <a href={retrySrc} target="_blank" rel="noopener noreferrer" className="text-[10px] text-white/20 underline">direct link</a>
+            <a href={retrySrc} target="_blank" rel="noopener noreferrer" className="text-[10px] text-[var(--v-fg-5)] underline">direct link</a>
           </div>
         )}
         <img
@@ -126,7 +126,7 @@ function ImageWithLoader({ src, alt }: { src: string; alt: string }) {
       {loaded && (
         <button
           onClick={() => downloadImage(retrySrc)}
-          className="flex items-center gap-1.5 text-xs text-white/30 hover:text-white/70 transition-colors"
+          className="flex items-center gap-1.5 text-xs text-[var(--v-fg-4)] hover:text-[var(--v-fg)] transition-colors"
         >
           <Download className="w-3 h-3" />
           <span>Download</span>
@@ -160,11 +160,11 @@ function ThinkingAnimation() {
     <div className="flex items-center gap-2">
       <div className="flex gap-1">
         {[0, 150, 300].map((d, i) => (
-          <div key={i} className="w-1.5 h-1.5 bg-white/30 rounded-full animate-bounce" style={{ animationDelay: `${d}ms` }} />
+          <div key={i} className="w-1.5 h-1.5 bg-[var(--v-fg-4)] rounded-full animate-bounce" style={{ animationDelay: `${d}ms` }} />
         ))}
       </div>
       <span
-        className="text-xs text-white/40 font-mono transition-opacity duration-300"
+        className="text-xs text-[var(--v-fg-3)] font-mono transition-opacity duration-300"
         style={{ opacity: fade ? 1 : 0 }}
       >
         {THINKING_WORDS[wordIdx]}
@@ -181,7 +181,7 @@ function CopyButton({ text, className = '' }: { text: string; className?: string
     setTimeout(() => setCopied(false), 2000);
   };
   return (
-    <button onClick={copy} className={`flex items-center gap-1.5 text-xs text-white/30 hover:text-white/60 transition-colors ${className}`}>
+    <button onClick={copy} className={`flex items-center gap-1.5 text-xs text-[var(--v-fg-4)] hover:text-[var(--v-fg-3)] transition-colors ${className}`}>
       {copied ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
       <span>{copied ? 'Copied' : 'Copy'}</span>
     </button>
@@ -190,12 +190,12 @@ function CopyButton({ text, className = '' }: { text: string; className?: string
 
 function CodeBlock({ lang, code }: { lang: string; code: string }) {
   return (
-    <div className="rounded-xl overflow-hidden border border-white/[0.10] my-3 text-left">
-      <div className="flex items-center justify-between px-4 py-2 bg-[#1a1a2e] border-b border-white/[0.08]">
+    <div className="rounded-lg overflow-hidden border border-[var(--v-border-2)] my-3 text-left">
+      <div className="flex items-center justify-between px-4 py-2 bg-[var(--v-code-hdr)] border-b border-[var(--v-border)]">
         <span className="text-xs text-violet-300/70 font-mono">{lang || 'code'}</span>
         <CopyButton text={code} />
       </div>
-      <pre className="p-4 overflow-x-auto bg-[#0f0f1a] text-sm font-mono leading-relaxed">
+      <pre className="p-4 overflow-x-auto bg-[var(--v-code-bg)] text-sm font-mono leading-relaxed">
         <code className="text-emerald-300/90 whitespace-pre">{code}</code>
       </pre>
     </div>
@@ -217,7 +217,7 @@ function renderContent(raw: string | undefined | null) {
       <span key={i} className="whitespace-pre-wrap">
         {inlineParts.map((s, j) =>
           s.startsWith('`') && s.endsWith('`')
-            ? <code key={j} className="px-1.5 py-0.5 rounded bg-[#1a1a2e] text-violet-300/80 font-mono text-[0.8em] border border-white/[0.08]">{s.slice(1, -1)}</code>
+            ? <code key={j} className="px-1.5 py-0.5 rounded bg-[var(--v-code-hdr)] text-violet-300/80 font-mono text-[0.8em] border border-[var(--v-border)]">{s.slice(1, -1)}</code>
             : s
         )}
       </span>
@@ -256,9 +256,9 @@ function renderTextWithInlineTools(text: string): React.ReactNode[] {
         const url = args.imageUrl || `https://image.pollinations.ai/prompt/${encodeURIComponent(args.prompt)}?width=1024&height=1024&model=flux&nologo=true&seed=${Math.floor(Math.random() * 1000000)}`;
         nodes.push(
           <div key={key++} className="py-2 flex flex-col items-start gap-2">
-            <p className="text-xs text-white/40 font-mono">{args.prompt}</p>
+            <p className="text-xs text-[var(--v-fg-3)] font-mono">{args.prompt}</p>
             <ImageWithLoader src={url} alt={args.prompt} />
-            <span className="text-[10px] text-white/30 font-mono">Generated by Pollinations AI · FLUX</span>
+            <span className="text-[10px] text-[var(--v-fg-4)] font-mono">Generated by Pollinations AI · FLUX</span>
           </div>
         );
       }
@@ -325,17 +325,17 @@ const toolNameMap: Record<string, string> = {
 };
 
 const modeColors: Record<Mode, string> = {
-  chat: 'text-white/80 border-white/30 bg-white/[0.08]',
+  chat: 'text-[var(--v-fg)] border-[var(--v-border-2)] bg-[var(--v-surface)]',
   search: 'text-sky-300 border-sky-400/40 bg-sky-400/[0.08]',
   code: 'text-emerald-300 border-emerald-400/40 bg-emerald-400/[0.08]',
   image: 'text-violet-300 border-violet-400/40 bg-violet-400/[0.08]',
 };
 
 const modeInactiveColors: Record<Mode, string> = {
-  chat: 'text-white/40 border-white/[0.08] bg-transparent hover:text-white/60 hover:border-white/20',
-  search: 'text-white/40 border-white/[0.08] bg-transparent hover:text-sky-300/60 hover:border-sky-400/20',
-  code: 'text-white/40 border-white/[0.08] bg-transparent hover:text-emerald-300/60 hover:border-emerald-400/20',
-  image: 'text-white/40 border-white/[0.08] bg-transparent hover:text-violet-300/60 hover:border-violet-400/20',
+  chat: 'text-[var(--v-fg-4)] border-[var(--v-border)] bg-transparent hover:text-[var(--v-fg-3)] hover:border-[var(--v-border-2)]',
+  search: 'text-[var(--v-fg-4)] border-[var(--v-border)] bg-transparent hover:text-sky-300/60 hover:border-sky-400/20',
+  code: 'text-[var(--v-fg-4)] border-[var(--v-border)] bg-transparent hover:text-emerald-300/60 hover:border-emerald-400/20',
+  image: 'text-[var(--v-fg-4)] border-[var(--v-border)] bg-transparent hover:text-violet-300/60 hover:border-violet-400/20',
 };
 
 function ModeSelector({ mode, setMode, compact = false }: { mode: Mode; setMode: (m: Mode) => void; compact?: boolean }) {
@@ -364,6 +364,7 @@ export default function Chat() {
   const { messages, sendMessage, status, error } = useChat();
   const [input, setInput] = useState('');
   const [mode, setMode] = useState<Mode>('chat');
+  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const [showSidebar, setShowSidebar] = useState(false);
   const [hasDashboardItems, setHasDashboardItems] = useState(false);
   const [clientImages, setClientImages] = useState<ClientImage[]>([]);
@@ -371,6 +372,18 @@ export default function Chat() {
   const inputRef = useRef<HTMLInputElement>(null);
   const mainRef = useRef<HTMLElement>(null);
   const isNearBottomRef = useRef(true);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    if (theme === 'dark') root.classList.add('dark');
+    else root.classList.remove('dark');
+    localStorage.setItem('sweep-theme', theme);
+  }, [theme]);
+
+  useEffect(() => {
+    const saved = localStorage.getItem('sweep-theme') as 'dark' | 'light' | null;
+    if (saved) setTheme(saved);
+  }, []);
 
   useEffect(() => {
     const outputs = messages.flatMap(message =>
@@ -494,13 +507,13 @@ export default function Chat() {
   const suggestions = suggestionsByMode[mode];
 
   return (
-    <div className="bg-[#0a0a0a] text-white flex flex-col" style={{ position: 'fixed', inset: 0, overflow: 'hidden' }}>
+    <div className="bg-[var(--v-bg)] text-[var(--v-fg)] flex flex-col" style={{ position: 'fixed', inset: 0, overflow: 'hidden' }}>
       {/* ── HEADER (only during chat) ── */}
       {(messages.length > 0 || clientImages.length > 0) && (
-        <header className="fixed top-0 left-0 right-0 z-40 bg-[#0a0a0a]/90 backdrop-blur-xl border-b border-white/[0.06]">
+        <header className="fixed top-0 left-0 right-0 z-40 bg-[var(--v-bg)]/90 backdrop-blur-xl border-b border-[var(--v-border)]">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-2 min-w-0">
             <button onClick={() => window.location.reload()} className="flex items-center gap-2 group shrink-0">
-              <span className="text-lg font-semibold tracking-tight bg-gradient-to-r from-white/60 via-white to-white/60 bg-clip-text text-transparent animate-gradient bg-[length:200%_100%]">
+              <span className="text-lg font-semibold tracking-tight bg-gradient-to-r from-white/50 via-white to-white/50 bg-clip-text text-transparent animate-gradient bg-[length:200%_100%] dark:from-white/50 dark:via-white dark:to-white/50">
                 Sweep
               </span>
             </button>
@@ -509,12 +522,15 @@ export default function Chat() {
               {hasDashboardItems && (
                 <button
                   onClick={() => setShowSidebar(v => !v)}
-                  className="hidden sm:flex items-center gap-1.5 text-xs text-white/50 hover:text-white transition-colors px-3 py-1.5 rounded-lg border border-white/[0.08] hover:border-white/20 bg-white/[0.03] hover:bg-white/[0.06] shrink-0"
+                  className="hidden sm:flex items-center gap-1.5 text-xs text-[var(--v-fg-3)] hover:text-[var(--v-fg)] transition-colors px-3 py-1.5 rounded-lg border border-[var(--v-border)] hover:border-[var(--v-border-2)] bg-[var(--v-surface)] hover:bg-[var(--v-border)] shrink-0"
                 >
                   <BarChart2 className="w-3.5 h-3.5" />
                   {showSidebar ? 'Hide' : 'Show'} dashboard
                 </button>
               )}
+              <button onClick={() => setTheme(t => t === 'dark' ? 'light' : 'dark')} className="w-8 h-8 rounded-lg border border-[var(--v-border)] bg-[var(--v-surface)] hover:bg-[var(--v-border)] flex items-center justify-center text-[var(--v-fg-3)] hover:text-[var(--v-fg)] transition-colors shrink-0">
+                {theme === 'dark' ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
+              </button>
             </div>
           </div>
         </header>
@@ -528,13 +544,18 @@ export default function Chat() {
           {messages.length === 0 && clientImages.length === 0 ? (
             <div className="flex flex-col items-center justify-center gap-8 py-20" style={{ minHeight: 'calc(100dvh - 80px)' }}>
               {/* Logo */}
-              <div className="text-center space-y-3">
+              <div className="text-center space-y-3 relative w-full">
+                <div className="absolute top-0 right-0">
+                  <button onClick={() => setTheme(t => t === 'dark' ? 'light' : 'dark')} className="w-8 h-8 rounded-lg border border-[var(--v-border)] bg-[var(--v-surface)] hover:bg-[var(--v-border)] flex items-center justify-center text-[var(--v-fg-3)] hover:text-[var(--v-fg)] transition-colors shrink-0">
+                    {theme === 'dark' ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
+                  </button>
+                </div>
                 <h1 className="text-6xl sm:text-7xl font-semibold tracking-tight">
-                  <span className="bg-gradient-to-r from-white/50 via-white to-white/50 bg-clip-text text-transparent animate-gradient bg-[length:200%_100%]">
+                  <span className="bg-gradient-to-r from-white/50 via-white to-white/50 bg-clip-text text-transparent animate-gradient bg-[length:200%_100%] dark:from-white/50 dark:via-white dark:to-white/50">
                     Sweep
                   </span>
                 </h1>
-                <p className="text-white/40 text-sm sm:text-base font-light tracking-wide">
+                <p className="text-[var(--v-fg-3)] text-sm sm:text-base font-light tracking-wide">
                   AI for finance, data & real estate
                 </p>
               </div>
@@ -549,7 +570,7 @@ export default function Chat() {
                     ref={inputRef}
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
-                    className="w-full bg-white/[0.04] text-white rounded-2xl pl-5 pr-14 py-4 border border-white/[0.10] focus:border-white/25 focus:bg-white/[0.06] focus:outline-none placeholder-white/25 text-sm transition-all duration-200"
+                    className="w-full bg-[var(--v-surface)] text-[var(--v-fg)] rounded-lg pl-5 pr-14 py-4 border border-[var(--v-border-2)] focus:border-[var(--v-fg-3)] focus:bg-[var(--v-border)] focus:outline-none placeholder-[var(--v-fg-5)] text-sm transition-all duration-200"
                     style={{ fontSize: '16px' }}
                     placeholder={currentPlaceholder}
                     autoComplete="off"
@@ -557,7 +578,7 @@ export default function Chat() {
                   <button
                     type="submit"
                     disabled={!input.trim()}
-                    className="absolute right-3 w-8 h-8 rounded-xl bg-white/10 hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center transition-all duration-200 group"
+                    className="absolute right-3 w-8 h-8 rounded-lg bg-[var(--v-surface)] hover:bg-[var(--v-border)] border border-[var(--v-border)] disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center transition-all duration-200 group"
                   >
                     <Send className="w-3.5 h-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
                   </button>
@@ -571,7 +592,7 @@ export default function Chat() {
                     <button
                       key={i}
                       onClick={() => handleSuggestion(s.label)}
-                      className="flex items-center gap-2.5 px-4 py-3 rounded-xl border border-white/[0.08] bg-white/[0.02] hover:bg-white/[0.06] hover:border-white/[0.16] text-white/50 hover:text-white/80 text-sm text-left transition-all duration-200 group"
+                      className="flex items-center gap-2.5 px-4 py-3 rounded-lg border border-[var(--v-border)] bg-[var(--v-surface)] hover:bg-[var(--v-border)] hover:border-[var(--v-border-2)] text-[var(--v-fg-3)] hover:text-[var(--v-fg)] text-sm text-left transition-all duration-200 group"
                     >
                       <span className="text-base shrink-0">{s.icon}</span>
                       <span className="truncate">{s.label}</span>
@@ -588,8 +609,8 @@ export default function Chat() {
                   {/* User message */}
                   {m.role === 'user' && (
                     <div className="py-5 flex justify-end">
-                      <div className="max-w-[85%] sm:max-w-[75%] bg-white/[0.06] border border-white/[0.08] rounded-2xl rounded-tr-sm px-4 py-3">
-                        <p className="text-white text-sm leading-relaxed">
+                      <div className="max-w-[85%] sm:max-w-[75%] bg-[var(--v-surface)] border border-[var(--v-border)] rounded-lg rounded-tr-sm px-4 py-3">
+                        <p className="text-[var(--v-fg)] text-sm leading-relaxed">
                           {m.parts.filter(p => p.type === 'text').map((part, i) => (
                             <span key={i}>{(part as any).text}</span>
                           ))}
@@ -603,7 +624,7 @@ export default function Chat() {
                     <div className="py-5">
                       {/* Sweep avatar dot */}
                       <div className="flex items-start gap-3">
-                        <div className="w-6 h-6 rounded-full bg-gradient-to-br from-white/20 to-white/5 border border-white/10 flex items-center justify-center shrink-0 mt-0.5">
+                        <div className="w-6 h-6 rounded-full bg-gradient-to-br from-[var(--v-border-2)] to-[var(--v-border)] border border-[var(--v-border)] flex items-center justify-center shrink-0 mt-0.5">
                           <div className={`w-2 h-2 rounded-full bg-white/60 ${isLoading && idx === messages.length - 1 ? 'animate-pulse' : ''}`} />
                         </div>
                         <div className="flex-1 min-w-0 space-y-4">
@@ -623,14 +644,14 @@ export default function Chat() {
                                       </svg>
                                     </div>
                                   ) : step.status === 'loading' ? (
-                                    <div className="w-4 h-4 rounded-full border-2 border-white/15 border-t-white/60 animate-spin shrink-0" />
+                                    <div className="w-4 h-4 rounded-full border-2 border-[var(--v-border)] border-t-[var(--v-fg-3)] animate-spin shrink-0" />
                                   ) : (
-                                    <div className="w-4 h-4 rounded-full bg-white/[0.06] border border-white/10 shrink-0" />
+                                    <div className="w-4 h-4 rounded-full bg-[var(--v-surface)] border border-[var(--v-border)] shrink-0" />
                                   )}
                                   <span className={`text-xs transition-colors ${
                                     step.status === 'complete' ? 'text-emerald-400' :
-                                    step.status === 'loading' ? 'text-white/70' :
-                                    'text-white/25'
+                                    step.status === 'loading' ? 'text-[var(--v-fg)]' :
+                                    'text-[var(--v-fg-5)]'
                                   }`}>{step.name}</span>
                                 </div>
                               ))}
@@ -648,7 +669,7 @@ export default function Chat() {
                               );
                             }
                             return (
-                              <div key={i} className="text-white/80 text-sm leading-relaxed">
+                              <div key={i} className="text-[var(--v-fg)] text-sm leading-relaxed">
                                 {renderContent(text)}
                               </div>
                             );
@@ -688,9 +709,9 @@ export default function Chat() {
                                 if (!part.output?.imageUrl) return null;
                                 return (
                                   <div key={part.toolCallId} className="py-2 flex flex-col items-start gap-2">
-                                    <p className="text-xs text-white/40 font-mono">{part.output.prompt}</p>
+                                    <p className="text-xs text-[var(--v-fg-3)] font-mono">{part.output.prompt}</p>
                                     <ImageWithLoader src={part.output.imageUrl} alt={part.output.prompt} />
-                                    <span className="text-[10px] text-white/30 font-mono">Generated by Pollinations AI · FLUX</span>
+                                    <span className="text-[10px] text-[var(--v-fg-4)] font-mono">Generated by Pollinations AI · FLUX</span>
                                   </div>
                                 );
                               })}
@@ -707,7 +728,7 @@ export default function Chat() {
 
                   {/* Divider between messages */}
                   {idx < messages.length - 1 && (
-                    <div className="border-b border-white/[0.04]" />
+                    <div className="border-b border-[var(--v-border)]" />
                   )}
                 </div>
               ))}
@@ -718,8 +739,8 @@ export default function Chat() {
               {clientImages.map((img) => (
                 <div key={img.id}>
                   <div className="py-5 flex justify-end">
-                    <div className="max-w-[85%] sm:max-w-[75%] bg-white/[0.06] border border-white/[0.08] rounded-2xl rounded-tr-sm px-4 py-3">
-                      <p className="text-white text-sm leading-relaxed">{img.prompt}</p>
+                    <div className="max-w-[85%] sm:max-w-[75%] bg-[var(--v-surface)] border border-[var(--v-border)] rounded-lg rounded-tr-sm px-4 py-3">
+                      <p className="text-[var(--v-fg)] text-sm leading-relaxed">{img.prompt}</p>
                     </div>
                   </div>
                   <div className="py-5">
@@ -729,16 +750,16 @@ export default function Chat() {
                       </div>
                       <div className="flex-1 min-w-0 space-y-2">
                         <ImageWithLoader src={img.imageUrl} alt={img.prompt} />
-                        <span className="text-[10px] text-white/30 font-mono">Generated by Pollinations AI · FLUX</span>
+                        <span className="text-[10px] text-[var(--v-fg-4)] font-mono">Generated by Pollinations AI · FLUX</span>
                       </div>
                     </div>
                   </div>
-                  <div className="border-b border-white/[0.04]" />
+                  <div className="border-b border-[var(--v-border)]" />
                 </div>
               ))}
 
               {error && !hasValidImage && (
-                <div className="mt-4 p-4 bg-red-500/[0.08] border border-red-500/20 rounded-xl">
+                <div className="mt-4 p-4 bg-red-500/[0.08] border border-red-500/20 rounded-lg">
                   <p className="text-red-400 text-sm">
                     {error.message?.includes('tokens per day') || error.message?.includes('TPD')
                       ? 'Daily token limit reached — the free AI quota resets in a few hours. Try again later.'
@@ -746,7 +767,7 @@ export default function Chat() {
                       ? 'Rate limit reached — please wait a moment and try again.'
                       : 'Something went wrong. Please try again.'}
                   </p>
-                  <button onClick={() => window.location.reload()} className="mt-2 text-xs text-white/40 hover:text-white/70 underline underline-offset-2 transition-colors">
+                  <button onClick={() => window.location.reload()} className="mt-2 text-xs text-[var(--v-fg-3)] hover:text-[var(--v-fg)] underline underline-offset-2 transition-colors">
                     Refresh page
                   </button>
                 </div>
@@ -760,7 +781,7 @@ export default function Chat() {
         {/* ── FIXED BOTTOM INPUT (chat mode) ── */}
         {(messages.length > 0 || clientImages.length > 0) && (
           <div
-            className={`fixed bottom-0 left-0 right-0 z-30 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/95 to-transparent pt-8 ${showSidebar ? 'md:right-[42%]' : ''}`}
+            className={`fixed bottom-0 left-0 right-0 z-30 bg-gradient-to-t from-[var(--v-bg)] via-[var(--v-bg)]/95 to-transparent pt-8 ${showSidebar ? 'md:right-[42%]' : ''}`}
             style={{ paddingBottom: 'max(20px, env(safe-area-inset-bottom))' }}
           >
             <div className="w-full px-3 sm:px-4 space-y-2">
@@ -774,7 +795,7 @@ export default function Chat() {
                       type="button"
                       onClick={() => handleSuggestion(s.label)}
                       disabled={isLoading}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-white/[0.08] bg-white/[0.02] hover:bg-white/[0.06] hover:border-white/[0.16] text-white/40 hover:text-white/70 text-xs whitespace-nowrap transition-all duration-200 disabled:opacity-30 disabled:cursor-not-allowed shrink-0"
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--v-border)] bg-[var(--v-surface)] hover:bg-[var(--v-border)] hover:border-[var(--v-border-2)] text-[var(--v-fg-4)] hover:text-[var(--v-fg-3)] text-xs whitespace-nowrap transition-all duration-200 disabled:opacity-30 disabled:cursor-not-allowed shrink-0"
                     >
                       <span>{s.icon}</span>
                       <span>{s.label}</span>
@@ -786,7 +807,7 @@ export default function Chat() {
                 <input
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
-                  className="w-full bg-white/[0.05] text-white rounded-2xl pl-5 pr-14 py-3.5 border border-white/[0.10] focus:border-white/25 focus:bg-white/[0.07] focus:outline-none placeholder-white/25 text-sm transition-all duration-200 disabled:opacity-50"
+                  className="w-full bg-[var(--v-surface)] text-[var(--v-fg)] rounded-lg pl-5 pr-14 py-3.5 border border-[var(--v-border-2)] focus:border-[var(--v-fg-3)] focus:bg-[var(--v-border)] focus:outline-none placeholder-[var(--v-fg-5)] text-sm transition-all duration-200 disabled:opacity-50"
                   style={{ fontSize: '16px' }}
                   placeholder={currentPlaceholder}
                   disabled={isLoading}
@@ -795,12 +816,12 @@ export default function Chat() {
                 <button
                   type="submit"
                   disabled={!input.trim() || isLoading}
-                  className="absolute right-3 w-8 h-8 rounded-xl bg-white/10 hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center transition-all duration-200 group"
+                  className="absolute right-3 w-8 h-8 rounded-lg bg-[var(--v-surface)] hover:bg-[var(--v-border)] border border-[var(--v-border)] disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center transition-all duration-200 group"
                 >
                   <Send className="w-3.5 h-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
                 </button>
               </form>
-              <p className="text-center text-[11px] text-white/20">
+              <p className="text-center text-[11px] text-[var(--v-fg-5)]">
                 Sweep can make mistakes. Verify important information.
               </p>
             </div>
@@ -809,16 +830,16 @@ export default function Chat() {
       </main>
 
       {/* ── RIGHT SIDEBAR (desktop dashboard) ── */}
-      <aside className={`hidden md:flex flex-col fixed top-0 right-0 h-full w-[42%] bg-[#0d0d0d] border-l border-white/[0.06] z-50 transform transition-transform duration-300 ease-in-out ${showSidebar ? 'translate-x-0' : 'translate-x-full'}`}>
+      <aside className={`hidden md:flex flex-col fixed top-0 right-0 h-full w-[42%] bg-[var(--v-bg-2)] border-l border-[var(--v-border)] z-50 transform transition-transform duration-300 ease-in-out ${showSidebar ? 'translate-x-0' : 'translate-x-full'}`}>
         {/* Sidebar header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.06] shrink-0">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--v-border)] shrink-0">
           <div className="flex items-center gap-2">
-            <BarChart2 className="w-4 h-4 text-white/40" />
-            <span className="text-sm font-medium text-white/70">Dashboard</span>
+            <BarChart2 className="w-4 h-4 text-[var(--v-fg-3)]" />
+            <span className="text-sm font-medium text-[var(--v-fg)]">Dashboard</span>
           </div>
           <button
             onClick={() => setShowSidebar(false)}
-            className="w-7 h-7 rounded-lg hover:bg-white/[0.06] flex items-center justify-center text-white/30 hover:text-white/60 transition-colors"
+            className="w-7 h-7 rounded-lg hover:bg-[var(--v-surface)] flex items-center justify-center text-[var(--v-fg-4)] hover:text-[var(--v-fg-3)] transition-colors"
           >
             <X className="w-4 h-4" />
           </button>
@@ -837,7 +858,7 @@ export default function Chat() {
       </aside>
 
       {/* Credit */}
-      <div className={`fixed bottom-2 right-4 text-[10px] text-white/15 pointer-events-none select-none z-50 font-light tracking-wide ${showSidebar ? 'md:right-[calc(42%+12px)]' : ''}`}>
+      <div className={`fixed bottom-2 right-4 text-[10px] text-[var(--v-fg-5)] pointer-events-none select-none z-50 font-light tracking-wide ${showSidebar ? 'md:right-[calc(42%+12px)]' : ''}`}>
         by Sushant Kataria
       </div>
     </div>
