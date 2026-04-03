@@ -76,88 +76,160 @@ async function downloadImage(src: string) {
   }
 }
 
-function buildPollinationsUrl(prompt: string, seed: number, useFlux = false) {
+const MODELS = ['turbo', 'flux', 'turbo', 'flux'];
+
+function buildPollinationsUrl(prompt: string, seed: number, modelIdx = 0) {
   const safePrompt = prompt.length > 400 ? prompt.slice(0, 400) : prompt;
-  const model = useFlux ? 'flux' : 'turbo';
-  return `https://image.pollinations.ai/prompt/${encodeURIComponent(safePrompt)}?width=768&height=768&model=${model}&seed=${seed}`;
+  const model = MODELS[modelIdx % MODELS.length];
+  return `https://image.pollinations.ai/prompt/${encodeURIComponent(safePrompt)}?width=768&height=768&model=${model}&seed=${seed}&nologo=true`;
+}
+
+function extractPrompt(url: string): string {
+  try {
+    return decodeURIComponent(new URL(url).pathname.replace('/prompt/', ''));
+  } catch {
+    return url;
+  }
 }
 
 function ImageWithLoader({ src, alt }: { src: string; alt: string }) {
-  const [loaded, setLoaded] = useState(false);
+  const [blobSrc, setBlobSrc] = useState<string | null>(null);
   const [errored, setErrored] = useState(false);
-  const [retrySrc, setRetrySrc] = useState(src);
-  const [autoRetryCount, setAutoRetryCount] = useState(0);
-  const MAX_AUTO_RETRIES = 3;
+  const [attempt, setAttempt] = useState(0);
+  const [directUrl, setDirectUrl] = useState(src);
+  const MAX_ATTEMPTS = 4;
+  const prompt = extractPrompt(src);
 
-  // Auto-retry on error up to MAX_AUTO_RETRIES times with a fresh seed
-  const handleError = () => {
-    if (autoRetryCount < MAX_AUTO_RETRIES) {
-      const newSeed = Math.floor(Math.random() * 1000000);
-      // alternate model: turbo for first 2 retries, flux for 3rd
-      const useFlux = autoRetryCount >= 2;
+  useEffect(() => {
+    let cancelled = false;
+    let blobUrl: string | null = null;
+    setBlobSrc(null);
+    setErrored(false);
+
+    const load = async (attemptNum: number) => {
+      const seed = Math.floor(Math.random() * 1000000);
+      const url = buildPollinationsUrl(prompt, seed, attemptNum);
+      setDirectUrl(url);
       try {
-        const url = new URL(retrySrc);
-        const rawPrompt = decodeURIComponent(url.pathname.replace('/prompt/', ''));
-        setRetrySrc(buildPollinationsUrl(rawPrompt, newSeed, useFlux));
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 55000);
+        const res = await fetch(url, { signal: controller.signal });
+        clearTimeout(timeout);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const blob = await res.blob();
+        if (cancelled) return;
+        blobUrl = URL.createObjectURL(blob);
+        setBlobSrc(blobUrl);
       } catch {
-        const url = new URL(retrySrc);
-        url.searchParams.set('seed', String(newSeed));
-        setRetrySrc(url.toString());
+        if (cancelled) return;
+        if (attemptNum < MAX_ATTEMPTS - 1) {
+          setAttempt(attemptNum + 1);
+          await new Promise(r => setTimeout(r, 1500));
+          if (!cancelled) await load(attemptNum + 1);
+        } else {
+          setErrored(true);
+        }
       }
-      setAutoRetryCount(c => c + 1);
-    } else {
-      setErrored(true);
-    }
-  };
+    };
+
+    load(0);
+    return () => {
+      cancelled = true;
+      if (blobUrl) URL.revokeObjectURL(blobUrl);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [src]);
 
   const retry = () => {
-    const newSeed = Math.floor(Math.random() * 1000000);
-    try {
-      const url = new URL(retrySrc);
-      const rawPrompt = decodeURIComponent(url.pathname.replace('/prompt/', ''));
-      setRetrySrc(buildPollinationsUrl(rawPrompt, newSeed));
-    } catch {
-      const url = new URL(retrySrc);
-      url.searchParams.set('seed', String(newSeed));
-      setRetrySrc(url.toString());
-    }
     setErrored(false);
-    setLoaded(false);
-    setAutoRetryCount(0);
+    setBlobSrc(null);
+    setAttempt(0);
+    // Force re-run by toggling src through a dummy state reset — trigger by changing key externally,
+    // but here just re-run effect by updating a counter via a fresh key prop approach.
+    // Simplest: dispatch a synthetic re-mount by flipping a key state in parent,
+    // but we handle it here by reassigning src to a new URL:
+    const seed = Math.floor(Math.random() * 1000000);
+    const newUrl = buildPollinationsUrl(prompt, seed, 0);
+    setDirectUrl(newUrl);
+    // Trigger re-run of the load effect by changing the key — done via retryKey below
+    setRetryKey(k => k + 1);
   };
+  const [retryKey, setRetryKey] = useState(0);
+
+  // Separate effect for manual retry
+  useEffect(() => {
+    if (retryKey === 0) return;
+    let cancelled = false;
+    let blobUrl: string | null = null;
+    setBlobSrc(null);
+    setErrored(false);
+
+    const load = async (attemptNum: number) => {
+      const seed = Math.floor(Math.random() * 1000000);
+      const url = buildPollinationsUrl(prompt, seed, attemptNum);
+      setDirectUrl(url);
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 55000);
+        const res = await fetch(url, { signal: controller.signal });
+        clearTimeout(timeout);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const blob = await res.blob();
+        if (cancelled) return;
+        blobUrl = URL.createObjectURL(blob);
+        setBlobSrc(blobUrl);
+      } catch {
+        if (cancelled) return;
+        if (attemptNum < MAX_ATTEMPTS - 1) {
+          setAttempt(attemptNum + 1);
+          await new Promise(r => setTimeout(r, 1500));
+          if (!cancelled) await load(attemptNum + 1);
+        } else {
+          setErrored(true);
+        }
+      }
+    };
+
+    load(0);
+    return () => {
+      cancelled = true;
+      if (blobUrl) URL.revokeObjectURL(blobUrl);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [retryKey]);
 
   return (
     <div className="flex flex-col items-start gap-2">
       <div className="relative w-full max-w-sm rounded-lg overflow-hidden border border-[var(--v-border)] bg-[var(--v-surface)]" style={{ aspectRatio: '1' }}>
-        {!loaded && !errored && (
+        {!blobSrc && !errored && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
             <div className="w-5 h-5 rounded-full border-2 border-[var(--v-border)] border-t-[var(--v-fg-3)] animate-spin" />
             <span className="text-[10px] text-[var(--v-fg-5)] font-mono">
-              {autoRetryCount > 0 ? `retrying… (${autoRetryCount}/${MAX_AUTO_RETRIES})` : 'generating image…'}
+              {attempt > 0 ? `retrying… (${attempt}/${MAX_ATTEMPTS})` : 'generating image…'}
             </span>
           </div>
         )}
         {errored && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
-            <span className="text-xs text-[var(--v-fg-4)]">Failed to load image</span>
+            <span className="text-xs text-[var(--v-fg-4)]">Failed to generate image</span>
             <button onClick={retry} className="text-[11px] text-violet-400/60 hover:text-violet-300 transition-colors underline underline-offset-2">
               Try again
             </button>
-            <a href={retrySrc} target="_blank" rel="noopener noreferrer" className="text-[10px] text-[var(--v-fg-5)] underline">direct link</a>
+            <a href={directUrl} target="_blank" rel="noopener noreferrer" className="text-[10px] text-[var(--v-fg-5)] underline">open direct link</a>
           </div>
         )}
-        <img
-          src={retrySrc}
-          alt={alt}
-          className="w-full h-full object-cover"
-          style={{ opacity: loaded ? 1 : 0, transition: 'opacity 0.5s ease' }}
-          onLoad={() => setLoaded(true)}
-          onError={handleError}
-        />
+        {blobSrc && (
+          <img
+            src={blobSrc}
+            alt={alt}
+            className="w-full h-full object-cover"
+            style={{ opacity: 1, transition: 'opacity 0.5s ease' }}
+          />
+        )}
       </div>
-      {loaded && (
+      {blobSrc && (
         <button
-          onClick={() => downloadImage(retrySrc)}
+          onClick={() => downloadImage(blobSrc!)}
           className="flex items-center gap-1.5 text-xs text-[var(--v-fg-4)] hover:text-[var(--v-fg)] transition-colors"
         >
           <Download className="w-3 h-3" />
