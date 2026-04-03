@@ -76,10 +76,10 @@ async function downloadImage(src: string) {
   }
 }
 
-function buildPollinationsUrl(prompt: string, seed: number, fast = false) {
+function buildPollinationsUrl(prompt: string, seed: number, useFlux = false) {
   const safePrompt = prompt.length > 400 ? prompt.slice(0, 400) : prompt;
-  const model = fast ? 'turbo' : 'flux';
-  return `https://image.pollinations.ai/prompt/${encodeURIComponent(safePrompt)}?width=768&height=768&model=${model}&nologo=true&seed=${seed}`;
+  const model = useFlux ? 'flux' : 'turbo';
+  return `https://image.pollinations.ai/prompt/${encodeURIComponent(safePrompt)}?width=768&height=768&model=${model}&seed=${seed}`;
 }
 
 function ImageWithLoader({ src, alt }: { src: string; alt: string }) {
@@ -93,12 +93,12 @@ function ImageWithLoader({ src, alt }: { src: string; alt: string }) {
   const handleError = () => {
     if (autoRetryCount < MAX_AUTO_RETRIES) {
       const newSeed = Math.floor(Math.random() * 1000000);
-      // alternate model: flux for first 2 retries, turbo for 3rd
-      const useFast = autoRetryCount >= 2;
+      // alternate model: turbo for first 2 retries, flux for 3rd
+      const useFlux = autoRetryCount >= 2;
       try {
         const url = new URL(retrySrc);
         const rawPrompt = decodeURIComponent(url.pathname.replace('/prompt/', ''));
-        setRetrySrc(buildPollinationsUrl(rawPrompt, newSeed, useFast));
+        setRetrySrc(buildPollinationsUrl(rawPrompt, newSeed, useFlux));
       } catch {
         const url = new URL(retrySrc);
         url.searchParams.set('seed', String(newSeed));
@@ -544,7 +544,7 @@ export default function Chat() {
         <header className="fixed top-0 left-0 right-0 z-40 bg-[var(--v-bg)]/90 backdrop-blur-xl border-b border-[var(--v-border)]">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-2 min-w-0">
             <button onClick={() => window.location.reload()} className="flex items-center gap-2 group shrink-0">
-              <span className="text-lg font-semibold tracking-tight bg-gradient-to-r from-white/50 via-white to-white/50 bg-clip-text text-transparent animate-gradient bg-[length:200%_100%] dark:from-white/50 dark:via-white dark:to-white/50">
+              <span className="text-lg font-semibold tracking-tight bg-gradient-to-r from-black/70 via-black to-black/70 dark:from-white/50 dark:via-white dark:to-white/50 bg-clip-text text-transparent animate-gradient bg-[length:200%_100%]">
                 Sweep
               </span>
             </button>
@@ -582,7 +582,7 @@ export default function Chat() {
                   </button>
                 </div>
                 <h1 className="text-6xl sm:text-7xl font-semibold tracking-tight">
-                  <span className="bg-gradient-to-r from-white/50 via-white to-white/50 bg-clip-text text-transparent animate-gradient bg-[length:200%_100%] dark:from-white/50 dark:via-white dark:to-white/50">
+                  <span className="bg-gradient-to-r from-black/70 via-black to-black/70 dark:from-white/50 dark:via-white dark:to-white/50 bg-clip-text text-transparent animate-gradient bg-[length:200%_100%]">
                     Sweep
                   </span>
                 </h1>
