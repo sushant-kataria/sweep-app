@@ -2,7 +2,7 @@
 
 import { useChat } from '@ai-sdk/react';
 import { useState, useEffect, useRef } from 'react';
-import { Send, BarChart2, X, Search, MessageSquare, Code2, Copy, Check, Wand2, Download, Sun, Moon } from 'lucide-react';
+import { Send, BarChart2, X, Search, MessageSquare, Code2, Copy, Check, Sun, Moon } from 'lucide-react';
 
 import { BarChartPro } from '@/components/dashboard/bar-chart-pro';
 import { LineChartPro } from '@/components/dashboard/line-chart-pro';
@@ -15,7 +15,7 @@ import { PropertyPortfolio } from '@/components/dashboard/property-portfolio';
 import { ZillowProperty } from '@/components/dashboard/zillow-property';
 import { ZillowListings } from '@/components/dashboard/zillow-listings';
 
-type Mode = 'chat' | 'search' | 'code' | 'image';
+type Mode = 'chat' | 'search' | 'code';
 
 type ChartOutput = { chartType: string; title: string; unit?: string; data: Array<{ label: string; value: number }>; };
 type ComparisonOutput = { title: string; items: Array<{ name: string; metrics: Record<string, number | string>; }>; };
@@ -53,192 +53,8 @@ const modes: { id: Mode; label: string; icon: React.ReactNode; placeholder: stri
     icon: <Code2 className="w-3.5 h-3.5" />,
     placeholder: 'Ask a coding question...',
   },
-  {
-    id: 'image',
-    label: 'Image',
-    icon: <Wand2 className="w-3.5 h-3.5" />,
-    placeholder: 'Describe an image to generate...',
-  },
 ];
 
-async function downloadImage(src: string) {
-  try {
-    const res = await fetch(src);
-    const blob = await res.blob();
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `sweep-image-${Date.now()}.jpg`;
-    a.click();
-    URL.revokeObjectURL(url);
-  } catch {
-    window.open(src, '_blank');
-  }
-}
-
-const MODELS = ['turbo', 'flux', 'turbo', 'flux'];
-
-function buildPollinationsUrl(prompt: string, seed: number, modelIdx = 0) {
-  const safePrompt = prompt.length > 400 ? prompt.slice(0, 400) : prompt;
-  const model = MODELS[modelIdx % MODELS.length];
-  return `https://image.pollinations.ai/prompt/${encodeURIComponent(safePrompt)}?width=768&height=768&model=${model}&seed=${seed}&nologo=true`;
-}
-
-function extractPrompt(url: string): string {
-  try {
-    return decodeURIComponent(new URL(url).pathname.replace('/prompt/', ''));
-  } catch {
-    return url;
-  }
-}
-
-function ImageWithLoader({ src, alt }: { src: string; alt: string }) {
-  const [blobSrc, setBlobSrc] = useState<string | null>(null);
-  const [errored, setErrored] = useState(false);
-  const [attempt, setAttempt] = useState(0);
-  const [directUrl, setDirectUrl] = useState(src);
-  const MAX_ATTEMPTS = 4;
-  const prompt = extractPrompt(src);
-
-  useEffect(() => {
-    let cancelled = false;
-    let blobUrl: string | null = null;
-    setBlobSrc(null);
-    setErrored(false);
-
-    const load = async (attemptNum: number) => {
-      const seed = Math.floor(Math.random() * 1000000);
-      const url = buildPollinationsUrl(prompt, seed, attemptNum);
-      setDirectUrl(url);
-      try {
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 55000);
-        const res = await fetch(url, { signal: controller.signal });
-        clearTimeout(timeout);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const blob = await res.blob();
-        if (cancelled) return;
-        blobUrl = URL.createObjectURL(blob);
-        setBlobSrc(blobUrl);
-      } catch {
-        if (cancelled) return;
-        if (attemptNum < MAX_ATTEMPTS - 1) {
-          setAttempt(attemptNum + 1);
-          await new Promise(r => setTimeout(r, 1500));
-          if (!cancelled) await load(attemptNum + 1);
-        } else {
-          setErrored(true);
-        }
-      }
-    };
-
-    load(0);
-    return () => {
-      cancelled = true;
-      if (blobUrl) URL.revokeObjectURL(blobUrl);
-    };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [src]);
-
-  const retry = () => {
-    setErrored(false);
-    setBlobSrc(null);
-    setAttempt(0);
-    // Force re-run by toggling src through a dummy state reset — trigger by changing key externally,
-    // but here just re-run effect by updating a counter via a fresh key prop approach.
-    // Simplest: dispatch a synthetic re-mount by flipping a key state in parent,
-    // but we handle it here by reassigning src to a new URL:
-    const seed = Math.floor(Math.random() * 1000000);
-    const newUrl = buildPollinationsUrl(prompt, seed, 0);
-    setDirectUrl(newUrl);
-    // Trigger re-run of the load effect by changing the key — done via retryKey below
-    setRetryKey(k => k + 1);
-  };
-  const [retryKey, setRetryKey] = useState(0);
-
-  // Separate effect for manual retry
-  useEffect(() => {
-    if (retryKey === 0) return;
-    let cancelled = false;
-    let blobUrl: string | null = null;
-    setBlobSrc(null);
-    setErrored(false);
-
-    const load = async (attemptNum: number) => {
-      const seed = Math.floor(Math.random() * 1000000);
-      const url = buildPollinationsUrl(prompt, seed, attemptNum);
-      setDirectUrl(url);
-      try {
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 55000);
-        const res = await fetch(url, { signal: controller.signal });
-        clearTimeout(timeout);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const blob = await res.blob();
-        if (cancelled) return;
-        blobUrl = URL.createObjectURL(blob);
-        setBlobSrc(blobUrl);
-      } catch {
-        if (cancelled) return;
-        if (attemptNum < MAX_ATTEMPTS - 1) {
-          setAttempt(attemptNum + 1);
-          await new Promise(r => setTimeout(r, 1500));
-          if (!cancelled) await load(attemptNum + 1);
-        } else {
-          setErrored(true);
-        }
-      }
-    };
-
-    load(0);
-    return () => {
-      cancelled = true;
-      if (blobUrl) URL.revokeObjectURL(blobUrl);
-    };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [retryKey]);
-
-  return (
-    <div className="flex flex-col items-start gap-2">
-      <div className="relative w-full max-w-sm rounded-lg overflow-hidden border border-[var(--v-border)] bg-[var(--v-surface)]" style={{ aspectRatio: '1' }}>
-        {!blobSrc && !errored && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
-            <div className="w-5 h-5 rounded-full border-2 border-[var(--v-border)] border-t-[var(--v-fg-3)] animate-spin" />
-            <span className="text-[10px] text-[var(--v-fg-5)] font-mono">
-              {attempt > 0 ? `retrying… (${attempt}/${MAX_ATTEMPTS})` : 'generating image…'}
-            </span>
-          </div>
-        )}
-        {errored && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
-            <span className="text-xs text-[var(--v-fg-4)]">Failed to generate image</span>
-            <button onClick={retry} className="text-[11px] text-violet-400/60 hover:text-violet-300 transition-colors underline underline-offset-2">
-              Try again
-            </button>
-            <a href={directUrl} target="_blank" rel="noopener noreferrer" className="text-[10px] text-[var(--v-fg-5)] underline">open direct link</a>
-          </div>
-        )}
-        {blobSrc && (
-          <img
-            src={blobSrc}
-            alt={alt}
-            className="w-full h-full object-cover"
-            style={{ opacity: 1, transition: 'opacity 0.5s ease' }}
-          />
-        )}
-      </div>
-      {blobSrc && (
-        <button
-          onClick={() => downloadImage(blobSrc!)}
-          className="flex items-center gap-1.5 text-xs text-[var(--v-fg-4)] hover:text-[var(--v-fg)] transition-colors"
-        >
-          <Download className="w-3 h-3" />
-          <span>Download</span>
-        </button>
-      )}
-    </div>
-  );
-}
 
 const THINKING_WORDS = [
   'Analyzing...', 'Thinking...', 'Interpreting...', 'Researching...',
@@ -356,15 +172,6 @@ function renderTextWithInlineTools(text: string): React.ReactNode[] {
         nodes.push(<StatsCard key={key++} title={args.title} stats={args.stats} />);
       } else if (toolName === 'showComparison' && args.items) {
         nodes.push(<ComparisonTable key={key++} title={args.title} items={args.items} />);
-      } else if (toolName === 'generateImage' && args.prompt) {
-        const url = args.imageUrl || `https://image.pollinations.ai/prompt/${encodeURIComponent(args.prompt)}?width=1024&height=1024&model=flux&nologo=true&seed=${Math.floor(Math.random() * 1000000)}`;
-        nodes.push(
-          <div key={key++} className="py-2 flex flex-col items-start gap-2">
-            <p className="text-xs text-[var(--v-fg-3)] font-mono">{args.prompt}</p>
-            <ImageWithLoader src={url} alt={args.prompt} />
-            <span className="text-[10px] text-[var(--v-fg-4)] font-mono">Generated by Pollinations AI · FLUX</span>
-          </div>
-        );
       }
     } catch { /* skip malformed function call */ }
     lastIndex = match.index + match[0].length;
@@ -400,18 +207,11 @@ const suggestionsByMode: Record<Mode, Array<{ label: string; icon: string }>> = 
     { label: 'Docker compose for Next.js + Postgres', icon: '🐳' },
     { label: 'Async/await vs Promise chaining', icon: '⚡' },
   ],
-  image: [
-    { label: 'Futuristic city at night with neon lights', icon: '🌃' },
-    { label: 'Cyberpunk portrait of a samurai', icon: '⚔️' },
-    { label: 'Cozy cabin in snowy mountains', icon: '🏔️' },
-    { label: 'Abstract art in vibrant colors', icon: '🎨' },
-    { label: 'Golden retriever puppy playing in a park', icon: '🐶' },
-  ],
 };
 
 const toolTypes = [
   'tool-showBarChart', 'tool-showLineChart', 'tool-showPieChart', 'tool-showAreaChart', 'tool-showComparison',
-  'tool-showStats', 'tool-showBalanceSheet', 'tool-showPropertyPortfolio', 'tool-showZillowProperty', 'tool-generateImage'
+  'tool-showStats', 'tool-showBalanceSheet', 'tool-showPropertyPortfolio', 'tool-showZillowProperty'
 ];
 
 const toolNameMap: Record<string, string> = {
@@ -425,21 +225,18 @@ const toolNameMap: Record<string, string> = {
   'tool-showPropertyPortfolio': 'Loading portfolio',
   'tool-showZillowProperty': 'Fetching property data',
   'tool-searchZillowListings': 'Searching properties',
-  'tool-generateImage': 'Generating image',
 };
 
 const modeColors: Record<Mode, string> = {
   chat: 'text-[var(--v-fg)] border-[var(--v-border-2)] bg-[var(--v-surface)]',
   search: 'text-sky-300 border-sky-400/40 bg-sky-400/[0.08]',
   code: 'text-emerald-300 border-emerald-400/40 bg-emerald-400/[0.08]',
-  image: 'text-violet-300 border-violet-400/40 bg-violet-400/[0.08]',
 };
 
 const modeInactiveColors: Record<Mode, string> = {
   chat: 'text-[var(--v-fg-4)] border-[var(--v-border)] bg-transparent hover:text-[var(--v-fg-3)] hover:border-[var(--v-border-2)]',
   search: 'text-[var(--v-fg-4)] border-[var(--v-border)] bg-transparent hover:text-sky-300/60 hover:border-sky-400/20',
   code: 'text-[var(--v-fg-4)] border-[var(--v-border)] bg-transparent hover:text-emerald-300/60 hover:border-emerald-400/20',
-  image: 'text-[var(--v-fg-4)] border-[var(--v-border)] bg-transparent hover:text-violet-300/60 hover:border-violet-400/20',
 };
 
 function ModeSelector({ mode, setMode, compact = false }: { mode: Mode; setMode: (m: Mode) => void; compact?: boolean }) {
@@ -462,8 +259,6 @@ function ModeSelector({ mode, setMode, compact = false }: { mode: Mode; setMode:
   );
 }
 
-type ClientImage = { id: string; prompt: string; imageUrl: string };
-
 export default function Chat() {
   const { messages, sendMessage, status, error } = useChat();
   const [input, setInput] = useState('');
@@ -471,7 +266,6 @@ export default function Chat() {
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const [showSidebar, setShowSidebar] = useState(false);
   const [hasDashboardItems, setHasDashboardItems] = useState(false);
-  const [clientImages, setClientImages] = useState<ClientImage[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const mainRef = useRef<HTMLElement>(null);
@@ -518,24 +312,12 @@ export default function Chat() {
     if (isNearBottomRef.current) {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [messages, status, clientImages]);
+  }, [messages, status]);
 
-
-  const generateClientImage = (prompt: string) => {
-    const seed = Math.floor(Math.random() * 1000000);
-    const imageUrl = buildPollinationsUrl(prompt, seed);
-    isNearBottomRef.current = true;
-    setClientImages(prev => [...prev, { id: String(seed), prompt, imageUrl }]);
-  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim()) return;
-    if (mode === 'image') {
-      generateClientImage(input.trim());
-      setInput('');
-      return;
-    }
     setShowSidebar(false);
     isNearBottomRef.current = true;
     sendMessage({ text: input }, { body: { mode } });
@@ -543,10 +325,6 @@ export default function Chat() {
   };
 
   const handleSuggestion = (label: string) => {
-    if (mode === 'image') {
-      generateClientImage(label);
-      return;
-    }
     sendMessage({ text: label }, { body: { mode } });
   };
 
@@ -593,17 +371,9 @@ export default function Chat() {
         const o = part.output as ZillowPropertyOutput;
         return <ZillowProperty key={callId} property={o.property} zillowUrl={o.zillowUrl} error={o.error} />;
       }
-      if (part.type === 'tool-generateImage') {
-        // Images are rendered inline in the chat — skip here to avoid duplicates
-        return null;
-      }
       return null;
     });
   };
-
-  const hasValidImage = messages.some(
-    m => m.role === "assistant" && m.parts.some(part => part.type === "tool-generateImage" && part.output && (part.output as any).imageUrl)
-  );
 
   const isLoading = status === 'streaming';
   const currentPlaceholder = modes.find(m => m.id === mode)?.placeholder ?? 'Ask anything...';
@@ -612,7 +382,7 @@ export default function Chat() {
   return (
     <div className="bg-[var(--v-bg)] text-[var(--v-fg)] flex flex-col" style={{ position: 'fixed', inset: 0, overflow: 'hidden' }}>
       {/* ── HEADER (only during chat) ── */}
-      {(messages.length > 0 || clientImages.length > 0) && (
+      {(messages.length > 0) && (
         <header className="fixed top-0 left-0 right-0 z-40 bg-[var(--v-bg)]/90 backdrop-blur-xl border-b border-[var(--v-border)]">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-2 min-w-0">
             <button onClick={() => window.location.reload()} className="flex items-center gap-2 group shrink-0">
@@ -640,11 +410,11 @@ export default function Chat() {
       )}
 
       {/* ── MAIN CONTENT ── */}
-      <main ref={mainRef} className={`flex-1 overflow-y-auto transition-all duration-300 ease-in-out ${showSidebar ? 'md:mr-[42%]' : ''} ${messages.length > 0 || clientImages.length > 0 ? 'pt-14' : ''}`}>
+      <main ref={mainRef} className={`flex-1 overflow-y-auto transition-all duration-300 ease-in-out ${showSidebar ? 'md:mr-[42%]' : ''} ${messages.length > 0 ? 'pt-14' : ''}`}>
         <div className="w-full max-w-2xl mx-auto px-4 sm:px-6 pb-36">
 
           {/* ── HERO (no messages) ── */}
-          {messages.length === 0 && clientImages.length === 0 ? (
+          {messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center gap-8 py-20" style={{ minHeight: 'calc(100dvh - 80px)' }}>
               {/* Logo */}
               <div className="text-center space-y-3 relative w-full">
@@ -805,21 +575,6 @@ export default function Chat() {
                             return null;
                           })}
 
-                          {/* Images always inline; other dashboard items mobile only (desktop → sidebar) */}
-                          {m.parts.some((p: any) => p.type === 'tool-generateImage' && p.state === 'output-available') && (
-                            <div className="space-y-4">
-                              {m.parts.filter((p: any) => p.type === 'tool-generateImage').map((part: any) => {
-                                if (!part.output?.imageUrl) return null;
-                                return (
-                                  <div key={part.toolCallId} className="py-2 flex flex-col items-start gap-2">
-                                    <p className="text-xs text-[var(--v-fg-3)] font-mono">{part.output.prompt}</p>
-                                    <ImageWithLoader src={part.output.imageUrl} alt={part.output.prompt} />
-                                    <span className="text-[10px] text-[var(--v-fg-4)] font-mono">Generated by Pollinations AI · FLUX</span>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          )}
                           {/* Charts on mobile */}
                           <div className="md:hidden space-y-4">
                             {renderDashboardItems(m)}
@@ -837,31 +592,7 @@ export default function Chat() {
               ))}
 
 
-              {/* Error block */}
-              {/* Client-side image generations (image mode — no API call) */}
-              {clientImages.map((img) => (
-                <div key={img.id}>
-                  <div className="py-5 flex justify-end">
-                    <div className="max-w-[85%] sm:max-w-[75%] bg-[var(--v-surface)] border border-[var(--v-border)] rounded-lg rounded-tr-sm px-4 py-3">
-                      <p className="text-[var(--v-fg)] text-sm leading-relaxed">{img.prompt}</p>
-                    </div>
-                  </div>
-                  <div className="py-5">
-                    <div className="flex items-start gap-3">
-                      <div className="w-6 h-6 rounded-full bg-gradient-to-br from-violet-500/20 to-violet-500/5 border border-violet-500/20 flex items-center justify-center shrink-0 mt-0.5">
-                        <div className="w-2 h-2 rounded-full bg-violet-400/60" />
-                      </div>
-                      <div className="flex-1 min-w-0 space-y-2">
-                        <ImageWithLoader src={img.imageUrl} alt={img.prompt} />
-                        <span className="text-[10px] text-[var(--v-fg-4)] font-mono">Generated by Pollinations AI · FLUX</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="border-b border-[var(--v-border)]" />
-                </div>
-              ))}
-
-              {error && !hasValidImage && (
+              {error && (
                 <div className="mt-4 p-4 bg-red-500/[0.08] border border-red-500/20 rounded-lg">
                   <p className="text-red-400 text-sm">
                     {error.message?.includes('tokens per day') || error.message?.includes('TPD')
@@ -882,7 +613,7 @@ export default function Chat() {
         </div>
 
         {/* ── FIXED BOTTOM INPUT (chat mode) ── */}
-        {(messages.length > 0 || clientImages.length > 0) && (
+        {(messages.length > 0) && (
           <div
             className={`fixed bottom-0 left-0 right-0 z-30 bg-gradient-to-t from-[var(--v-bg)] via-[var(--v-bg)]/95 to-transparent pt-8 ${showSidebar ? 'md:right-[42%]' : ''}`}
             style={{ paddingBottom: 'max(20px, env(safe-area-inset-bottom))' }}
