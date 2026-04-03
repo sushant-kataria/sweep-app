@@ -76,24 +76,54 @@ async function downloadImage(src: string) {
   }
 }
 
+function buildPollinationsUrl(prompt: string, seed: number, fast = false) {
+  const safePrompt = prompt.length > 400 ? prompt.slice(0, 400) : prompt;
+  const model = fast ? 'turbo' : 'flux';
+  return `https://image.pollinations.ai/prompt/${encodeURIComponent(safePrompt)}?width=768&height=768&model=${model}&nologo=true&seed=${seed}`;
+}
+
 function ImageWithLoader({ src, alt }: { src: string; alt: string }) {
   const [loaded, setLoaded] = useState(false);
   const [errored, setErrored] = useState(false);
   const [retrySrc, setRetrySrc] = useState(src);
+  const [autoRetryCount, setAutoRetryCount] = useState(0);
+  const MAX_AUTO_RETRIES = 3;
 
-  useEffect(() => {
-    if (loaded || errored) return;
-    const t = setTimeout(() => setErrored(true), 90000);
-    return () => clearTimeout(t);
-  }, [loaded, errored]);
+  // Auto-retry on error up to MAX_AUTO_RETRIES times with a fresh seed
+  const handleError = () => {
+    if (autoRetryCount < MAX_AUTO_RETRIES) {
+      const newSeed = Math.floor(Math.random() * 1000000);
+      // alternate model: flux for first 2 retries, turbo for 3rd
+      const useFast = autoRetryCount >= 2;
+      try {
+        const url = new URL(retrySrc);
+        const rawPrompt = decodeURIComponent(url.pathname.replace('/prompt/', ''));
+        setRetrySrc(buildPollinationsUrl(rawPrompt, newSeed, useFast));
+      } catch {
+        const url = new URL(retrySrc);
+        url.searchParams.set('seed', String(newSeed));
+        setRetrySrc(url.toString());
+      }
+      setAutoRetryCount(c => c + 1);
+    } else {
+      setErrored(true);
+    }
+  };
 
   const retry = () => {
-    // Append a cache-bust param to force a fresh load
-    const url = new URL(retrySrc);
-    url.searchParams.set('seed', String(Math.floor(Math.random() * 1000000)));
+    const newSeed = Math.floor(Math.random() * 1000000);
+    try {
+      const url = new URL(retrySrc);
+      const rawPrompt = decodeURIComponent(url.pathname.replace('/prompt/', ''));
+      setRetrySrc(buildPollinationsUrl(rawPrompt, newSeed));
+    } catch {
+      const url = new URL(retrySrc);
+      url.searchParams.set('seed', String(newSeed));
+      setRetrySrc(url.toString());
+    }
     setErrored(false);
     setLoaded(false);
-    setRetrySrc(url.toString());
+    setAutoRetryCount(0);
   };
 
   return (
@@ -102,7 +132,9 @@ function ImageWithLoader({ src, alt }: { src: string; alt: string }) {
         {!loaded && !errored && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
             <div className="w-5 h-5 rounded-full border-2 border-[var(--v-border)] border-t-[var(--v-fg-3)] animate-spin" />
-            <span className="text-[10px] text-[var(--v-fg-5)] font-mono">generating image...</span>
+            <span className="text-[10px] text-[var(--v-fg-5)] font-mono">
+              {autoRetryCount > 0 ? `retrying… (${autoRetryCount}/${MAX_AUTO_RETRIES})` : 'generating image…'}
+            </span>
           </div>
         )}
         {errored && (
@@ -120,7 +152,7 @@ function ImageWithLoader({ src, alt }: { src: string; alt: string }) {
           className="w-full h-full object-cover"
           style={{ opacity: loaded ? 1 : 0, transition: 'opacity 0.5s ease' }}
           onLoad={() => setLoaded(true)}
-          onError={() => setErrored(true)}
+          onError={handleError}
         />
       </div>
       {loaded && (
@@ -419,8 +451,7 @@ export default function Chat() {
 
   const generateClientImage = (prompt: string) => {
     const seed = Math.floor(Math.random() * 1000000);
-    const safePrompt = prompt.length > 400 ? prompt.slice(0, 400) : prompt;
-    const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(safePrompt)}?width=1024&height=1024&model=flux&nologo=true&seed=${seed}`;
+    const imageUrl = buildPollinationsUrl(prompt, seed);
     isNearBottomRef.current = true;
     setClientImages(prev => [...prev, { id: String(seed), prompt, imageUrl }]);
   };
