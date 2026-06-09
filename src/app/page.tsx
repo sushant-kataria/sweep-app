@@ -205,7 +205,7 @@ function renderContent(raw: string | undefined | null): React.ReactNode {
 
 function renderTextWithInlineTools(text: string): React.ReactNode[] {
   const nodes: React.ReactNode[] = [];
-  const regex = /<function\((\w+)\)([\s\S]*?)<\/function>/g;
+  const regex = /<function[@(](\w+)[)>]([\s\S]*?)<\/function>/g;
   let lastIndex = 0; let match; let key = 0;
   while ((match = regex.exec(text)) !== null) {
     if (match.index > lastIndex) {
@@ -225,6 +225,10 @@ function renderTextWithInlineTools(text: string): React.ReactNode[] {
         nodes.push(<StatsCard key={key++} title={args.title} stats={args.stats} />);
       } else if (toolName === 'showComparison' && args.items) {
         nodes.push(<ComparisonTable key={key++} title={args.title} items={args.items} />);
+      } else if (toolName === 'showBalanceSheet' && args.assets) {
+        nodes.push(<BalanceSheet key={key++} title={args.title} period={args.period} currency={args.currency} assets={args.assets} liabilities={args.liabilities} equity={args.equity} />);
+      } else if (toolName === 'showPropertyPortfolio' && args.properties) {
+        nodes.push(<PropertyPortfolio key={key++} properties={args.properties} />);
       }
     } catch {}
     lastIndex = match.index + match[0].length;
@@ -615,7 +619,7 @@ function Chat({
 
                           {m.parts.filter((p: any) => p.type === 'text').map((part: any, i: number) => {
                             const text = part.text as string;
-                            if (/<function\(\w+\)/.test(text)) {
+                            if (/<function[@(]\w+/.test(text)) {
                               return <div key={i} className="space-y-4">{renderTextWithInlineTools(text)}</div>;
                             }
                             return (
