@@ -176,6 +176,10 @@ EXPERTISE:
 const openrouter = createOpenAI({
   baseURL: 'https://openrouter.ai/api/v1',
   apiKey: process.env.OPENROUTER_API_KEY,
+  headers: {
+    'HTTP-Referer': 'https://sweep-app.vercel.app',
+    'X-Title': 'Sweep',
+  },
 });
 
 const google = createGoogleGenerativeAI({
