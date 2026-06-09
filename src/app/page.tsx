@@ -205,7 +205,7 @@ function renderContent(raw: string | undefined | null): React.ReactNode {
 
 function renderTextWithInlineTools(text: string): React.ReactNode[] {
   const nodes: React.ReactNode[] = [];
-  const regex = /<function[@(](\w+)[)>]([\s\S]*?)<\/function>/g;
+  const regex = /<function[@(](\w+)[)>]>?([\s\S]*?)<\/function>/g;
   let lastIndex = 0; let match; let key = 0;
   while ((match = regex.exec(text)) !== null) {
     if (match.index > lastIndex) {
