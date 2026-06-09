@@ -4,7 +4,11 @@ export function SvgSparkline({ data, color = "#22d3ee", height = 200 }: {
     height?: number
   }) {
     if (!data || data.length < 2) {
-      return <div className="h-full flex items-center justify-center text-xs text-gray-400">No chart data available.</div>
+      return (
+        <div className="flex h-full items-center justify-center text-xs text-[var(--v-chart-empty)]">
+          No chart data available.
+        </div>
+      )
     }
   
     const width = 500;
