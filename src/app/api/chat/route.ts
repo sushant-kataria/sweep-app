@@ -2,7 +2,7 @@
 import { createOpenAI } from '@ai-sdk/openai';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { createGroq } from '@ai-sdk/groq';
-import { streamText, createDataStreamResponse, convertToModelMessages, stepCountIs, type UIMessage } from 'ai';
+import { streamText, convertToModelMessages, stepCountIs, type UIMessage } from 'ai';
 import { dashboardTools } from '@/ai/dashboard-tools';
 
 export const runtime = 'edge';
@@ -205,51 +205,74 @@ export async function POST(req: Request) {
   const modelMessages = convertToModelMessages(messages);
   const isChat = mode === 'chat';
 
-  // createDataStreamResponse runs execute() inside the stream so errors thrown
-  // during mergeIntoDataStream (including mid-stream 429s) are catchable,
-  // enabling true model fallback before any content is committed.
-  return createDataStreamResponse({
-    execute: async (dataStream) => {
-      let lastError: any;
+  for (const model of models) {
+    try {
+      const result = isChat
+        ? streamText({
+            model,
+            system: nemotronSystemPrompts.chat,
+            messages: modelMessages,
+            tools: dashboardTools,
+            stopWhen: stepCountIs(10),
+            maxRetries: 0,
+          })
+        : streamText({
+            model,
+            system: nemotronSystemPrompts[mode],
+            messages: modelMessages,
+            maxRetries: 0,
+          });
 
-      for (const model of models) {
-        try {
-          const result = isChat
-            ? streamText({
-                model,
-                system: nemotronSystemPrompts.chat,
-                messages: modelMessages,
-                tools: dashboardTools,
-                stopWhen: stepCountIs(10),
-                maxRetries: 0,
-              })
-            : streamText({
-                model,
-                system: nemotronSystemPrompts[mode],
-                messages: modelMessages,
-                maxRetries: 0,
-              });
+      const modelResponse = result.toUIMessageStreamResponse();
+      if (!modelResponse.body) continue;
 
-          await result.mergeIntoDataStream(dataStream);
-          return; // success — stop trying further models
-        } catch (error: any) {
-          lastError = error;
-          if (isRateLimit(error)) {
-            console.warn(`[Rate limit] Model failed, trying next. Error: ${error?.message}`);
-            continue;
+      // Tee the stream: peek branch detects errors, main branch goes to client.
+      // tee() buffers so mainStream still has all chunks even after we read from peekStream.
+      const [peekStream, mainStream] = modelResponse.body.tee();
+      const reader = peekStream.getReader();
+      let isStreamError = false;
+
+      try {
+        // In AI SDK v5 stream: 'f:' = message start, '0:' = text delta, '3:' = error
+        // Read a few initial chunks to detect a rate-limit error event before committing.
+        for (let i = 0; i < 4; i++) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          const text = new TextDecoder().decode(value);
+          if (text.startsWith('3:') || text.includes('\n3:')) {
+            isStreamError = true;
+            break;
           }
-          console.error('[Stream error]', error?.message);
-          throw error;
+          if (text.startsWith('0:') || text.includes('\n0:')) break; // got real content
         }
+      } catch (peekErr: any) {
+        isStreamError = isRateLimit(peekErr);
+        if (!isStreamError) { reader.releaseLock(); throw peekErr; }
       }
 
-      // All models exhausted
-      throw lastError ?? new Error('All models failed.');
-    },
-    onError: (error: unknown) => {
-      const e = error as any;
-      if (isRateLimit(e)) return 'All models are rate limited. Please wait a moment and try again.';
-      return e?.message ?? 'An error occurred';
-    },
-  });
+      reader.releaseLock();
+      peekStream.cancel().catch(() => {});
+
+      if (isStreamError) {
+        console.warn('[Rate limit] Stream error detected, trying next model');
+        mainStream.cancel().catch(() => {});
+        continue;
+      }
+
+      return new Response(mainStream, { headers: modelResponse.headers });
+
+    } catch (error: any) {
+      if (isRateLimit(error)) {
+        console.warn(`[Rate limit] Model failed, trying next. Error: ${error?.message}`);
+        continue;
+      }
+      console.error('[Stream error]', error?.message);
+      break;
+    }
+  }
+
+  return new Response(
+    JSON.stringify({ error: 'All models are rate limited. Please wait a moment and try again.' }),
+    { status: 429, headers: { 'Content-Type': 'application/json' } }
+  );
 }
