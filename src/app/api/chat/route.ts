@@ -24,7 +24,6 @@ YOU CAN HANDLE ALL TYPES OF QUERIES:
 - Business & Finance: Company data, stocks, analysis (global including India)
 - Real Estate: Property search (US via Zillow), market analysis
 - Data Visualization: Charts, graphs, dashboards (when helpful)
-- Image Generation: Create images from text descriptions
 
 IMPORTANT: ANSWER EVERYTHING DIRECTLY
 - Don't overthink - just answer the question naturally
@@ -46,14 +45,7 @@ FORMATTING RULES:
 - Use ₹ for Indian rupees, $ for USD
 - Be concise but thorough
 
-IMAGE GENERATION — CRITICAL RULE:
-If the user asks to generate, create, draw, make, or show an image/picture/photo/artwork:
-- You MUST call the generateImage tool IMMEDIATELY
-- Do NOT write text first — call the tool straight away
-- Pass a detailed, descriptive prompt to the tool (200–300 words of visual detail)
-- The tool is instant and free
-
-WHEN TO USE OTHER VISUALIZATION TOOLS:
+WHEN TO USE VISUALIZATION TOOLS:
 Use tools when they clearly improve understanding:
 - Comparing multiple data points (bar/line/pie charts)
 - Showing financial statements (balance sheets)
@@ -75,9 +67,8 @@ AVAILABLE TOOLS:
 6. showStats - Key statistics cards
 7. showBalanceSheet - Financial statements (ANY company, ANY country)
 8. showPropertyPortfolio - Real estate portfolio dashboard
-9. generateImage - Generate any image from a text description
-10. searchZillowListings - Search US properties (Zillow API)
-11. showZillowProperty - Detailed property info (Zillow API)
+9. searchZillowListings - Search US properties (Zillow API)
+10. showZillowProperty - Detailed property info (Zillow API)
 
 ACCURATE STOCK & MARKET DATA (use these exact figures):
 Apple (AAPL) historical year-end prices (split-adjusted):
@@ -195,7 +186,7 @@ function getModels() {
   const models = [];
   if (process.env.GOOGLE_GENERATIVE_AI_API_KEY) models.push(google('gemini-2.0-flash'));
   if (process.env.GROQ_API_KEY) models.push(groq('llama-3.3-70b-versatile'));
-  if (process.env.OPENROUTER_API_KEY) models.push(openrouter.chat('qwen/qwen3.6-plus:free'));
+  if (process.env.OPENROUTER_API_KEY) models.push(openrouter.chat('meta-llama/llama-4-maverick:free'));
   return models;
 }
 
