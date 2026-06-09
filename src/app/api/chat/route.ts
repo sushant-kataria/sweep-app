@@ -1,5 +1,7 @@
 // app/api/chat/route.ts
 import { createOpenAI } from '@ai-sdk/openai';
+import { createGoogleGenerativeAI } from '@ai-sdk/google';
+import { createGroq } from '@ai-sdk/groq';
 import { streamText, convertToModelMessages, stepCountIs, type UIMessage } from 'ai';
 import { dashboardTools } from '@/ai/dashboard-tools';
 
@@ -176,64 +178,78 @@ const openrouter = createOpenAI({
   apiKey: process.env.OPENROUTER_API_KEY,
 });
 
-// qwen/qwen3.6-plus:free — free on OpenRouter
-const model = openrouter.chat('qwen/qwen3.6-plus:free');
+const google = createGoogleGenerativeAI({
+  apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
+});
+
+const groq = createGroq({
+  apiKey: process.env.GROQ_API_KEY,
+});
+
+// Ordered list of free models to try. First available key wins.
+function getModels() {
+  const models = [];
+  if (process.env.GOOGLE_GENERATIVE_AI_API_KEY) models.push(google('gemini-2.0-flash'));
+  if (process.env.GROQ_API_KEY) models.push(groq('llama-3.3-70b-versatile'));
+  if (process.env.OPENROUTER_API_KEY) models.push(openrouter.chat('qwen/qwen3.6-plus:free'));
+  return models;
+}
+
+function isRateLimit(e: any) {
+  return e?.statusCode === 429 || e?.status === 429 || e?.message?.includes('429') || e?.message?.includes('rate limit') || e?.message?.includes('quota');
+}
 
 export async function POST(req: Request) {
   const { messages, mode = 'chat' }: { messages: UIMessage[]; mode?: Mode } = await req.json();
 
-  const onError = ({ error }: { error: unknown }) => {
-    const e = error as any;
-    // Surface 429 errors from the stream (they come via onError not catch)
-    if (e?.statusCode === 429 || e?.data?.error?.code === 'rate_limit_exceeded') {
-      const msg = e?.data?.error?.message || '';
-      const isTokenLimit = msg.includes('TPD') || msg.includes('tokens per day');
-      console.error('[Rate limit]', isTokenLimit ? 'token/day' : 'requests', msg);
-    } else {
-      console.error('[Nemotron stream error]', JSON.stringify(error));
-    }
-  };
+  const models = getModels();
+  if (models.length === 0) {
+    return new Response(JSON.stringify({ error: 'No AI API keys configured.' }), { status: 500 });
+  }
 
-  try {
-    // Search and Code modes: text only
-    if (mode === 'search' || mode === 'code') {
-      const result = streamText({
-        model,
-        system: nemotronSystemPrompts[mode],
-        messages: convertToModelMessages(messages),
+  const modelMessages = convertToModelMessages(messages);
+  const isChat = mode === 'chat';
 
-        maxRetries: 0,
-        onError,
-      });
+  // Try each model in order, falling back on rate limit errors
+  let lastError: any;
+  for (const model of models) {
+    try {
+      const result = isChat
+        ? streamText({
+            model,
+            system: nemotronSystemPrompts.chat,
+            messages: modelMessages,
+            tools: dashboardTools,
+            stopWhen: stepCountIs(10),
+            maxRetries: 0,
+          })
+        : streamText({
+            model,
+            system: nemotronSystemPrompts[mode],
+            messages: modelMessages,
+            maxRetries: 0,
+          });
       return result.toUIMessageStreamResponse();
+    } catch (error: any) {
+      lastError = error;
+      if (isRateLimit(error)) {
+        console.warn(`[Rate limit] Model failed, trying next. Error: ${error?.message}`);
+        continue;
+      }
+      console.error('[Stream error]', error?.message);
+      break;
     }
+  }
 
-    // Chat mode: with tools for charts, images, etc.
-    // (Image mode is handled client-side — no API call needed)
-    const result = streamText({
-      model,
-      system: nemotronSystemPrompts.chat,
-      messages: convertToModelMessages(messages),
-      tools: dashboardTools,
-      stopWhen: stepCountIs(10),
-      maxRetries: 0,
-      onError,
-    });
-
-    return result.toUIMessageStreamResponse();
-  } catch (error: any) {
-    console.error('[Nemotron request error]', error?.message, JSON.stringify(error));
-
-    if (error?.status === 429 || error?.statusCode === 429 || error?.data?.error?.code === 429) {
-      return new Response(
-        JSON.stringify({ error: 'Rate limit exceeded. Please wait a moment and try again.' }),
-        { status: 429, headers: { 'Content-Type': 'application/json', 'Retry-After': '2' } }
-      );
-    }
-
+  if (isRateLimit(lastError)) {
     return new Response(
-      JSON.stringify({ error: error?.message || 'An error occurred' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
+      JSON.stringify({ error: 'All models are rate limited. Please wait a moment and try again.' }),
+      { status: 429, headers: { 'Content-Type': 'application/json' } }
     );
   }
+
+  return new Response(
+    JSON.stringify({ error: lastError?.message || 'An error occurred' }),
+    { status: 500, headers: { 'Content-Type': 'application/json' } }
+  );
 }
