@@ -184,9 +184,9 @@ const groq = createGroq({
 // Ordered list of free models to try. First available key wins.
 function getModels() {
   const models = [];
-  if (process.env.GOOGLE_GENERATIVE_AI_API_KEY) models.push(google('gemini-2.0-flash'));
   if (process.env.GROQ_API_KEY) models.push(groq('llama-3.3-70b-versatile'));
   if (process.env.OPENROUTER_API_KEY) models.push(openrouter.chat('meta-llama/llama-4-maverick:free'));
+  if (process.env.GOOGLE_GENERATIVE_AI_API_KEY) models.push(google('gemini-2.0-flash'));
   return models;
 }
 

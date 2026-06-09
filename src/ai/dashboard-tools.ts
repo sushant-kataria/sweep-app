@@ -78,21 +78,6 @@ export const dashboardTools = {
     },
   }),
 
-  generateImage: tool({
-    description: "Generate an image from a text prompt using Pollinations AI (free, instant, no API key required).",
-    inputSchema: z.object({
-      prompt: z.string().describe("Detailed image prompt (keep under 300 characters for best results)"),
-    }),
-    execute: async function({ prompt }) {
-      const seed = Math.floor(Math.random() * 1000000);
-      // Truncate long prompts to avoid overly long URLs
-      const safePrompt = prompt.length > 400 ? prompt.slice(0, 400) : prompt;
-      const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(safePrompt)}?width=1024&height=1024&model=flux&nologo=true&seed=${seed}`;
-      return { imageUrl, prompt };
-    },
-  }),
-  
-  
   showStats: tool({
     description: 'Display key statistics or metrics in a card layout',
     inputSchema: z.object({
