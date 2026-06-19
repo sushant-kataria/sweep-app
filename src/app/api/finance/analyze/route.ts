@@ -60,7 +60,7 @@ export async function POST(req: Request) {
           ? await extractFromPdfFile(buffer, file.name)
           : await extractFromSpreadsheet(buffer, file.name);
         const dataSource = isPdf ? 'pdf' : name.endsWith('.csv') ? 'csv' : 'excel';
-        const session = await analyzeDocument(doc, { dataSource, sourceFileName: file.name });
+        const session = await analyzeDocument(doc, { dataSource, sourceFileName: file.name }, { heuristicOnly: true });
         return NextResponse.json(session);
       }
 
@@ -90,6 +90,7 @@ export async function POST(req: Request) {
           dataSource: dataSource ?? 'pdf',
           sourceFileName: fileName,
         },
+        { heuristicOnly: true },
       );
       return NextResponse.json(session);
     }

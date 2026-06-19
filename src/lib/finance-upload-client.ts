@@ -80,7 +80,7 @@ async function extractSpreadsheetInBrowser(buffer: ArrayBuffer, fileName: string
   return {
     fileName,
     mimeType: ext === 'csv' ? 'text/csv' : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    text: prepareUploadText(raw, fileName),
+    text: prepareUploadText(raw),
     sheetNames: workbook.SheetNames,
   };
 }
@@ -114,7 +114,7 @@ export async function extractUploadedFile(
       doc: {
         fileName: file.name,
         mimeType: 'application/pdf',
-        text: prepareUploadText(raw, file.name),
+        text: prepareUploadText(raw),
       },
       dataSource: 'pdf',
     };

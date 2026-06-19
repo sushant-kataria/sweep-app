@@ -60,16 +60,44 @@ function buildUploadCandidates(raw: string): string[] {
   return candidates;
 }
 
-/** Pick the text window most likely to contain a parseable balance sheet. */
-export function prepareUploadText(raw: string, fileName?: string): string {
-  if (!raw.trim()) return raw;
+function bestUploadWindow(raw: string): string {
+  return (
+    extractBestBalanceSheetWindow(raw, 80_000) ??
+    extractByFinancialDensity(raw) ??
+    focusBalanceSheetForUpload(raw, MAX_STORED_CHARS)
+  );
+}
 
-  const candidates = buildUploadCandidates(raw);
+/** Focus long filings on the balance-sheet section (client + server). */
+export function prepareUploadText(raw: string): string {
+  if (!raw.trim()) return raw;
+  if (raw.length <= MAX_STORED_CHARS) return raw;
+  return bestUploadWindow(raw);
+}
+
+/** Try every candidate window until the table parser succeeds. */
+export function tryHeuristicFromAllCandidates(
+  text: string,
+  fileName?: string,
+): ReturnType<typeof tryHeuristicBalanceSheetExtraction> {
+  const seen = new Set<string>();
+  const candidates: string[] = [];
+
+  const add = (value: string | null | undefined) => {
+    const trimmed = value?.trim();
+    if (!trimmed || trimmed.length < 100 || seen.has(trimmed)) return;
+    seen.add(trimmed);
+    candidates.push(trimmed);
+  };
+
+  add(text);
+  for (const candidate of buildUploadCandidates(text)) add(candidate);
+  add(bestUploadWindow(text));
+
   for (const candidate of candidates) {
-    if (tryHeuristicBalanceSheetExtraction(candidate, { fileName })) {
-      return candidate;
-    }
+    const parsed = tryHeuristicBalanceSheetExtraction(candidate, { fileName });
+    if (parsed) return parsed;
   }
 
-  return candidates[0] ?? focusBalanceSheetForUpload(raw, MAX_STORED_CHARS);
+  return null;
 }

@@ -368,6 +368,34 @@ function inferCurrency(text: string): string {
   return 'USD';
 }
 
+function collectParsedItems(block: string): Array<{ item: ParsedLine; idx: number }> {
+  const normalized = preprocessFinancialText(block);
+  const collected: Array<{ item: ParsedLine; idx: number }> = [];
+  const seen = new Set<string>();
+
+  for (const segment of splitIntoSegments(block)) {
+    const item = parseLineItem(segment);
+    if (!item) continue;
+    const key = `${item.label}:${item.value}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    const idx = normalized.toLowerCase().indexOf(segment.toLowerCase().slice(0, 24));
+    collected.push({ item, idx: idx >= 0 ? idx : collected.length * 100 });
+  }
+
+  for (const line of normalized.split(/\n+/)) {
+    const item = parseLineItem(line);
+    if (!item) continue;
+    const key = `${item.label}:${item.value}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    const idx = normalized.toLowerCase().indexOf(line.toLowerCase().slice(0, 24));
+    collected.push({ item, idx: idx >= 0 ? idx : collected.length * 100 });
+  }
+
+  return collected.sort((a, b) => a.idx - b.idx);
+}
+
 function classifyBlock(block: string): BalanceSheetExtraction | null {
   const assets = { current: [] as ParsedLine[], nonCurrent: [] as ParsedLine[] };
   const liabilities = { current: [] as ParsedLine[], nonCurrent: [] as ParsedLine[] };
@@ -388,26 +416,27 @@ function classifyBlock(block: string): BalanceSheetExtraction | null {
   );
   const usNonCurLiab = lower.search(/non[- ]current liabilities/);
 
-  for (const segment of splitIntoSegments(block)) {
-    const item = parseLineItem(segment);
-    if (!item) continue;
+  const parsedItems = collectParsedItems(block);
 
-    const idx = normalized.toLowerCase().indexOf(segment.toLowerCase().slice(0, 24));
-    if (idx < 0) continue;
-
+  for (const { item, idx } of parsedItems) {
+    let placed = false;
     const inAssets =
       totalAssets >= 0 ? idx < totalAssets : eqAndLiab >= 0 ? idx < eqAndLiab : usLiabHdr >= 0 && idx < usLiabHdr;
 
     if (inAssets) {
       if (curAssets >= 0 && idx >= curAssets) assets.current.push(item);
       else assets.nonCurrent.push(item);
+      placed = true;
     } else if (eqAndLiab >= 0 && idx >= eqAndLiab && (liabHdr < 0 || idx < liabHdr)) {
       equity.push(item);
+      placed = true;
     } else if (usEquityHdr >= 0 && idx >= usEquityHdr) {
       equity.push(item);
+      placed = true;
     } else if (liabHdr >= 0 && idx >= liabHdr) {
       if (curLiab >= 0 && idx >= curLiab) liabilities.current.push(item);
       else liabilities.nonCurrent.push(item);
+      placed = true;
     } else if (usLiabHdr >= 0 && idx >= usLiabHdr) {
       if (usNonCurLiab >= 0 && idx >= usNonCurLiab) {
         if (curLiab >= 0 && idx >= curLiab) liabilities.current.push(item);
@@ -417,15 +446,33 @@ function classifyBlock(block: string): BalanceSheetExtraction | null {
       } else {
         liabilities.nonCurrent.push(item);
       }
+      placed = true;
     }
   }
 
-  const totalItems =
+  let totalItems =
     assets.current.length +
     assets.nonCurrent.length +
     liabilities.current.length +
     liabilities.nonCurrent.length +
     equity.length;
+
+  if (totalItems < 5 && parsedItems.length >= 5) {
+    assets.current.length = 0;
+    assets.nonCurrent.length = 0;
+    liabilities.current.length = 0;
+    liabilities.nonCurrent.length = 0;
+    equity.length = 0;
+
+    const assetEnd = Math.floor(parsedItems.length * 0.45);
+    const liabEnd = Math.floor(parsedItems.length * 0.85);
+    parsedItems.forEach(({ item }, i) => {
+      if (i < assetEnd) assets.nonCurrent.push(item);
+      else if (i < liabEnd) liabilities.nonCurrent.push(item);
+      else equity.push(item);
+    });
+    totalItems = parsedItems.length;
+  }
 
   if (totalItems < 5) return null;
 

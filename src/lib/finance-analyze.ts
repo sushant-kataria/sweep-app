@@ -1,7 +1,7 @@
 import type { BalanceSheetReport, FinanceSession } from './finance-types';
 import { buildExtractionPrompt, type ExtractedDocument } from './finance-extract';
 import { tryHeuristicBalanceSheetExtraction } from './finance-heuristic-extract';
-import { prepareUploadText } from './finance-upload-prep';
+import { prepareUploadText, tryHeuristicFromAllCandidates } from './finance-upload-prep';
 import { computeFinanceMetrics } from './finance-metrics';
 import { generateStructuredObject } from './finance-model';
 import { balanceSheetExtractionSchema, type BalanceSheetExtraction } from './finance-schemas';
@@ -25,12 +25,14 @@ const HEURISTIC_ONLY_ERROR =
 
 async function extractBalanceSheet(
   doc: ExtractedDocument,
-  options?: { heuristicOnly?: boolean },
+  options?: { heuristicOnly?: boolean; isUpload?: boolean },
 ): Promise<BalanceSheetExtraction> {
-  const heuristic = tryHeuristicBalanceSheetExtraction(doc.text, { fileName: doc.fileName });
+  const heuristic = options?.isUpload
+    ? tryHeuristicFromAllCandidates(doc.text, doc.fileName)
+    : tryHeuristicBalanceSheetExtraction(doc.text, { fileName: doc.fileName });
   if (heuristic) return heuristic;
 
-  if (options?.heuristicOnly) {
+  if (options?.heuristicOnly || options?.isUpload) {
     throw new Error(HEURISTIC_ONLY_ERROR);
   }
 
@@ -49,10 +51,12 @@ export async function analyzeDocument(
 ): Promise<FinanceSession> {
   const isUpload =
     meta.dataSource === 'pdf' || meta.dataSource === 'excel' || meta.dataSource === 'csv';
-  const preparedDoc = isUpload
-    ? { ...doc, text: prepareUploadText(doc.text, doc.fileName) }
-    : doc;
-  const extracted = await extractBalanceSheet(preparedDoc, options);
+  const preparedDoc = isUpload ? { ...doc, text: prepareUploadText(doc.text) } : doc;
+  const extracted = await extractBalanceSheet(preparedDoc, {
+    ...options,
+    heuristicOnly: options?.heuristicOnly ?? isUpload,
+    isUpload,
+  });
 
   const report: BalanceSheetReport = {
     type: 'balance_sheet',
