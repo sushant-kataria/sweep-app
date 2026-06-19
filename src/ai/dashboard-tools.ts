@@ -20,10 +20,10 @@ export const dashboardTools = {
   }),
   
   showLineChart: tool({
-    description: 'Display a line chart for trends over time or continuous data',
+    description: 'Display a line chart for trends over time. For stocks use title like "Apple (AAPL) Stock Price" with unit "USD" and chronological year labels.',
     inputSchema: z.object({
-      title: z.string().describe('Chart title'),
-      unit: z.string().describe('Unit of measurement (e.g., "billions USD", "percent growth", "users")'),
+      title: z.string().describe('Chart title — for stocks include ticker in parentheses, e.g. "Apple (AAPL) Stock Price"'),
+      unit: z.string().describe('Unit of measurement (e.g., "USD", "billions USD", "percent growth", "users")'),
       items: z.array(z.object({
         label: z.string().describe('X-axis label (year, month, date)'),
         value: z.number().describe('Y-axis value'),

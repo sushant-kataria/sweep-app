@@ -1,8 +1,10 @@
 'use client';
 
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useChat } from '@ai-sdk/react';
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Send, BarChart2, X, Search, MessageSquare, Code2, Copy, Check, Sun, Moon, Mic, MicOff, FileDown, Menu, Plus, Trash2 } from 'lucide-react';
+import { ArrowUp, BarChart2, X, Search, MessageSquare, Code2, Copy, Check, Sun, Moon, Mic, MicOff, FileDown, Menu, Plus, Trash2, Pencil, RotateCcw, Square, FileSpreadsheet } from 'lucide-react';
 
 import { BarChartPro } from '@/components/dashboard/bar-chart-pro';
 import { LineChartPro } from '@/components/dashboard/line-chart-pro';
@@ -14,6 +16,8 @@ import { BalanceSheet } from '@/components/dashboard/balance-sheet';
 import { PropertyPortfolio } from '@/components/dashboard/property-portfolio';
 import { ZillowProperty } from '@/components/dashboard/zillow-property';
 import { ZillowListings } from '@/components/dashboard/zillow-listings';
+import { SweepLogo } from '@/components/sweep-logo';
+import { SweepWordmark } from '@/components/sweep-wordmark';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -26,6 +30,7 @@ type StoredConv = {
   messages: any[];
   createdAt: number;
   updatedAt: number;
+  expiresAt: number;
 };
 
 type ChartOutput = { chartType: string; title: string; unit?: string; data: Array<{ label: string; value: number }>; };
@@ -48,7 +53,9 @@ type ZillowListingsOutput = {
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 const CONV_KEY = 'sweep_conversations';
+const CURRENT_CONV_KEY = 'sweep_current_conv';
 const THEME_KEY = 'sweep-theme';
+const CONV_TTL_MS = 5 * 60 * 1000;
 
 const modes: { id: Mode; label: string; icon: React.ReactNode; placeholder: string }[] = [
   { id: 'chat', label: 'Chat', icon: <MessageSquare className="w-3.5 h-3.5" />, placeholder: 'Ask anything...' },
@@ -102,12 +109,52 @@ const THINKING_WORDS = ['Analyzing...', 'Thinking...', 'Interpreting...', 'Resea
 
 function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
 
+function cloneForStorage<T>(value: T): T {
+  try { return JSON.parse(JSON.stringify(value)); } catch { return value; }
+}
+
+function withExpiry(conv: StoredConv): StoredConv {
+  const now = Date.now();
+  return { ...conv, updatedAt: now, expiresAt: now + CONV_TTL_MS };
+}
+
+function pruneExpired(convs: StoredConv[]): StoredConv[] {
+  const now = Date.now();
+  return convs.filter(c => (c.expiresAt ?? 0) > now);
+}
+
 function loadConvs(): StoredConv[] {
-  try { return JSON.parse(localStorage.getItem(CONV_KEY) || '[]'); } catch { return []; }
+  try {
+    const parsed = JSON.parse(localStorage.getItem(CONV_KEY) || '[]') as StoredConv[];
+    const active = pruneExpired(parsed);
+    if (active.length !== parsed.length) saveConvs(active);
+    return active;
+  } catch { return []; }
 }
 
 function saveConvs(convs: StoredConv[]) {
-  try { localStorage.setItem(CONV_KEY, JSON.stringify(convs.slice(0, 50))); } catch {}
+  try {
+    const active = pruneExpired(convs);
+    localStorage.setItem(CONV_KEY, JSON.stringify(cloneForStorage(active.slice(0, 20))));
+  } catch {}
+}
+
+function saveCurrentConvId(id: string) {
+  try { localStorage.setItem(CURRENT_CONV_KEY, id); } catch {}
+}
+
+function loadCurrentConvId(): string | null {
+  try { return localStorage.getItem(CURRENT_CONV_KEY); } catch { return null; }
+}
+
+function messageHasDashboardOutput(message: any) {
+  return message.parts?.some(
+    (p: any) => toolTypes.includes(p.type) && 'state' in p && p.state === 'output-available'
+  );
+}
+
+function getLatestDashboardMessage(messages: any[]) {
+  return [...messages].reverse().find(m => m.role === 'assistant' && messageHasDashboardOutput(m));
 }
 
 // ─── Hooks ────────────────────────────────────────────────────────────────────
@@ -203,9 +250,50 @@ function renderContent(raw: string | undefined | null): React.ReactNode {
   });
 }
 
+const AAPL_STOCK_ITEMS = [
+  { label: '2018', value: 39 },
+  { label: '2019', value: 73 },
+  { label: '2020', value: 132 },
+  { label: '2021', value: 178 },
+  { label: '2022', value: 130 },
+  { label: '2023', value: 193 },
+  { label: '2024', value: 250 },
+];
+
+function parseToolArgs(toolName: string, raw: string): Record<string, unknown> | null {
+  const trimmed = raw.trim();
+  try {
+    return JSON.parse(trimmed) as Record<string, unknown>;
+  } catch {
+    if (toolName === 'showLineChart' && /AAPL|Apple/i.test(trimmed)) {
+      return { title: 'Apple (AAPL) Stock Price', unit: 'USD', items: AAPL_STOCK_ITEMS };
+    }
+    const itemsMatch = trimmed.match(/"items"\s*:\s*(\[[\s\S]*)/);
+    if (itemsMatch) {
+      let itemsJson = itemsMatch[1];
+      const open = (itemsJson.match(/\[/g) ?? []).length;
+      const close = (itemsJson.match(/\]/g) ?? []).length;
+      for (let i = close; i < open; i++) itemsJson += ']';
+      try {
+        const items = JSON.parse(itemsJson);
+        const titleMatch = trimmed.match(/"title"\s*:\s*"([^"]+)"/);
+        const unitMatch = trimmed.match(/"unit"\s*:\s*"([^"]+)"/);
+        return {
+          title: titleMatch?.[1] ?? 'Chart',
+          unit: unitMatch?.[1] ?? '',
+          items,
+        };
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  }
+}
+
 function renderTextWithInlineTools(text: string): React.ReactNode[] {
   const nodes: React.ReactNode[] = [];
-  const regex = /<function[@(](\w+)[)>]>?([\s\S]*?)<\/function>/g;
+  const regex = /<function[.@(](\w+)[)>]>([\s\S]*?)(?:<\/function>|$)/g;
   let lastIndex = 0; let match; let key = 0;
   while ((match = regex.exec(text)) !== null) {
     if (match.index > lastIndex) {
@@ -214,7 +302,8 @@ function renderTextWithInlineTools(text: string): React.ReactNode[] {
     }
     try {
       const toolName = match[1];
-      const args = JSON.parse(match[2]);
+      const args = parseToolArgs(toolName, match[2]);
+      if (!args) throw new Error('unparsed');
       if (['showBarChart','showLineChart','showPieChart','showAreaChart'].includes(toolName) && args.items) {
         const chartData = args.items.map((it: any) => ({ label: it.label, value: it.value }));
         if (toolName === 'showBarChart') nodes.push(<BarChartPro key={key++} title={args.title} data={chartData} unit={args.unit} />);
@@ -253,28 +342,56 @@ function ThinkingAnimation() {
     return () => clearInterval(iv);
   }, []);
   return (
-    <div className="flex items-center gap-2">
-      <div className="flex gap-1">
-        {[0, 150, 300].map((d, i) => (
-          <div key={i} className="w-1.5 h-1.5 bg-[var(--v-fg-4)] rounded-full animate-bounce" style={{ animationDelay: `${d}ms` }} />
-        ))}
-      </div>
-      <span className="text-xs text-[var(--v-fg-3)] font-mono transition-opacity duration-300" style={{ opacity: fade ? 1 : 0 }}>
-        {THINKING_WORDS[wordIdx]}
-      </span>
-    </div>
+    <span className="text-sm text-[var(--v-fg-4)] transition-opacity duration-300" style={{ opacity: fade ? 1 : 0 }}>
+      {THINKING_WORDS[wordIdx]}
+    </span>
   );
 }
 
-function CopyButton({ text, className = '' }: { text: string; className?: string }) {
-  const [copied, setCopied] = useState(false);
+function getMessageText(message: { parts?: Array<{ type: string; text?: string }> }): string {
+  return message.parts?.filter((p) => p.type === 'text').map((p) => p.text ?? '').join('') ?? '';
+}
+
+function MessageActionBtn({
+  onClick,
+  label,
+  icon: Icon,
+  disabled = false,
+  className = '',
+}: {
+  onClick: () => void;
+  label: string;
+  icon: React.ComponentType<{ className?: string; fill?: string }>;
+  disabled?: boolean;
+  className?: string;
+}) {
   return (
     <button
-      onClick={() => { navigator.clipboard.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
-      className={`flex items-center gap-1.5 text-xs text-[var(--v-fg-4)] hover:text-[var(--v-fg-3)] transition-colors ${className}`}
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      aria-label={label}
+      title={label}
+      className={`grok-message-action ${className}`.trim()}
     >
-      {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-      <span>{copied ? 'Copied' : 'Copy'}</span>
+      <Icon className={className.includes('grok-message-action--stop') ? 'fill-current' : undefined} />
+    </button>
+  );
+}
+
+function CopyButton({ text, className = '', iconOnly = false }: { text: string; className?: string; iconOnly?: boolean }) {
+  const [copied, setCopied] = useState(false);
+  const label = copied ? 'Copied' : 'Copy';
+  return (
+    <button
+      type="button"
+      onClick={() => { navigator.clipboard.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
+      aria-label={label}
+      title={label}
+      className={iconOnly ? `grok-message-action ${className}`.trim() : `flex items-center gap-1.5 text-xs text-[var(--v-fg-4)] hover:text-[var(--v-fg-3)] transition-colors ${className}`}
+    >
+      {copied ? <Check /> : <Copy />}
+      {!iconOnly && <span>{label}</span>}
     </button>
   );
 }
@@ -295,23 +412,85 @@ function CodeBlock({ lang, code }: { lang: string; code: string }) {
 
 function ModeSelector({ mode, setMode, compact = false }: { mode: Mode; setMode: (m: Mode) => void; compact?: boolean }) {
   return (
-    <div className={`flex items-center gap-1 ${compact ? '' : 'justify-center'}`}>
+    <div className={`flex flex-wrap items-center gap-1 ${compact ? 'justify-start' : 'justify-center'}`}>
       {modes.map((m) => (
         <button
           key={m.id}
           type="button"
           onClick={() => setMode(m.id)}
-          className={`flex items-center gap-1.5 rounded-lg border text-xs font-medium transition-all duration-150 px-2.5 py-1.5 ${
-            mode === m.id
-              ? 'bg-[var(--v-fg)] text-[var(--v-bg)] border-[var(--v-fg)]'
-              : 'text-[var(--v-fg-3)] border-[var(--v-border)] bg-transparent hover:text-[var(--v-fg)] hover:border-[var(--v-fg-3)]'
-          }`}
+          className={`grok-mode-pill ${mode === m.id ? 'grok-mode-pill--active' : ''}`}
         >
           {m.icon}
-          <span>{m.label}</span>
+          <span className={compact ? 'hidden min-[420px]:inline' : ''}>{m.label}</span>
         </button>
       ))}
     </div>
+  );
+}
+
+function ChatComposer({
+  input,
+  setInput,
+  placeholder,
+  isStreaming,
+  isListening,
+  toggleVoice,
+  onSubmit,
+  onStop,
+}: {
+  input: string;
+  setInput: (v: string) => void;
+  placeholder: string;
+  isStreaming?: boolean;
+  isListening: boolean;
+  toggleVoice: () => void;
+  onSubmit: (e: React.FormEvent) => void;
+  onStop: () => void;
+}) {
+  return (
+    <form onSubmit={onSubmit} className="w-full min-w-0">
+      <div className="grok-composer">
+        <input
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          className="grok-composer-input"
+          style={{ fontSize: '16px' }}
+          placeholder={placeholder}
+          disabled={isStreaming}
+          autoComplete="off"
+        />
+        <div className="grok-composer-toolbar">
+          <button
+            type="button"
+            onClick={toggleVoice}
+            className={`grok-icon-btn ${isListening ? 'grok-icon-btn--active' : ''}`}
+            aria-label={isListening ? 'Stop voice input' : 'Start voice input'}
+            disabled={isStreaming}
+          >
+            {isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+          </button>
+          {isStreaming ? (
+            <button
+              type="button"
+              onClick={onStop}
+              className="grok-stop-btn"
+              aria-label="Stop generating"
+            >
+              <Square className="h-3.5 w-3.5" fill="currentColor" />
+            </button>
+          ) : (
+            <button
+              type="submit"
+              disabled={!input.trim()}
+              className="grok-send-btn"
+              aria-label="Send message"
+            >
+              <ArrowUp className="h-4 w-4" strokeWidth={2.5} />
+            </button>
+          )}
+        </div>
+      </div>
+    </form>
   );
 }
 
@@ -329,18 +508,19 @@ function ConvSidebar({
       {/* Backdrop */}
       <div className="fixed inset-0 z-40 bg-[var(--v-fg)]/10 backdrop-blur-sm" onClick={onClose} />
       {/* Panel */}
-      <div className="fixed left-0 top-0 bottom-0 z-50 w-72 bg-[var(--v-bg)] border-r border-[var(--v-border)] flex flex-col">
-        <div className="flex items-center justify-between px-4 py-4 border-b border-[var(--v-border)] shrink-0">
-          <span className="text-sm font-semibold text-[var(--v-fg)]">Conversations</span>
-          <button onClick={onClose} className="w-7 h-7 rounded-lg flex items-center justify-center text-[var(--v-fg-3)] hover:text-[var(--v-fg)] hover:bg-[var(--v-surface)] transition-colors">
-            <X className="w-4 h-4" />
+      <div className="safe-top fixed bottom-0 left-0 top-0 z-50 flex w-full max-w-sm flex-col border-r border-[var(--v-border)] bg-[var(--v-bg)] sm:w-72">
+        <div className="flex shrink-0 items-center justify-between border-b border-[var(--v-border)] px-4 py-3">
+          <span className="text-sm font-medium text-[var(--v-fg)]">History</span>
+          <button onClick={onClose} className="grok-ghost-btn">
+            <X className="h-4 w-4" />
           </button>
         </div>
 
-        <div className="px-3 pt-3 shrink-0">
+        <div className="shrink-0 px-3 pt-3">
           <button
-            onClick={onNew}
-            className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg border border-[var(--v-border)] bg-[var(--v-surface)] hover:bg-[var(--v-border)] text-[var(--v-fg)] text-sm font-medium transition-colors"
+            type="button"
+            onClick={() => { onClose(); onNew(); }}
+            className="flex w-full items-center gap-2 rounded-xl border border-[var(--v-border)] bg-[var(--v-surface)] px-3 py-2.5 text-sm font-medium text-[var(--v-fg)] transition-colors hover:bg-[var(--v-border)]"
           >
             <Plus className="w-4 h-4 text-[var(--v-fg-3)]" />
             New chat
@@ -354,7 +534,8 @@ function ConvSidebar({
           {convs.map((c) => (
             <div key={c.id} className={`group relative flex items-center rounded-lg transition-colors ${c.id === currentId ? 'bg-[var(--v-surface)] border border-[var(--v-border)]' : 'hover:bg-[var(--v-surface)]'}`}>
               <button
-                onClick={() => { onSelect(c.id); onClose(); }}
+                type="button"
+                onClick={() => onSelect(c.id)}
                 className="flex-1 text-left px-3 py-2.5 min-w-0"
               >
                 <p className="text-sm text-[var(--v-fg)] truncate">{c.title}</p>
@@ -371,6 +552,10 @@ function ConvSidebar({
             </div>
           ))}
         </div>
+
+        <p className="shrink-0 border-t border-[var(--v-border)] px-4 py-3 text-center text-[10px] text-[var(--v-fg-5)]">
+          Chats saved in this browser for 5 minutes
+        </p>
       </div>
     </>
   );
@@ -387,34 +572,63 @@ function Chat({
   onUpdateConv: (id: string, messages: any[], title: string, mode: Mode) => void;
   onOpenConvSidebar: () => void;
 }) {
-  const { messages, sendMessage, status, error } = useChat({ id: convId, initialMessages });
+  const seededMessages = useRef(cloneForStorage(initialMessages));
+  const { messages, sendMessage, regenerate, stop, status, error } = useChat({ id: convId, messages: seededMessages.current });
   const [input, setInput] = useState('');
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+  const [editDraft, setEditDraft] = useState('');
   const [mode, setMode] = useState<Mode>(initialMode);
   const [showDashboard, setShowDashboard] = useState(false);
   const [hasDashboardItems, setHasDashboardItems] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const mainRef = useRef<HTMLElement>(null);
   const isNearBottomRef = useRef(true);
+  const lastPersistedRef = useRef('');
 
-  const { isListening, toggle: toggleVoice } = useVoiceInput((text) => setInput(t => t ? `${t} ${text}` : text));
+  const onVoiceTranscript = useCallback((text: string) => {
+    setInput(t => (t ? `${t} ${text}` : text));
+  }, []);
+  const { isListening, toggle: toggleVoice } = useVoiceInput(onVoiceTranscript);
 
-  // Persist messages to parent on change
-  useEffect(() => {
+  const persistConversation = useCallback(() => {
     if (messages.length === 0) return;
     const firstUserMsg = messages.find(m => m.role === 'user');
     const title = firstUserMsg?.parts?.find((p: any) => p.type === 'text')?.text?.slice(0, 60) ?? 'New chat';
-    onUpdateConv(convId, messages, title, mode);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [messages]);
+    const snapshot = JSON.stringify({ convId, title, mode, messages: cloneForStorage(messages) });
+    if (snapshot === lastPersistedRef.current) return;
+    lastPersistedRef.current = snapshot;
+    onUpdateConv(convId, cloneForStorage(messages), title, mode);
+  }, [messages, convId, mode, onUpdateConv]);
 
   useEffect(() => {
-    const outputs = messages.flatMap(m =>
-      m.parts.filter((p: any) => toolTypes.includes(p.type) && 'state' in p && p.state === 'output-available')
+    lastPersistedRef.current = '';
+    setInput('');
+    setEditingMessageId(null);
+    setEditDraft('');
+    setShowDashboard(false);
+    setHasDashboardItems(false);
+    mainRef.current?.scrollTo({ top: 0, behavior: 'instant' });
+  }, [convId]);
+
+  // Persist messages to parent on change (skip if snapshot unchanged to avoid render loops)
+  useEffect(() => {
+    persistConversation();
+  }, [persistConversation]);
+
+  // Flush save when a response finishes streaming
+  useEffect(() => {
+    if (status === 'ready') persistConversation();
+  }, [status, persistConversation]);
+
+  useEffect(() => {
+    const has = messages.some(m =>
+      m.parts?.some((p: any) => toolTypes.includes(p.type) && 'state' in p && p.state === 'output-available')
     );
-    const has = outputs.length > 0;
-    setHasDashboardItems(has);
-    if (has) setShowDashboard(true);
-    else setShowDashboard(false);
+    setHasDashboardItems(prev => (prev === has ? prev : has));
+    setShowDashboard(prev => {
+      if (has) return prev ? prev : true;
+      return prev ? false : prev;
+    });
   }, [messages]);
 
   useEffect(() => {
@@ -440,8 +654,56 @@ function Chat({
     setInput('');
   };
 
+  const router = useRouter();
+
   const handleSuggestion = (label: string) => {
+    if (/balance sheet/i.test(label)) {
+      const ticker = /walmart/i.test(label) ? 'WMT' : /apple/i.test(label) ? 'AAPL' : /microsoft/i.test(label) ? 'MSFT' : 'WMT';
+      router.push(`/finance?ticker=${encodeURIComponent(ticker)}&generate=1`);
+      return;
+    }
     sendMessage({ text: label }, { body: { mode } });
+  };
+
+  const isBusy = status === 'streaming' || status === 'submitted';
+
+  const handleStop = () => {
+    void stop();
+  };
+
+  const handleEditUserMessage = async (messageId: string, newText: string) => {
+    const trimmed = newText.trim();
+    if (!trimmed || isBusy) return;
+    setEditingMessageId(null);
+    setEditDraft('');
+    setShowDashboard(false);
+    isNearBottomRef.current = true;
+    await sendMessage({ text: trimmed, messageId }, { body: { mode } });
+  };
+
+  const handleResendUserMessage = async (messageId: string, text: string) => {
+    if (!text.trim() || isBusy) return;
+    setShowDashboard(false);
+    isNearBottomRef.current = true;
+    await sendMessage({ text, messageId }, { body: { mode } });
+  };
+
+  const handleRegenerateAssistant = async (messageId: string) => {
+    if (isBusy) return;
+    setShowDashboard(false);
+    isNearBottomRef.current = true;
+    await regenerate({ messageId }, { body: { mode } });
+  };
+
+  const startEditingMessage = (messageId: string, text: string) => {
+    if (isBusy) return;
+    setEditingMessageId(messageId);
+    setEditDraft(text);
+  };
+
+  const cancelEditing = () => {
+    setEditingMessageId(null);
+    setEditDraft('');
   };
 
   const getLoadingSteps = () => {
@@ -463,213 +725,274 @@ function Chat({
     message.parts.map((part: any) => {
       if (!('state' in part) || !('toolCallId' in part) || part.state !== 'output-available') return null;
       const k = part.toolCallId;
-      if (part.type === 'tool-showBarChart') return <BarChartPro key={k} title={(part.output as ChartOutput).title} data={(part.output as ChartOutput).data} unit={(part.output as ChartOutput).unit} />;
-      if (part.type === 'tool-showLineChart') return <LineChartPro key={k} title={(part.output as ChartOutput).title} data={(part.output as ChartOutput).data} unit={(part.output as ChartOutput).unit} />;
-      if (part.type === 'tool-showPieChart') return <PieChartPro key={k} title={(part.output as ChartOutput).title} data={(part.output as ChartOutput).data} unit={(part.output as ChartOutput).unit} />;
-      if (part.type === 'tool-showAreaChart') return <AreaChartPro key={k} title={(part.output as ChartOutput).title} data={(part.output as ChartOutput).data} unit={(part.output as ChartOutput).unit} />;
-      if (part.type === 'tool-showComparison') return <ComparisonTable key={k} title={(part.output as ComparisonOutput).title} items={(part.output as ComparisonOutput).items} />;
-      if (part.type === 'tool-showStats') return <StatsCard key={k} title={(part.output as StatsOutput).title} stats={(part.output as StatsOutput).stats} />;
+      const wrap = (node: React.ReactNode) => (
+        <div key={k} className="min-w-0 w-full max-w-full">{node}</div>
+      );
+      if (part.type === 'tool-showBarChart') return wrap(<BarChartPro title={(part.output as ChartOutput).title} data={(part.output as ChartOutput).data} unit={(part.output as ChartOutput).unit} />);
+      if (part.type === 'tool-showLineChart') return wrap(<LineChartPro title={(part.output as ChartOutput).title} data={(part.output as ChartOutput).data} unit={(part.output as ChartOutput).unit} />);
+      if (part.type === 'tool-showPieChart') return wrap(<PieChartPro title={(part.output as ChartOutput).title} data={(part.output as ChartOutput).data} unit={(part.output as ChartOutput).unit} />);
+      if (part.type === 'tool-showAreaChart') return wrap(<AreaChartPro title={(part.output as ChartOutput).title} data={(part.output as ChartOutput).data} unit={(part.output as ChartOutput).unit} />);
+      if (part.type === 'tool-showComparison') return wrap(<ComparisonTable title={(part.output as ComparisonOutput).title} items={(part.output as ComparisonOutput).items} />);
+      if (part.type === 'tool-showStats') return wrap(<StatsCard title={(part.output as StatsOutput).title} stats={(part.output as StatsOutput).stats} />);
       if (part.type === 'tool-showBalanceSheet') {
         const o = part.output as BalanceSheetOutput;
-        return <BalanceSheet key={k} title={o.title} period={o.period} currency={o.currency} assets={o.assets} liabilities={o.liabilities} equity={o.equity} />;
+        return wrap(<BalanceSheet title={o.title} period={o.period} currency={o.currency} assets={o.assets} liabilities={o.liabilities} equity={o.equity} />);
       }
-      if (part.type === 'tool-showPropertyPortfolio') return <PropertyPortfolio key={k} properties={(part.output as PropertyPortfolioOutput).properties} />;
+      if (part.type === 'tool-showPropertyPortfolio') return wrap(<PropertyPortfolio properties={(part.output as PropertyPortfolioOutput).properties} />);
       if (part.type === 'tool-showZillowProperty') {
         const o = part.output as ZillowPropertyOutput;
-        return <ZillowProperty key={k} property={o.property} zillowUrl={o.zillowUrl} error={o.error} />;
+        return wrap(<ZillowProperty property={o.property} zillowUrl={o.zillowUrl} error={o.error} />);
       }
       return null;
     });
 
   const loadingSteps = getLoadingSteps();
-  const isLoading = status === 'streaming';
+  const isLoading = status === 'streaming' || status === 'submitted';
   const placeholder = modes.find(m => m.id === mode)?.placeholder ?? 'Ask anything...';
   const suggestions = suggestionsByMode[mode];
   const convTitle = messages.find(m => m.role === 'user')?.parts?.find((p: any) => p.type === 'text')?.text?.slice(0, 60) ?? 'New chat';
+  const latestDashboardMessage = getLatestDashboardMessage(messages);
 
   return (
     <div className="bg-[var(--v-bg)] text-[var(--v-fg)] flex flex-col" style={{ position: 'fixed', inset: 0, overflow: 'hidden' }}>
 
       {/* ── HEADER ── */}
-      {messages.length > 0 && (
-        <header className="fixed top-0 left-0 right-0 z-30 bg-[var(--v-bg)]/90 backdrop-blur-xl border-b border-[var(--v-border)]">
-          <div className="max-w-7xl mx-auto px-4 h-14 flex items-center gap-2">
-            <button onClick={onOpenConvSidebar} className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--v-fg-3)] hover:text-[var(--v-fg)] hover:bg-[var(--v-surface)] transition-colors shrink-0">
-              <Menu className="w-4 h-4" />
+      <header className={`grok-header safe-top fixed top-0 left-0 right-0 z-30 transition-[margin] duration-300 ${showDashboard ? 'md:mr-[min(42%,520px)]' : ''}`}>
+        <div className="grok-header-inner">
+          <div className="grok-header-slot grok-header-slot--left">
+            <button onClick={onOpenConvSidebar} aria-label="Open conversations" className="grok-ghost-btn">
+              <Menu className="h-[1.125rem] w-[1.125rem]" strokeWidth={2} />
             </button>
-            <span className="text-sm font-semibold tracking-tight text-[var(--v-fg)] flex-1 truncate">Sweep</span>
-            <div className="flex items-center gap-1.5">
-              {hasDashboardItems && (
-                <button onClick={() => setShowDashboard(v => !v)} className="hidden sm:flex items-center gap-1.5 text-xs text-[var(--v-fg-3)] hover:text-[var(--v-fg)] px-3 py-1.5 rounded-lg border border-[var(--v-border)] hover:border-[var(--v-border-2)] bg-[var(--v-surface)] hover:bg-[var(--v-border)] transition-colors shrink-0">
-                  <BarChart2 className="w-3.5 h-3.5" />
-                  {showDashboard ? 'Hide' : 'Show'} charts
-                </button>
-              )}
-              <button onClick={() => exportChat(messages, convTitle)} className="w-8 h-8 rounded-lg border border-[var(--v-border)] bg-[var(--v-surface)] hover:bg-[var(--v-border)] flex items-center justify-center text-[var(--v-fg-3)] hover:text-[var(--v-fg)] transition-colors shrink-0" title="Export chat">
-                <FileDown className="w-3.5 h-3.5" />
-              </button>
-              <button onClick={toggleTheme} className="w-8 h-8 rounded-lg border border-[var(--v-border)] bg-[var(--v-surface)] hover:bg-[var(--v-border)] flex items-center justify-center text-[var(--v-fg-3)] hover:text-[var(--v-fg)] transition-colors shrink-0">
-                {theme === 'dark' ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
-              </button>
-            </div>
           </div>
-        </header>
-      )}
+
+          <div className="grok-header-slot grok-header-slot--center" aria-hidden />
+
+          <div className="grok-header-slot grok-header-slot--right">
+            <Link href="/finance" className="grok-ghost-btn grok-ghost-btn--wide" title="Finance reports" aria-label="Finance reports">
+              <FileSpreadsheet className="h-4 w-4" />
+              <span className="hidden text-xs text-[var(--v-fg-3)] md:inline">Finance</span>
+            </Link>
+            {messages.length > 0 && hasDashboardItems && (
+              <button
+                onClick={() => setShowDashboard(v => !v)}
+                className="grok-ghost-btn grok-ghost-btn--wide"
+                title={showDashboard ? 'Hide charts' : 'Show charts'}
+                aria-label={showDashboard ? 'Hide charts' : 'Show charts'}
+              >
+                <BarChart2 className="h-4 w-4" />
+                <span className="hidden text-xs text-[var(--v-fg-3)] md:inline">Charts</span>
+              </button>
+            )}
+            {messages.length > 0 && (
+              <button onClick={() => exportChat(messages, convTitle)} className="grok-ghost-btn" title="Export chat" aria-label="Export chat">
+                <FileDown className="h-4 w-4" />
+              </button>
+            )}
+            <button onClick={toggleTheme} aria-label="Toggle theme" className="grok-ghost-btn">
+              {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            </button>
+          </div>
+        </div>
+      </header>
 
       {/* ── MAIN ── */}
-      <main ref={mainRef} className={`flex-1 overflow-y-auto transition-all duration-300 ease-in-out ${showDashboard ? 'md:mr-[42%]' : ''} ${messages.length > 0 ? 'pt-14' : ''}`}>
-        <div className="w-full max-w-2xl mx-auto px-4 sm:px-6 pb-36">
+      <main ref={mainRef} className={`flex-1 overflow-y-auto overscroll-y-contain pt-[3.25rem] transition-all duration-300 ease-in-out sm:pt-14 ${showDashboard ? 'md:mr-[min(42%,520px)]' : ''}`}>
+        <div className={`mx-auto w-full px-3 sm:px-4 ${messages.length > 0 ? 'max-w-3xl pb-44' : 'max-w-2xl'}`}>
 
           {/* HERO */}
           {messages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center gap-8 py-20" style={{ minHeight: 'calc(100dvh - 80px)' }}>
-              <div className="text-center space-y-2 relative w-full">
-                <div className="absolute top-0 left-0 flex items-center gap-1">
-                  <button onClick={onOpenConvSidebar} className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--v-fg-3)] hover:text-[var(--v-fg)] hover:bg-[var(--v-surface)] border border-[var(--v-border)] transition-colors">
-                    <Menu className="w-4 h-4" />
-                  </button>
+            <div className="flex min-h-[calc(100dvh-3rem)] flex-col items-center justify-center gap-8 py-8 sm:min-h-[calc(100dvh-3.5rem)] sm:py-12">
+              <div className="w-full space-y-3 text-center">
+                <div className="mx-auto flex justify-center">
+                  <SweepLogo className="h-12 w-12 sm:h-14 sm:w-14" />
                 </div>
-                <div className="absolute top-0 right-0">
-                  <button onClick={toggleTheme} className="w-8 h-8 rounded-lg border border-[var(--v-border)] bg-[var(--v-surface)] hover:bg-[var(--v-border)] flex items-center justify-center text-[var(--v-fg-3)] hover:text-[var(--v-fg)] transition-colors">
-                    {theme === 'dark' ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
-                  </button>
-                </div>
-                <h1 className="text-6xl sm:text-7xl font-semibold tracking-tight text-[var(--v-fg)]">Sweep</h1>
-                <p className="text-[var(--v-fg-3)] text-sm font-light tracking-wide">AI for finance, data & real estate</p>
+                <h1 className="text-4xl text-[var(--v-fg)] sm:text-5xl">
+                  <SweepWordmark />
+                </h1>
+                <p className="text-sm text-[var(--v-fg-3)]">What do you want to know?</p>
               </div>
 
-              <ModeSelector mode={mode} setMode={setMode} />
+              <div className="w-full max-w-2xl space-y-4">
+                <ModeSelector mode={mode} setMode={setMode} />
+                <ChatComposer
+                  input={input}
+                  setInput={setInput}
+                  placeholder={placeholder}
+                  isStreaming={isLoading}
+                  isListening={isListening}
+                  toggleVoice={toggleVoice}
+                  onSubmit={handleSubmit}
+                  onStop={handleStop}
+                />
+              </div>
 
-              <form onSubmit={handleSubmit} className="w-full">
-                <div className="relative flex items-center">
-                  <input
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    className="w-full bg-[var(--v-surface)] text-[var(--v-fg)] rounded-lg pl-5 pr-20 py-4 border border-[var(--v-border-2)] focus:border-[var(--v-fg-3)] focus:outline-none placeholder-[var(--v-fg-5)] text-sm transition-all"
-                    style={{ fontSize: '16px' }}
-                    placeholder={placeholder}
-                    autoComplete="off"
-                  />
-                  <div className="absolute right-3 flex items-center gap-1">
-                    <button type="button" onClick={toggleVoice} className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors ${isListening ? 'bg-[var(--v-fg)] text-[var(--v-bg)]' : 'text-[var(--v-fg-4)] hover:text-[var(--v-fg)] hover:bg-[var(--v-surface)]'}`}>
-                      {isListening ? <MicOff className="w-3.5 h-3.5" /> : <Mic className="w-3.5 h-3.5" />}
-                    </button>
-                    <button type="submit" disabled={!input.trim()} className="w-7 h-7 rounded-lg bg-[var(--v-surface)] hover:bg-[var(--v-border)] border border-[var(--v-border)] disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center transition-all group">
-                      <Send className="w-3.5 h-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
-                    </button>
-                  </div>
-                </div>
-              </form>
-
-              <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div className="flex w-full max-w-2xl flex-wrap justify-center gap-2 pb-1">
                 {suggestions.map((s, i) => (
-                  <button key={i} onClick={() => handleSuggestion(s.label)}
-                    className="flex items-center gap-2.5 px-4 py-3 rounded-lg border border-[var(--v-border)] bg-[var(--v-surface)] hover:bg-[var(--v-border)] hover:border-[var(--v-border-2)] text-[var(--v-fg-3)] hover:text-[var(--v-fg)] text-sm text-left transition-all">
-                    <span className="truncate">{s.label}</span>
+                  <button key={i} type="button" onClick={() => handleSuggestion(s.label)} className="grok-suggestion-chip">
+                    {s.label}
                   </button>
                 ))}
               </div>
             </div>
           ) : (
             /* MESSAGES */
-            <div className="pt-8 pb-4 space-y-1">
+            <div className="pb-4 pt-4 sm:pt-6">
               {messages.map((m, idx) => (
-                <div key={m.id + '-' + idx}>
+                <div key={m.id + '-' + idx} className="grok-turn">
                   {m.role === 'user' && (
-                    <div className="py-5 flex justify-end">
-                      <div className="max-w-[85%] sm:max-w-[75%] bg-[var(--v-surface)] border border-[var(--v-border)] rounded-lg px-4 py-3">
-                        <p className="text-[var(--v-fg)] text-sm leading-relaxed">
-                          {m.parts.filter((p: any) => p.type === 'text').map((p: any, i: number) => <span key={i}>{p.text}</span>)}
-                        </p>
-                      </div>
+                    <div className="flex flex-col items-end gap-2">
+                      {editingMessageId === m.id ? (
+                        <div className="grok-edit-panel w-full max-w-[min(85%,42rem)]">
+                          <textarea
+                            value={editDraft}
+                            onChange={(e) => setEditDraft(e.target.value)}
+                            className="grok-edit-input"
+                            rows={Math.min(8, Math.max(2, editDraft.split('\n').length))}
+                            autoFocus
+                          />
+                          <div className="mt-2 flex justify-end gap-2">
+                            <button type="button" onClick={cancelEditing} className="grok-edit-btn grok-edit-btn--ghost">
+                              Cancel
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => void handleEditUserMessage(m.id, editDraft)}
+                              disabled={!editDraft.trim()}
+                              className="grok-edit-btn grok-edit-btn--primary"
+                            >
+                              Save & resend
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          <div className="grok-user-bubble">
+                            {m.parts.filter((p: any) => p.type === 'text').map((p: any, i: number) => <span key={i}>{p.text}</span>)}
+                          </div>
+                          <div className="grok-message-actions justify-end">
+                            <MessageActionBtn
+                              label="Edit"
+                              icon={Pencil}
+                              disabled={isBusy}
+                              onClick={() => startEditingMessage(m.id, getMessageText(m))}
+                            />
+                            <MessageActionBtn
+                              label="Resend"
+                              icon={RotateCcw}
+                              disabled={isBusy}
+                              onClick={() => void handleResendUserMessage(m.id, getMessageText(m))}
+                            />
+                          </div>
+                        </>
+                      )}
                     </div>
                   )}
 
                   {m.role === 'assistant' && (
-                    <div className="py-5">
-                      <div className="flex items-start gap-3">
-                        <div className="w-5 h-5 rounded-full border border-[var(--v-border)] bg-[var(--v-surface)] flex items-center justify-center shrink-0 mt-0.5">
-                          <div className={`w-1.5 h-1.5 rounded-full bg-[var(--v-fg-3)] ${isLoading && idx === messages.length - 1 ? 'animate-pulse' : ''}`} />
-                        </div>
-                        <div className="flex-1 min-w-0 space-y-4">
-                          {isLoading && idx === messages.length - 1 && !m.parts.some((p: any) => p.type === 'text') && loadingSteps.length === 0 && <ThinkingAnimation />}
+                    <div className="mt-4 space-y-4">
+                      {isLoading && idx === messages.length - 1 && !m.parts.some((p: any) => p.type === 'text') && loadingSteps.length === 0 && (
+                        <ThinkingAnimation />
+                      )}
 
-                          {isLoading && idx === messages.length - 1 && loadingSteps.length > 0 && (
-                            <div className="space-y-2">
-                              {loadingSteps.map((step, i) => (
-                                <div key={i} className="flex items-center gap-2.5">
-                                  {step.status === 'complete' ? (
-                                    <div className="w-4 h-4 rounded-full bg-[var(--v-fg)] flex items-center justify-center shrink-0">
-                                      <svg className="w-2.5 h-2.5 text-[var(--v-bg)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                                      </svg>
-                                    </div>
-                                  ) : step.status === 'loading' ? (
-                                    <div className="w-4 h-4 rounded-full border-2 border-[var(--v-border)] border-t-[var(--v-fg-3)] animate-spin shrink-0" />
-                                  ) : (
-                                    <div className="w-4 h-4 rounded-full bg-[var(--v-surface)] border border-[var(--v-border)] shrink-0" />
-                                  )}
-                                  <span className={`text-xs ${step.status === 'complete' ? 'text-[var(--v-fg)]' : step.status === 'loading' ? 'text-[var(--v-fg-3)]' : 'text-[var(--v-fg-5)]'}`}>
-                                    {step.name}
-                                  </span>
+                      {isLoading && idx === messages.length - 1 && loadingSteps.length > 0 && (
+                        <div className="space-y-2 rounded-xl border border-[var(--v-border)] bg-[var(--v-surface)] px-3 py-2.5">
+                          {loadingSteps.map((step, i) => (
+                            <div key={i} className="flex items-center gap-2.5">
+                              {step.status === 'complete' ? (
+                                <div className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-[var(--v-fg)]">
+                                  <Check className="h-2.5 w-2.5 text-[var(--v-bg)]" strokeWidth={3} />
                                 </div>
-                              ))}
+                              ) : step.status === 'loading' ? (
+                                <div className="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-[var(--v-border)] border-t-[var(--v-fg-3)]" />
+                              ) : (
+                                <div className="h-4 w-4 shrink-0 rounded-full border border-[var(--v-border)] bg-[var(--v-bg)]" />
+                              )}
+                              <span className={`text-xs ${step.status === 'complete' ? 'text-[var(--v-fg)]' : step.status === 'loading' ? 'text-[var(--v-fg-3)]' : 'text-[var(--v-fg-5)]'}`}>
+                                {step.name}
+                              </span>
                             </div>
-                          )}
-
-                          {m.parts.filter((p: any) => p.type === 'text').map((part: any, i: number) => {
-                            const text = part.text as string;
-                            if (/<function[@(]\w+/.test(text)) {
-                              return <div key={i} className="space-y-4">{renderTextWithInlineTools(text)}</div>;
-                            }
-                            return (
-                              <div key={i} className="text-[var(--v-fg)] text-sm leading-relaxed">
-                                {renderContent(text)}
-                              </div>
-                            );
-                          })}
-
-                          {!(isLoading && idx === messages.length - 1) && m.parts.some((p: any) => p.type === 'text') && (
-                            <CopyButton text={m.parts.filter((p: any) => p.type === 'text').map((p: any) => p.text).join('')} className="mt-1" />
-                          )}
-
-                          {m.parts.map((part: any) => {
-                            if (!('state' in part) || !('toolCallId' in part)) return null;
-                            if (part.type === 'tool-searchZillowListings' && part.state === 'output-available') {
-                              const o = part.output as ZillowListingsOutput;
-                              return (
-                                <div key={part.toolCallId} className="mt-2">
-                                  <ZillowListings
-                                    properties={o.properties || []}
-                                    totalResults={o.totalResults || 0}
-                                    searchCriteria={o.searchCriteria}
-                                    error={o.error}
-                                    onPropertySelectAction={(url) => sendMessage({ text: `show zillow property ${url}` }, { body: { mode } })}
-                                  />
-                                </div>
-                              );
-                            }
-                            return null;
-                          })}
-
-                          <div className="md:hidden space-y-4">{renderDashboardItems(m)}</div>
+                          ))}
                         </div>
+                      )}
+
+                      <div className="grok-assistant-block space-y-4">
+                        {m.parts.filter((p: any) => p.type === 'text').map((part: any, i: number) => {
+                          const text = part.text as string;
+                          if (/<function[.@(]\w+/.test(text)) {
+                            return <div key={i} className="space-y-4">{renderTextWithInlineTools(text)}</div>;
+                          }
+                          return <div key={i}>{renderContent(text)}</div>;
+                        })}
                       </div>
+
+                      {!(isLoading && idx === messages.length - 1) && m.parts.some((p: any) => p.type === 'text') && (
+                        <div className="grok-message-actions">
+                          <CopyButton text={getMessageText(m)} iconOnly />
+                          <MessageActionBtn
+                            label="Resend"
+                            icon={RotateCcw}
+                            disabled={isBusy}
+                            onClick={() => void handleRegenerateAssistant(m.id)}
+                          />
+                        </div>
+                      )}
+
+                      {isLoading && idx === messages.length - 1 && (
+                        <div className="grok-message-actions mt-2">
+                          <MessageActionBtn label="Stop" icon={Square} className="grok-message-action--stop" onClick={handleStop} />
+                        </div>
+                      )}
+
+                      {m.parts.map((part: any) => {
+                        if (!('state' in part) || !('toolCallId' in part)) return null;
+                        if (part.type === 'tool-searchZillowListings' && part.state === 'output-available') {
+                          const o = part.output as ZillowListingsOutput;
+                          return (
+                            <div key={part.toolCallId} className="mt-2">
+                              <ZillowListings
+                                properties={o.properties || []}
+                                totalResults={o.totalResults || 0}
+                                searchCriteria={o.searchCriteria}
+                                error={o.error}
+                                onPropertySelectAction={(url) => sendMessage({ text: `show zillow property ${url}` }, { body: { mode } })}
+                              />
+                            </div>
+                          );
+                        }
+                        return null;
+                      })}
+
+                      {messageHasDashboardOutput(m) && (
+                        <button
+                          type="button"
+                          onClick={() => setShowDashboard(true)}
+                          className="dashboard-card flex w-full items-center justify-between gap-3 rounded-xl border border-[var(--v-border)] bg-[var(--v-surface)] px-4 py-3 text-left transition-colors hover:border-[var(--v-border-2)] md:hidden"
+                        >
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-[var(--v-fg)]">Charts & data ready</p>
+                            <p className="text-xs text-[var(--v-fg-4)]">Tap to open dashboard</p>
+                          </div>
+                          <BarChart2 className="h-4 w-4 shrink-0 text-[var(--v-fg-3)]" />
+                        </button>
+                      )}
                     </div>
                   )}
-
-                  {idx < messages.length - 1 && <div className="border-b border-[var(--v-border)]" />}
                 </div>
               ))}
 
               {error && (
                 <div className="mt-4 p-4 bg-[var(--v-surface)] border border-[var(--v-border)] rounded-lg">
                   <p className="text-[var(--v-fg)] text-sm">
-                    {error.message?.includes('tokens per day') || error.message?.includes('TPD')
-                      ? 'Daily token limit reached — resets in a few hours. Try again later.'
-                      : error.message?.includes('429') || error.message?.includes('rate limit')
-                      ? 'Rate limit reached — please wait a moment and try again.'
-                      : 'Something went wrong. Please try again.'}
+                    {(() => {
+                      const err = (error.message ?? '').toLowerCase();
+                      if (err.includes('tokens per day') || err.includes('tpd')) {
+                        return 'Daily token limit reached — resets in a few hours. Try again later.';
+                      }
+                      if (err.includes('429') || err.includes('rate limit') || err.includes('tpm')) {
+                        return 'Rate limit reached — please wait ~20 seconds and try again.';
+                      }
+                      return 'Something went wrong. Please try again.';
+                    })()}
                   </p>
                   <button onClick={() => window.location.reload()} className="mt-2 text-xs text-[var(--v-fg-3)] hover:text-[var(--v-fg)] underline underline-offset-2 transition-colors">Refresh page</button>
                 </div>
@@ -679,70 +1002,71 @@ function Chat({
           )}
         </div>
 
-        {/* FIXED BOTTOM INPUT */}
+        {/* FIXED BOTTOM COMPOSER */}
         {messages.length > 0 && (
-          <div
-            className={`fixed bottom-0 left-0 right-0 z-30 bg-gradient-to-t from-[var(--v-bg)] via-[var(--v-bg)]/95 to-transparent pt-8 ${showDashboard ? 'md:right-[42%]' : ''}`}
-            style={{ paddingBottom: 'max(20px, env(safe-area-inset-bottom))' }}
-          >
-            <div className="w-full max-w-2xl mx-auto px-4 space-y-2">
+          <div className={`grok-dock safe-bottom fixed bottom-0 left-0 right-0 z-30 pt-6 ${showDashboard ? 'md:right-[min(42%,520px)]' : ''}`}>
+            <div className="mx-auto w-full max-w-3xl space-y-2 px-3 sm:px-4">
               <ModeSelector mode={mode} setMode={setMode} compact />
-              <div className="flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-none">
-                {suggestions.map((s, i) => (
-                  <button key={i} type="button" onClick={() => handleSuggestion(s.label)} disabled={isLoading}
-                    className="flex items-center px-3 py-1.5 rounded-lg border border-[var(--v-border)] bg-[var(--v-surface)] hover:bg-[var(--v-border)] text-[var(--v-fg-4)] hover:text-[var(--v-fg-3)] text-xs whitespace-nowrap transition-all disabled:opacity-30 disabled:cursor-not-allowed shrink-0">
-                    {s.label}
-                  </button>
-                ))}
-              </div>
-              <form onSubmit={handleSubmit} className="relative flex items-center">
-                <input
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  className="w-full bg-[var(--v-surface)] text-[var(--v-fg)] rounded-lg pl-5 pr-20 py-3.5 border border-[var(--v-border-2)] focus:border-[var(--v-fg-3)] focus:outline-none placeholder-[var(--v-fg-5)] text-sm transition-all disabled:opacity-50"
-                  style={{ fontSize: '16px' }}
-                  placeholder={placeholder}
-                  disabled={isLoading}
-                  autoComplete="off"
-                />
-                <div className="absolute right-3 flex items-center gap-1">
-                  <button type="button" onClick={toggleVoice} className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors ${isListening ? 'bg-[var(--v-fg)] text-[var(--v-bg)]' : 'text-[var(--v-fg-4)] hover:text-[var(--v-fg)]'}`}>
-                    {isListening ? <MicOff className="w-3.5 h-3.5" /> : <Mic className="w-3.5 h-3.5" />}
-                  </button>
-                  <button type="submit" disabled={!input.trim() || isLoading} className="w-7 h-7 rounded-lg bg-[var(--v-surface)] hover:bg-[var(--v-border)] border border-[var(--v-border)] disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center transition-all group">
-                    <Send className="w-3.5 h-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
-                  </button>
-                </div>
-              </form>
-              <p className="text-center text-[11px] text-[var(--v-fg-5)]">Sweep can make mistakes. Verify important information.</p>
+              <ChatComposer
+                input={input}
+                setInput={setInput}
+                placeholder={placeholder}
+                isStreaming={isLoading}
+                isListening={isListening}
+                toggleVoice={toggleVoice}
+                onSubmit={handleSubmit}
+                onStop={handleStop}
+              />
+              <p className="pb-1 text-center text-[11px] text-[var(--v-fg-5)]">Sweep can make mistakes. Verify important information.</p>
             </div>
           </div>
         )}
       </main>
 
-      {/* RIGHT DASHBOARD SIDEBAR */}
-      <aside className={`hidden md:flex flex-col fixed top-0 right-0 h-full w-[42%] bg-[var(--v-bg-2)] border-l border-[var(--v-border)] z-20 transform transition-transform duration-300 ${showDashboard ? 'translate-x-0' : 'translate-x-full'}`}>
-        <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--v-border)] shrink-0">
-          <div className="flex items-center gap-2">
-            <BarChart2 className="w-4 h-4 text-[var(--v-fg-3)]" />
-            <span className="text-sm font-medium text-[var(--v-fg)]">Dashboard</span>
+      {/* MOBILE DASHBOARD SHEET */}
+      {showDashboard && hasDashboardItems && (
+        <div className="fixed inset-0 z-40 flex flex-col justify-end md:hidden">
+          <button
+            type="button"
+            aria-label="Close dashboard"
+            className="absolute inset-0 bg-black/45"
+            onClick={() => setShowDashboard(false)}
+          />
+          <div className="safe-bottom relative flex max-h-[88dvh] flex-col rounded-t-2xl border-t border-[var(--v-border)] bg-[var(--v-bg)] shadow-[0_-24px_60px_rgba(0,0,0,0.22)]">
+            <div className="mx-auto mt-2 h-1 w-10 shrink-0 rounded-full bg-[var(--v-border-2)]" />
+            <div className="flex shrink-0 items-center justify-between gap-3 border-b border-[var(--v-border)] px-4 py-3">
+              <div className="flex min-w-0 items-center gap-2">
+                <BarChart2 className="h-4 w-4 shrink-0 text-[var(--v-fg-4)]" />
+                <span className="truncate text-sm font-medium text-[var(--v-fg)]">Dashboard</span>
+              </div>
+              <button onClick={() => setShowDashboard(false)} aria-label="Close dashboard" className="flex h-10 w-10 items-center justify-center rounded-lg text-[var(--v-fg-4)] transition-colors hover:bg-[var(--v-surface)] hover:text-[var(--v-fg-3)]">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="flex-1 space-y-5 overflow-y-auto overscroll-y-contain p-4">
+              {latestDashboardMessage ? renderDashboardItems(latestDashboardMessage) : null}
+            </div>
           </div>
-          <button onClick={() => setShowDashboard(false)} className="w-7 h-7 rounded-lg hover:bg-[var(--v-surface)] flex items-center justify-center text-[var(--v-fg-4)] hover:text-[var(--v-fg-3)] transition-colors">
-            <X className="w-4 h-4" />
+        </div>
+      )}
+
+      {/* DESKTOP DASHBOARD SIDEBAR */}
+      <aside className={`fixed top-0 right-0 z-20 hidden h-full w-[min(42%,520px)] transform flex-col border-l border-[var(--v-border)] bg-[var(--v-bg)] transition-transform duration-300 ease-in-out md:flex ${showDashboard ? 'translate-x-0' : 'translate-x-full'}`}>
+        <div className="safe-top flex min-w-0 shrink-0 items-center justify-between gap-3 border-b border-[var(--v-border)] px-5 py-4">
+          <div className="flex min-w-0 items-center gap-2">
+            <BarChart2 className="h-4 w-4 shrink-0 text-[var(--v-fg-4)]" />
+            <span className="truncate text-sm font-medium text-[var(--v-fg-3)]">Dashboard</span>
+          </div>
+          <button onClick={() => setShowDashboard(false)} aria-label="Close dashboard" className="flex h-9 w-9 items-center justify-center rounded-lg text-[var(--v-fg-4)] transition-colors hover:bg-[var(--v-surface)] hover:text-[var(--v-fg-3)]">
+            <X className="h-4 w-4" />
           </button>
         </div>
-        <div className="flex-1 overflow-y-auto p-5 space-y-5">
-          {(() => {
-            const last = [...messages].reverse().find(m =>
-              m.role === 'assistant' &&
-              m.parts.some((p: any) => toolTypes.includes(p.type) && 'state' in p && p.state === 'output-available')
-            );
-            return last ? renderDashboardItems(last) : null;
-          })()}
+        <div className="flex-1 space-y-5 overflow-y-auto overscroll-y-contain p-4 sm:p-5">
+          {latestDashboardMessage ? renderDashboardItems(latestDashboardMessage) : null}
         </div>
       </aside>
 
-      <div className={`fixed bottom-2 right-4 text-[10px] text-[var(--v-fg-5)] pointer-events-none select-none z-10 font-light ${showDashboard ? 'md:right-[calc(42%+12px)]' : ''}`}>
+      <div className={`pointer-events-none fixed bottom-2 right-4 z-10 select-none text-[10px] font-light text-[var(--v-fg-5)] safe-bottom ${showDashboard ? 'md:right-[min(calc(42%+12px),532px)]' : ''}`}>
         by Sushant Kataria
       </div>
     </div>
@@ -755,6 +1079,7 @@ export default function App() {
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const [convs, setConvs] = useState<StoredConv[]>([]);
   const [currentId, setCurrentId] = useState<string>('');
+  const [chatSession, setChatSession] = useState(0);
   const [showConvSidebar, setShowConvSidebar] = useState(false);
 
   // Load theme + conversations from localStorage on mount
@@ -763,9 +1088,38 @@ export default function App() {
     if (savedTheme) setTheme(savedTheme);
     const loaded = loadConvs();
     setConvs(loaded);
-    if (loaded.length > 0) setCurrentId(loaded[0].id);
-    else { const id = genId(); setCurrentId(id); }
+    const savedCurrentId = loadCurrentConvId();
+    if (savedCurrentId && loaded.some(c => c.id === savedCurrentId)) {
+      setCurrentId(savedCurrentId);
+    } else if (loaded.length > 0) {
+      setCurrentId(loaded[0].id);
+      saveCurrentConvId(loaded[0].id);
+    } else {
+      const id = genId();
+      setCurrentId(id);
+      saveCurrentConvId(id);
+    }
   }, []);
+
+  // Keep active conversation id in sync + prune expired chats every 30s
+  useEffect(() => {
+    if (!currentId) return;
+    saveCurrentConvId(currentId);
+    const timer = window.setInterval(() => {
+      setConvs(prev => {
+        const next = pruneExpired(prev);
+        if (next.length === prev.length) return prev;
+        saveConvs(next);
+        if (!next.some(c => c.id === currentId)) {
+          const fallback = next[0]?.id ?? genId();
+          setCurrentId(fallback);
+          saveCurrentConvId(fallback);
+        }
+        return next;
+      });
+    }, 30_000);
+    return () => window.clearInterval(timer);
+  }, [currentId]);
 
   // Sync theme to <html>
   useEffect(() => {
@@ -778,24 +1132,53 @@ export default function App() {
   const toggleTheme = () => setTheme(t => t === 'dark' ? 'light' : 'dark');
 
   const handleUpdateConv = useCallback((id: string, messages: any[], title: string, mode: Mode) => {
+    const storedMessages = cloneForStorage(messages);
     setConvs(prev => {
       const exists = prev.find(c => c.id === id);
+      if (exists) {
+        const unchanged =
+          exists.title === title &&
+          exists.mode === mode &&
+          JSON.stringify(exists.messages) === JSON.stringify(storedMessages);
+        if (unchanged) return prev;
+      }
+      const now = Date.now();
       let next: StoredConv[];
       if (exists) {
-        next = prev.map(c => c.id === id ? { ...c, messages, title, mode, updatedAt: Date.now() } : c);
+        next = prev.map(c => c.id === id
+          ? withExpiry({ ...c, messages: storedMessages, title, mode })
+          : c);
       } else {
-        next = [{ id, title, mode, messages, createdAt: Date.now(), updatedAt: Date.now() }, ...prev];
+        next = [withExpiry({
+          id,
+          title,
+          mode,
+          messages: storedMessages,
+          createdAt: now,
+          updatedAt: now,
+          expiresAt: now + CONV_TTL_MS,
+        }), ...prev];
       }
       next.sort((a, b) => b.updatedAt - a.updatedAt);
       saveConvs(next);
       return next;
     });
+    saveCurrentConvId(id);
   }, []);
 
+  const selectConv = (id: string) => {
+    setShowConvSidebar(false);
+    setCurrentId(id);
+    saveCurrentConvId(id);
+    setChatSession((n) => n + 1);
+  };
+
   const newConv = () => {
+    setShowConvSidebar(false);
     const id = genId();
     setCurrentId(id);
-    setShowConvSidebar(false);
+    saveCurrentConvId(id);
+    setChatSession((n) => n + 1);
   };
 
   const deleteConv = (id: string) => {
@@ -806,8 +1189,14 @@ export default function App() {
     });
     if (id === currentId) {
       const remaining = convs.filter(c => c.id !== id);
-      if (remaining.length > 0) setCurrentId(remaining[0].id);
-      else setCurrentId(genId());
+      if (remaining.length > 0) {
+        setCurrentId(remaining[0].id);
+        saveCurrentConvId(remaining[0].id);
+      } else {
+        const freshId = genId();
+        setCurrentId(freshId);
+        saveCurrentConvId(freshId);
+      }
     }
   };
 
@@ -821,14 +1210,14 @@ export default function App() {
         <ConvSidebar
           convs={convs}
           currentId={currentId}
-          onSelect={setCurrentId}
+          onSelect={selectConv}
           onNew={newConv}
           onDelete={deleteConv}
           onClose={() => setShowConvSidebar(false)}
         />
       )}
       <Chat
-        key={currentId}
+        key={`${currentId}-${chatSession}`}
         convId={currentId}
         initialMessages={currentConv?.messages ?? []}
         initialMode={currentConv?.mode ?? 'chat'}

@@ -1,0 +1,1730 @@
+{
+  "AAPL": {
+    "Q2 FY2026 (ended 2026-03-28)": {
+      "ticker": "AAPL",
+      "companyName": "Apple Inc.",
+      "period": "Q2 FY2026 (ended 2026-03-28)",
+      "currency": "USD",
+      "title": "Apple Inc. Balance Sheet",
+      "source": "SEC EDGAR 10-Q filed 2026-05-01",
+      "assets": {
+        "current": [
+          {
+            "label": "Cash and cash equivalents",
+            "value": 45572
+          },
+          {
+            "label": "Receivables, net",
+            "value": 30339
+          },
+          {
+            "label": "Inventories",
+            "value": 6747
+          },
+          {
+            "label": "Other current assets",
+            "value": 61456
+          }
+        ],
+        "nonCurrent": [
+          {
+            "label": "Property and equipment, net",
+            "value": 50116
+          },
+          {
+            "label": "Other non-current assets",
+            "value": 176852
+          }
+        ]
+      },
+      "liabilities": {
+        "current": [
+          {
+            "label": "Accounts payable",
+            "value": 57349
+          },
+          {
+            "label": "Other current liabilities",
+            "value": 77292
+          }
+        ],
+        "nonCurrent": [
+          {
+            "label": "Long-term debt",
+            "value": 74404
+          },
+          {
+            "label": "Other long-term liabilities",
+            "value": 55546
+          }
+        ]
+      },
+      "equity": [
+        {
+          "label": "Retained earnings",
+          "value": 12359
+        },
+        {
+          "label": "Other equity",
+          "value": 94132
+        }
+      ]
+    }
+  },
+  "MSFT": {
+    "Q3 FY2026 (ended 2026-03-31)": {
+      "ticker": "MSFT",
+      "companyName": "Microsoft Corporation",
+      "period": "Q3 FY2026 (ended 2026-03-31)",
+      "currency": "USD",
+      "title": "Microsoft Corporation Balance Sheet",
+      "source": "SEC EDGAR 10-Q filed 2026-04-29",
+      "assets": {
+        "current": [
+          {
+            "label": "Cash and cash equivalents",
+            "value": 32105
+          },
+          {
+            "label": "Receivables, net",
+            "value": 60041
+          },
+          {
+            "label": "Inventories",
+            "value": 1219
+          },
+          {
+            "label": "Other current assets",
+            "value": 81964
+          }
+        ],
+        "nonCurrent": [
+          {
+            "label": "Property and equipment, net",
+            "value": 283228
+          },
+          {
+            "label": "Other non-current assets",
+            "value": 235671
+          }
+        ]
+      },
+      "liabilities": {
+        "current": [
+          {
+            "label": "Accounts payable",
+            "value": 37513
+          },
+          {
+            "label": "Other current liabilities",
+            "value": 99148
+          }
+        ],
+        "nonCurrent": [
+          {
+            "label": "Long-term debt",
+            "value": 31423
+          },
+          {
+            "label": "Other long-term liabilities",
+            "value": 111777
+          }
+        ]
+      },
+      "equity": [
+        {
+          "label": "Retained earnings",
+          "value": 302526
+        },
+        {
+          "label": "Other equity",
+          "value": 111841
+        }
+      ]
+    }
+  },
+  "NVDA": {
+    "Q1 FY2027 (ended 2026-04-26)": {
+      "ticker": "NVDA",
+      "companyName": "NVIDIA Corporation",
+      "period": "Q1 FY2027 (ended 2026-04-26)",
+      "currency": "USD",
+      "title": "NVIDIA Corporation Balance Sheet",
+      "source": "SEC EDGAR 10-Q filed 2026-05-20",
+      "assets": {
+        "current": [
+          {
+            "label": "Cash and cash equivalents",
+            "value": 13237
+          },
+          {
+            "label": "Receivables, net",
+            "value": 40710
+          },
+          {
+            "label": "Inventories",
+            "value": 25797
+          },
+          {
+            "label": "Other current assets",
+            "value": 71251
+          }
+        ],
+        "nonCurrent": [
+          {
+            "label": "Property and equipment, net",
+            "value": 12403
+          },
+          {
+            "label": "Other non-current assets",
+            "value": 96076
+          }
+        ]
+      },
+      "liabilities": {
+        "current": [
+          {
+            "label": "Accounts payable",
+            "value": 13097
+          },
+          {
+            "label": "Short-term debt",
+            "value": 1000
+          },
+          {
+            "label": "Other current liabilities",
+            "value": 29787
+          }
+        ],
+        "nonCurrent": [
+          {
+            "label": "Long-term debt",
+            "value": 7470
+          },
+          {
+            "label": "Other long-term liabilities",
+            "value": 12646
+          }
+        ]
+      },
+      "equity": [
+        {
+          "label": "Retained earnings",
+          "value": 185038
+        },
+        {
+          "label": "Other equity",
+          "value": 10436
+        }
+      ]
+    }
+  },
+  "AMZN": {
+    "Q1 FY2026 (ended 2026-03-31)": {
+      "ticker": "AMZN",
+      "companyName": "Amazon.com Inc.",
+      "period": "Q1 FY2026 (ended 2026-03-31)",
+      "currency": "USD",
+      "title": "Amazon.com Inc. Balance Sheet",
+      "source": "SEC EDGAR 10-Q filed 2026-04-30",
+      "assets": {
+        "current": [
+          {
+            "label": "Cash and cash equivalents",
+            "value": 101816
+          },
+          {
+            "label": "Receivables, net",
+            "value": 75532
+          },
+          {
+            "label": "Inventories",
+            "value": 36534
+          },
+          {
+            "label": "Other current assets",
+            "value": 41273
+          }
+        ],
+        "nonCurrent": [
+          {
+            "label": "Property and equipment, net",
+            "value": 357025
+          },
+          {
+            "label": "Other non-current assets",
+            "value": 304450
+          }
+        ]
+      },
+      "liabilities": {
+        "current": [
+          {
+            "label": "Accounts payable",
+            "value": 124749
+          },
+          {
+            "label": "Short-term debt",
+            "value": 152
+          },
+          {
+            "label": "Other current liabilities",
+            "value": 91855
+          }
+        ],
+        "nonCurrent": [
+          {
+            "label": "Long-term debt",
+            "value": 119074
+          },
+          {
+            "label": "Other long-term liabilities",
+            "value": 138886
+          }
+        ]
+      },
+      "equity": [
+        {
+          "label": "Retained earnings",
+          "value": 280791
+        },
+        {
+          "label": "Other equity",
+          "value": 161123
+        }
+      ]
+    }
+  },
+  "GOOGL": {
+    "Q1 FY2026 (ended 2026-03-31)": {
+      "ticker": "GOOGL",
+      "companyName": "Alphabet Inc.",
+      "period": "Q1 FY2026 (ended 2026-03-31)",
+      "currency": "USD",
+      "title": "Alphabet Inc. Balance Sheet",
+      "source": "SEC EDGAR 10-Q filed 2026-04-30",
+      "assets": {
+        "current": [
+          {
+            "label": "Cash and cash equivalents",
+            "value": 38063
+          },
+          {
+            "label": "Receivables, net",
+            "value": 62999
+          },
+          {
+            "label": "Inventories",
+            "value": 2957
+          },
+          {
+            "label": "Other current assets",
+            "value": 109734
+          }
+        ],
+        "nonCurrent": [
+          {
+            "label": "Property and equipment, net",
+            "value": 185062
+          },
+          {
+            "label": "Other non-current assets",
+            "value": 305104
+          }
+        ]
+      },
+      "liabilities": {
+        "current": [
+          {
+            "label": "Accounts payable",
+            "value": 16852
+          },
+          {
+            "label": "Short-term debt",
+            "value": 1329
+          },
+          {
+            "label": "Other current liabilities",
+            "value": 93007
+          }
+        ],
+        "nonCurrent": [
+          {
+            "label": "Long-term debt",
+            "value": 77501
+          },
+          {
+            "label": "Other long-term liabilities",
+            "value": 36484
+          }
+        ]
+      },
+      "equity": [
+        {
+          "label": "Retained earnings",
+          "value": 384024
+        },
+        {
+          "label": "Other equity",
+          "value": 94722
+        }
+      ]
+    }
+  },
+  "META": {
+    "Q1 FY2026 (ended 2026-03-31)": {
+      "ticker": "META",
+      "companyName": "Meta Platforms Inc.",
+      "period": "Q1 FY2026 (ended 2026-03-31)",
+      "currency": "USD",
+      "title": "Meta Platforms Inc. Balance Sheet",
+      "source": "SEC EDGAR 10-Q filed 2026-04-30",
+      "assets": {
+        "current": [
+          {
+            "label": "Cash and cash equivalents",
+            "value": 23426
+          },
+          {
+            "label": "Receivables, net",
+            "value": 17470
+          },
+          {
+            "label": "Other current assets",
+            "value": 68869
+          }
+        ],
+        "nonCurrent": [
+          {
+            "label": "Property and equipment, net",
+            "value": 42291
+          },
+          {
+            "label": "Other non-current assets",
+            "value": 243194
+          }
+        ]
+      },
+      "liabilities": {
+        "current": [
+          {
+            "label": "Accounts payable",
+            "value": 1331
+          },
+          {
+            "label": "Other current liabilities",
+            "value": 45422
+          }
+        ],
+        "nonCurrent": [
+          {
+            "label": "Long-term debt",
+            "value": 58748
+          },
+          {
+            "label": "Other long-term liabilities",
+            "value": 46068
+          }
+        ]
+      },
+      "equity": [
+        {
+          "label": "Retained earnings",
+          "value": 144647
+        },
+        {
+          "label": "Other equity",
+          "value": 99034
+        }
+      ]
+    }
+  },
+  "BRK.B": {
+    "Q1 FY2026 (ended 2026-03-31)": {
+      "ticker": "BRK.B",
+      "companyName": "Berkshire Hathaway Inc.",
+      "period": "Q1 FY2026 (ended 2026-03-31)",
+      "currency": "USD",
+      "title": "Berkshire Hathaway Inc. Balance Sheet",
+      "source": "SEC EDGAR 10-Q filed 2026-05-04",
+      "assets": {
+        "current": [
+          {
+            "label": "Cash and cash equivalents",
+            "value": 31583
+          },
+          {
+            "label": "Receivables, net",
+            "value": 87659
+          },
+          {
+            "label": "Inventories",
+            "value": 25523
+          },
+          {
+            "label": "Other current assets",
+            "value": 293530
+          }
+        ],
+        "nonCurrent": [
+          {
+            "label": "Property and equipment, net",
+            "value": 488386
+          },
+          {
+            "label": "Other non-current assets",
+            "value": 325590
+          }
+        ]
+      },
+      "liabilities": {
+        "current": [
+          {
+            "label": "Accounts payable",
+            "value": 73195
+          },
+          {
+            "label": "Other current liabilities",
+            "value": 135933
+          }
+        ],
+        "nonCurrent": [
+          {
+            "label": "Long-term debt",
+            "value": 156847
+          },
+          {
+            "label": "Other long-term liabilities",
+            "value": 156846
+          }
+        ]
+      },
+      "equity": [
+        {
+          "label": "Retained earnings",
+          "value": 773292
+        }
+      ]
+    }
+  },
+  "TSLA": {
+    "Q1 FY2026 (ended 2026-03-31)": {
+      "ticker": "TSLA",
+      "companyName": "Tesla Inc.",
+      "period": "Q1 FY2026 (ended 2026-03-31)",
+      "currency": "USD",
+      "title": "Tesla Inc. Balance Sheet",
+      "source": "SEC EDGAR 10-Q filed 2026-04-23",
+      "assets": {
+        "current": [
+          {
+            "label": "Cash and cash equivalents",
+            "value": 16603
+          },
+          {
+            "label": "Receivables, net",
+            "value": 3959
+          },
+          {
+            "label": "Inventories",
+            "value": 14434
+          },
+          {
+            "label": "Other current assets",
+            "value": 34752
+          }
+        ],
+        "nonCurrent": [
+          {
+            "label": "Property and equipment, net",
+            "value": 39407
+          },
+          {
+            "label": "Other non-current assets",
+            "value": 34569
+          }
+        ]
+      },
+      "liabilities": {
+        "current": [
+          {
+            "label": "Accounts payable",
+            "value": 14696
+          },
+          {
+            "label": "Short-term debt",
+            "value": 1374
+          },
+          {
+            "label": "Other current liabilities",
+            "value": 18068
+          }
+        ],
+        "nonCurrent": [
+          {
+            "label": "Long-term debt",
+            "value": 598
+          },
+          {
+            "label": "Other long-term liabilities",
+            "value": 24186
+          }
+        ]
+      },
+      "equity": [
+        {
+          "label": "Retained earnings",
+          "value": 39480
+        },
+        {
+          "label": "Other equity",
+          "value": 44636
+        }
+      ]
+    }
+  },
+  "LLY": {
+    "Q1 FY2026 (ended 2026-03-31)": {
+      "ticker": "LLY",
+      "companyName": "Eli Lilly and Company",
+      "period": "Q1 FY2026 (ended 2026-03-31)",
+      "currency": "USD",
+      "title": "Eli Lilly and Company Balance Sheet",
+      "source": "SEC EDGAR 10-Q filed 2026-04-30",
+      "assets": {
+        "current": [
+          {
+            "label": "Cash and cash equivalents",
+            "value": 5282
+          },
+          {
+            "label": "Receivables, net",
+            "value": 18429
+          },
+          {
+            "label": "Inventories",
+            "value": 14529
+          },
+          {
+            "label": "Other current assets",
+            "value": 16595
+          }
+        ],
+        "nonCurrent": [
+          {
+            "label": "Property and equipment, net",
+            "value": 26540
+          },
+          {
+            "label": "Other non-current assets",
+            "value": 35201
+          }
+        ]
+      },
+      "liabilities": {
+        "current": [
+          {
+            "label": "Accounts payable",
+            "value": 5029
+          },
+          {
+            "label": "Short-term debt",
+            "value": 4000
+          },
+          {
+            "label": "Other current liabilities",
+            "value": 27605
+          }
+        ],
+        "nonCurrent": [
+          {
+            "label": "Long-term debt",
+            "value": 39370
+          },
+          {
+            "label": "Other long-term liabilities",
+            "value": 9374
+          }
+        ]
+      },
+      "equity": [
+        {
+          "label": "Retained earnings",
+          "value": 29514
+        },
+        {
+          "label": "Other equity",
+          "value": 1684
+        }
+      ]
+    }
+  },
+  "AVGO": {
+    "Q2 FY2026 (ended 2026-05-03)": {
+      "ticker": "AVGO",
+      "companyName": "Broadcom Inc.",
+      "period": "Q2 FY2026 (ended 2026-05-03)",
+      "currency": "USD",
+      "title": "Broadcom Inc. Balance Sheet",
+      "source": "SEC EDGAR 10-Q filed 2026-06-09",
+      "assets": {
+        "current": [
+          {
+            "label": "Cash and cash equivalents",
+            "value": 19628
+          },
+          {
+            "label": "Receivables, net",
+            "value": 10830
+          },
+          {
+            "label": "Inventories",
+            "value": 4328
+          },
+          {
+            "label": "Other current assets",
+            "value": 7427
+          }
+        ],
+        "nonCurrent": [
+          {
+            "label": "Property and equipment, net",
+            "value": 2788
+          },
+          {
+            "label": "Other non-current assets",
+            "value": 134157
+          }
+        ]
+      },
+      "liabilities": {
+        "current": [
+          {
+            "label": "Accounts payable",
+            "value": 2337
+          },
+          {
+            "label": "Short-term debt",
+            "value": 2252
+          },
+          {
+            "label": "Other current liabilities",
+            "value": 14273
+          }
+        ],
+        "nonCurrent": [
+          {
+            "label": "Long-term debt",
+            "value": 62655
+          },
+          {
+            "label": "Other long-term liabilities",
+            "value": 9950
+          }
+        ]
+      },
+      "equity": [
+        {
+          "label": "Retained earnings",
+          "value": 12166
+        },
+        {
+          "label": "Other equity",
+          "value": 12775
+        }
+      ]
+    }
+  },
+  "JPM": {
+    "Q1 FY2026 (ended 2026-03-31)": {
+      "ticker": "JPM",
+      "companyName": "JPMorgan Chase & Co.",
+      "period": "Q1 FY2026 (ended 2026-03-31)",
+      "currency": "USD",
+      "title": "JPMorgan Chase & Co. Balance Sheet",
+      "source": "SEC EDGAR 10-Q filed 2026-05-01",
+      "assets": {
+        "current": [
+          {
+            "label": "Cash and cash equivalents",
+            "value": 278793
+          },
+          {
+            "label": "Receivables, net",
+            "value": 343033
+          },
+          {
+            "label": "Other current assets",
+            "value": 1093340
+          }
+        ],
+        "nonCurrent": [
+          {
+            "label": "Property and equipment, net",
+            "value": 29677
+          },
+          {
+            "label": "Other non-current assets",
+            "value": 3155632
+          }
+        ]
+      },
+      "liabilities": {
+        "current": [
+          {
+            "label": "Accounts payable",
+            "value": 635101
+          },
+          {
+            "label": "Short-term debt",
+            "value": 68048
+          },
+          {
+            "label": "Other current liabilities",
+            "value": 1111426
+          }
+        ],
+        "nonCurrent": [
+          {
+            "label": "Long-term debt",
+            "value": 269929
+          },
+          {
+            "label": "Other long-term liabilities",
+            "value": 2451933
+          }
+        ]
+      },
+      "equity": [
+        {
+          "label": "Retained earnings",
+          "value": 428206
+        }
+      ]
+    }
+  },
+  "WMT": {
+    "Q1 FY2027 (ended 2026-04-30)": {
+      "ticker": "WMT",
+      "companyName": "Walmart Inc.",
+      "period": "Q1 FY2027 (ended 2026-04-30)",
+      "currency": "USD",
+      "title": "Walmart Inc. Balance Sheet",
+      "source": "SEC EDGAR 10-Q filed 2026-05-29",
+      "assets": {
+        "current": [
+          {
+            "label": "Cash and cash equivalents",
+            "value": 10729
+          },
+          {
+            "label": "Receivables, net",
+            "value": 10662
+          },
+          {
+            "label": "Inventories",
+            "value": 62570
+          },
+          {
+            "label": "Other current assets",
+            "value": 4433
+          }
+        ],
+        "nonCurrent": [
+          {
+            "label": "Property and equipment, net",
+            "value": 137789
+          },
+          {
+            "label": "Other non-current assets",
+            "value": 63424
+          }
+        ]
+      },
+      "liabilities": {
+        "current": [
+          {
+            "label": "Accounts payable",
+            "value": 62876
+          },
+          {
+            "label": "Short-term debt",
+            "value": 10673
+          },
+          {
+            "label": "Other current liabilities",
+            "value": 41034
+          }
+        ],
+        "nonCurrent": [
+          {
+            "label": "Long-term debt",
+            "value": 36887
+          },
+          {
+            "label": "Other long-term liabilities",
+            "value": 43807
+          }
+        ]
+      },
+      "equity": [
+        {
+          "label": "Retained earnings",
+          "value": 100241
+        }
+      ]
+    }
+  },
+  "MA": {
+    "Q1 FY2026 (ended 2026-03-31)": {
+      "ticker": "MA",
+      "companyName": "Mastercard Incorporated",
+      "period": "Q1 FY2026 (ended 2026-03-31)",
+      "currency": "USD",
+      "title": "Mastercard Incorporated Balance Sheet",
+      "source": "SEC EDGAR 10-Q filed 2026-04-30",
+      "assets": {
+        "current": [
+          {
+            "label": "Cash and cash equivalents",
+            "value": 7906
+          },
+          {
+            "label": "Receivables, net",
+            "value": 4720
+          },
+          {
+            "label": "Other current assets",
+            "value": 9872
+          }
+        ],
+        "nonCurrent": [
+          {
+            "label": "Property and equipment, net",
+            "value": 2349
+          },
+          {
+            "label": "Other non-current assets",
+            "value": 27602
+          }
+        ]
+      },
+      "liabilities": {
+        "current": [
+          {
+            "label": "Accounts payable",
+            "value": 1030
+          },
+          {
+            "label": "Other current liabilities",
+            "value": 21904
+          }
+        ],
+        "nonCurrent": [
+          {
+            "label": "Long-term debt",
+            "value": 17212
+          },
+          {
+            "label": "Other long-term liabilities",
+            "value": 5581
+          }
+        ]
+      },
+      "equity": [
+        {
+          "label": "Retained earnings",
+          "value": 88146
+        }
+      ]
+    }
+  },
+  "XOM": {
+    "Q1 FY2026 (ended 2026-03-31)": {
+      "ticker": "XOM",
+      "companyName": "Exxon Mobil Corporation",
+      "period": "Q1 FY2026 (ended 2026-03-31)",
+      "currency": "USD",
+      "title": "Exxon Mobil Corporation Balance Sheet",
+      "source": "SEC EDGAR 10-Q filed 2026-05-04",
+      "assets": {
+        "current": [
+          {
+            "label": "Cash and cash equivalents",
+            "value": 8435
+          },
+          {
+            "label": "Receivables, net",
+            "value": 35744
+          },
+          {
+            "label": "Inventories",
+            "value": 15158
+          },
+          {
+            "label": "Other current assets",
+            "value": 38450
+          }
+        ],
+        "nonCurrent": [
+          {
+            "label": "Property and equipment, net",
+            "value": 298781
+          },
+          {
+            "label": "Other non-current assets",
+            "value": 67842
+          }
+        ]
+      },
+      "liabilities": {
+        "current": [
+          {
+            "label": "Accounts payable",
+            "value": 33032
+          },
+          {
+            "label": "Short-term debt",
+            "value": 14531
+          },
+          {
+            "label": "Other current liabilities",
+            "value": 46815
+          }
+        ],
+        "nonCurrent": [
+          {
+            "label": "Long-term debt",
+            "value": 23100
+          },
+          {
+            "label": "Other long-term liabilities",
+            "value": 85936
+          }
+        ]
+      },
+      "equity": [
+        {
+          "label": "Retained earnings",
+          "value": 482344
+        }
+      ]
+    }
+  },
+  "UNH": {
+    "Q1 FY2026 (ended 2026-03-31)": {
+      "ticker": "UNH",
+      "companyName": "UnitedHealth Group Inc.",
+      "period": "Q1 FY2026 (ended 2026-03-31)",
+      "currency": "USD",
+      "title": "UnitedHealth Group Inc. Balance Sheet",
+      "source": "SEC EDGAR 10-Q filed 2026-05-05",
+      "assets": {
+        "current": [
+          {
+            "label": "Cash and cash equivalents",
+            "value": 28001
+          },
+          {
+            "label": "Receivables, net",
+            "value": 26587
+          },
+          {
+            "label": "Inventories",
+            "value": 3300
+          },
+          {
+            "label": "Other current assets",
+            "value": 33239
+          }
+        ],
+        "nonCurrent": [
+          {
+            "label": "Property and equipment, net",
+            "value": 10667
+          },
+          {
+            "label": "Other non-current assets",
+            "value": 210850
+          }
+        ]
+      },
+      "liabilities": {
+        "current": [
+          {
+            "label": "Accounts payable",
+            "value": 39943
+          },
+          {
+            "label": "Short-term debt",
+            "value": 6477
+          },
+          {
+            "label": "Other current liabilities",
+            "value": 67704
+          }
+        ],
+        "nonCurrent": [
+          {
+            "label": "Long-term debt",
+            "value": 71440
+          },
+          {
+            "label": "Other long-term liabilities",
+            "value": 21761
+          }
+        ]
+      },
+      "equity": [
+        {
+          "label": "Retained earnings",
+          "value": 99878
+        }
+      ]
+    }
+  },
+  "COST": {
+    "Q3 FY2026 (ended 2026-05-10)": {
+      "ticker": "COST",
+      "companyName": "Costco Wholesale Corporation",
+      "period": "Q3 FY2026 (ended 2026-05-10)",
+      "currency": "USD",
+      "title": "Costco Wholesale Corporation Balance Sheet",
+      "source": "SEC EDGAR 10-Q filed 2026-06-03",
+      "assets": {
+        "current": [
+          {
+            "label": "Cash and cash equivalents",
+            "value": 18946
+          },
+          {
+            "label": "Receivables, net",
+            "value": 3750
+          },
+          {
+            "label": "Inventories",
+            "value": 19418
+          },
+          {
+            "label": "Other current assets",
+            "value": 3063
+          }
+        ],
+        "nonCurrent": [
+          {
+            "label": "Property and equipment, net",
+            "value": 34293
+          },
+          {
+            "label": "Other non-current assets",
+            "value": 6960
+          }
+        ]
+      },
+      "liabilities": {
+        "current": [
+          {
+            "label": "Accounts payable",
+            "value": 22363
+          },
+          {
+            "label": "Short-term debt",
+            "value": 36
+          },
+          {
+            "label": "Other current liabilities",
+            "value": 19726
+          }
+        ],
+        "nonCurrent": [
+          {
+            "label": "Long-term debt",
+            "value": 5670
+          },
+          {
+            "label": "Other long-term liabilities",
+            "value": 5126
+          }
+        ]
+      },
+      "equity": [
+        {
+          "label": "Retained earnings",
+          "value": 26482
+        },
+        {
+          "label": "Other equity",
+          "value": 7027
+        }
+      ]
+    }
+  },
+  "PG": {
+    "Q3 FY2026 (ended 2026-03-31)": {
+      "ticker": "PG",
+      "companyName": "Procter & Gamble Company",
+      "period": "Q3 FY2026 (ended 2026-03-31)",
+      "currency": "USD",
+      "title": "Procter & Gamble Company Balance Sheet",
+      "source": "SEC EDGAR 10-Q filed 2026-04-24",
+      "assets": {
+        "current": [
+          {
+            "label": "Cash and cash equivalents",
+            "value": 9304
+          },
+          {
+            "label": "Receivables, net",
+            "value": 6322
+          },
+          {
+            "label": "Inventories",
+            "value": 7853
+          },
+          {
+            "label": "Other current assets",
+            "value": 4508
+          }
+        ],
+        "nonCurrent": [
+          {
+            "label": "Property and equipment, net",
+            "value": 24574
+          },
+          {
+            "label": "Other non-current assets",
+            "value": 75817
+          }
+        ]
+      },
+      "liabilities": {
+        "current": [
+          {
+            "label": "Accounts payable",
+            "value": 15030
+          },
+          {
+            "label": "Short-term debt",
+            "value": 13174
+          },
+          {
+            "label": "Other current liabilities",
+            "value": 10031
+          }
+        ],
+        "nonCurrent": [
+          {
+            "label": "Long-term debt",
+            "value": 23852
+          },
+          {
+            "label": "Other long-term liabilities",
+            "value": 11560
+          }
+        ]
+      },
+      "equity": [
+        {
+          "label": "Retained earnings",
+          "value": 135424
+        }
+      ]
+    }
+  },
+  "HD": {
+    "Q1 FY2026 (ended 2026-05-03)": {
+      "ticker": "HD",
+      "companyName": "Home Depot Inc.",
+      "period": "Q1 FY2026 (ended 2026-05-03)",
+      "currency": "USD",
+      "title": "Home Depot Inc. Balance Sheet",
+      "source": "SEC EDGAR 10-Q filed 2026-05-27",
+      "assets": {
+        "current": [
+          {
+            "label": "Cash and cash equivalents",
+            "value": 1601
+          },
+          {
+            "label": "Receivables, net",
+            "value": 6624
+          },
+          {
+            "label": "Inventories",
+            "value": 27280
+          },
+          {
+            "label": "Other current assets",
+            "value": 1667
+          }
+        ],
+        "nonCurrent": [
+          {
+            "label": "Property and equipment, net",
+            "value": 27683
+          },
+          {
+            "label": "Other non-current assets",
+            "value": 43049
+          }
+        ]
+      },
+      "liabilities": {
+        "current": [
+          {
+            "label": "Accounts payable",
+            "value": 14373
+          },
+          {
+            "label": "Short-term debt",
+            "value": 1344
+          },
+          {
+            "label": "Other current liabilities",
+            "value": 19863
+          }
+        ],
+        "nonCurrent": [
+          {
+            "label": "Long-term debt",
+            "value": 8707
+          },
+          {
+            "label": "Other long-term liabilities",
+            "value": 49743
+          }
+        ]
+      },
+      "equity": [
+        {
+          "label": "Retained earnings",
+          "value": 95506
+        }
+      ]
+    }
+  },
+  "JNJ": {
+    "Q1 FY2026 (ended 2026-03-29)": {
+      "ticker": "JNJ",
+      "companyName": "Johnson & Johnson",
+      "period": "Q1 FY2026 (ended 2026-03-29)",
+      "currency": "USD",
+      "title": "Johnson & Johnson Balance Sheet",
+      "source": "SEC EDGAR 10-Q filed 2026-04-22",
+      "assets": {
+        "current": [
+          {
+            "label": "Cash and cash equivalents",
+            "value": 21688
+          },
+          {
+            "label": "Receivables, net",
+            "value": 17721
+          },
+          {
+            "label": "Inventories",
+            "value": 14583
+          },
+          {
+            "label": "Other current assets",
+            "value": 5181
+          }
+        ],
+        "nonCurrent": [
+          {
+            "label": "Property and equipment, net",
+            "value": 23270
+          },
+          {
+            "label": "Other non-current assets",
+            "value": 118451
+          }
+        ]
+      },
+      "liabilities": {
+        "current": [
+          {
+            "label": "Accounts payable",
+            "value": 10460
+          },
+          {
+            "label": "Short-term debt",
+            "value": 8500
+          },
+          {
+            "label": "Other current liabilities",
+            "value": 38756
+          }
+        ],
+        "nonCurrent": [
+          {
+            "label": "Long-term debt",
+            "value": 37527
+          },
+          {
+            "label": "Other long-term liabilities",
+            "value": 24465
+          }
+        ]
+      },
+      "equity": [
+        {
+          "label": "Retained earnings",
+          "value": 169161
+        }
+      ]
+    }
+  },
+  "NFLX": {
+    "Q1 FY2026 (ended 2026-03-31)": {
+      "ticker": "NFLX",
+      "companyName": "Netflix Inc.",
+      "period": "Q1 FY2026 (ended 2026-03-31)",
+      "currency": "USD",
+      "title": "Netflix Inc. Balance Sheet",
+      "source": "SEC EDGAR 10-Q filed 2026-04-17",
+      "assets": {
+        "current": [
+          {
+            "label": "Cash and cash equivalents",
+            "value": 12260
+          },
+          {
+            "label": "Receivables, net",
+            "value": 3414
+          },
+          {
+            "label": "Other current assets",
+            "value": 1397
+          }
+        ],
+        "nonCurrent": [
+          {
+            "label": "Property and equipment, net",
+            "value": 2148
+          },
+          {
+            "label": "Other non-current assets",
+            "value": 41797
+          }
+        ]
+      },
+      "liabilities": {
+        "current": [
+          {
+            "label": "Accounts payable",
+            "value": 895
+          },
+          {
+            "label": "Short-term debt",
+            "value": 999
+          },
+          {
+            "label": "Other current liabilities",
+            "value": 10238
+          }
+        ],
+        "nonCurrent": [
+          {
+            "label": "Long-term debt",
+            "value": 13361
+          },
+          {
+            "label": "Other long-term liabilities",
+            "value": 4397
+          }
+        ]
+      },
+      "equity": [
+        {
+          "label": "Retained earnings",
+          "value": 47565
+        }
+      ]
+    }
+  },
+  "CRM": {
+    "Q1 FY2027 (ended 2026-04-30)": {
+      "ticker": "CRM",
+      "companyName": "Salesforce Inc.",
+      "period": "Q1 FY2027 (ended 2026-04-30)",
+      "currency": "USD",
+      "title": "Salesforce Inc. Balance Sheet",
+      "source": "SEC EDGAR 10-Q filed 2026-05-28",
+      "assets": {
+        "current": [
+          {
+            "label": "Cash and cash equivalents",
+            "value": 8935
+          },
+          {
+            "label": "Receivables, net",
+            "value": 5080
+          },
+          {
+            "label": "Other current assets",
+            "value": 7598
+          }
+        ],
+        "nonCurrent": [
+          {
+            "label": "Property and equipment, net",
+            "value": 2768
+          },
+          {
+            "label": "Other non-current assets",
+            "value": 82299
+          }
+        ]
+      },
+      "liabilities": {
+        "current": [
+          {
+            "label": "Accounts payable",
+            "value": 165
+          },
+          {
+            "label": "Other current liabilities",
+            "value": 27337
+          }
+        ],
+        "nonCurrent": [
+          {
+            "label": "Long-term debt",
+            "value": 39280
+          },
+          {
+            "label": "Other long-term liabilities",
+            "value": 5663
+          }
+        ]
+      },
+      "equity": [
+        {
+          "label": "Retained earnings",
+          "value": 23954
+        },
+        {
+          "label": "Other equity",
+          "value": 10281
+        }
+      ]
+    }
+  },
+  "AMD": {
+    "Q1 FY2026 (ended 2026-03-28)": {
+      "ticker": "AMD",
+      "companyName": "Advanced Micro Devices Inc.",
+      "period": "Q1 FY2026 (ended 2026-03-28)",
+      "currency": "USD",
+      "title": "Advanced Micro Devices Inc. Balance Sheet",
+      "source": "SEC EDGAR 10-Q filed 2026-05-06",
+      "assets": {
+        "current": [
+          {
+            "label": "Cash and cash equivalents",
+            "value": 5585
+          },
+          {
+            "label": "Receivables, net",
+            "value": 6035
+          },
+          {
+            "label": "Inventories",
+            "value": 8045
+          },
+          {
+            "label": "Other current assets",
+            "value": 8963
+          }
+        ],
+        "nonCurrent": [
+          {
+            "label": "Property and equipment, net",
+            "value": 2723
+          },
+          {
+            "label": "Other non-current assets",
+            "value": 48291
+          }
+        ]
+      },
+      "liabilities": {
+        "current": [
+          {
+            "label": "Accounts payable",
+            "value": 2997
+          },
+          {
+            "label": "Other current liabilities",
+            "value": 7509
+          }
+        ],
+        "nonCurrent": [
+          {
+            "label": "Long-term debt",
+            "value": 2350
+          },
+          {
+            "label": "Other long-term liabilities",
+            "value": 2324
+          }
+        ]
+      },
+      "equity": [
+        {
+          "label": "Retained earnings",
+          "value": 8082
+        },
+        {
+          "label": "Other equity",
+          "value": 56380
+        }
+      ]
+    }
+  },
+  "KO": {
+    "Q1 FY2026 (ended 2026-04-03)": {
+      "ticker": "KO",
+      "companyName": "Coca-Cola Company",
+      "period": "Q1 FY2026 (ended 2026-04-03)",
+      "currency": "USD",
+      "title": "Coca-Cola Company Balance Sheet",
+      "source": "SEC EDGAR 10-Q filed 2026-04-30",
+      "assets": {
+        "current": [
+          {
+            "label": "Cash and cash equivalents",
+            "value": 10574
+          },
+          {
+            "label": "Receivables, net",
+            "value": 3675
+          },
+          {
+            "label": "Inventories",
+            "value": 4730
+          },
+          {
+            "label": "Other current assets",
+            "value": 11411
+          }
+        ],
+        "nonCurrent": [
+          {
+            "label": "Property and equipment, net",
+            "value": 9522
+          },
+          {
+            "label": "Other non-current assets",
+            "value": 64305
+          }
+        ]
+      },
+      "liabilities": {
+        "current": [
+          {
+            "label": "Accounts payable",
+            "value": 7832
+          },
+          {
+            "label": "Short-term debt",
+            "value": 2373
+          },
+          {
+            "label": "Other current liabilities",
+            "value": 12173
+          }
+        ],
+        "nonCurrent": [
+          {
+            "label": "Long-term debt",
+            "value": 35104
+          },
+          {
+            "label": "Other long-term liabilities",
+            "value": 13102
+          }
+        ]
+      },
+      "equity": [
+        {
+          "label": "Retained earnings",
+          "value": 82026
+        }
+      ]
+    }
+  },
+  "CVX": {
+    "Q1 FY2026 (ended 2026-03-31)": {
+      "ticker": "CVX",
+      "companyName": "Chevron Corporation",
+      "period": "Q1 FY2026 (ended 2026-03-31)",
+      "currency": "USD",
+      "title": "Chevron Corporation Balance Sheet",
+      "source": "SEC EDGAR 10-Q filed 2026-05-07",
+      "assets": {
+        "current": [
+          {
+            "label": "Cash and cash equivalents",
+            "value": 4008
+          },
+          {
+            "label": "Receivables, net",
+            "value": 22200
+          },
+          {
+            "label": "Inventories",
+            "value": 10554
+          },
+          {
+            "label": "Other current assets",
+            "value": 9398
+          }
+        ],
+        "nonCurrent": [
+          {
+            "label": "Property and equipment, net",
+            "value": 153972
+          },
+          {
+            "label": "Other non-current assets",
+            "value": 129419
+          }
+        ]
+      },
+      "liabilities": {
+        "current": [
+          {
+            "label": "Accounts payable",
+            "value": 23181
+          },
+          {
+            "label": "Short-term debt",
+            "value": 10918
+          },
+          {
+            "label": "Other current liabilities",
+            "value": 8077
+          }
+        ],
+        "nonCurrent": [
+          {
+            "label": "Long-term debt",
+            "value": 29854
+          },
+          {
+            "label": "Other long-term liabilities",
+            "value": 68150
+          }
+        ]
+      },
+      "equity": [
+        {
+          "label": "Retained earnings",
+          "value": 204039
+        }
+      ]
+    }
+  }
+}
