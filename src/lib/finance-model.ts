@@ -64,7 +64,7 @@ function friendlyFinanceError(e: unknown): Error {
   const msg = String((e as Error)?.message ?? e ?? '');
   if (/quota|billing|exceeded your current/i.test(msg)) {
     return new Error(
-      'AI quota exceeded. The app will parse balance-sheet tables directly when possible — retry your upload, or use Top 25 US for instant reports.',
+      'Google Gemini quota exceeded (used for URL imports, not Groq). File uploads are parsed without AI — retry your upload, or use Top 25 US. For URL imports, update GOOGLE_GENERATIVE_AI_API_KEY on Vercel.',
     );
   }
   if (/tpm|request too large|token/i.test(msg)) {

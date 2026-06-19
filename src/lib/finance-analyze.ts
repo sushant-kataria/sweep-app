@@ -19,32 +19,34 @@ RULES:
 - Set extractionConfidence to low if data is incomplete or ambiguous.
 - If multiple periods appear, use the most recent fiscal year-end.`;
 
+const HEURISTIC_ONLY_ERROR =
+  'Could not find a balance-sheet table in this file. Try a text-based PDF or Excel export with clear line items, or use Top 25 US for instant reports.';
+
 async function extractBalanceSheet(
   doc: ExtractedDocument,
+  options?: { heuristicOnly?: boolean },
 ): Promise<BalanceSheetExtraction> {
   const heuristic = tryHeuristicBalanceSheetExtraction(doc.text, { fileName: doc.fileName });
-  if (heuristic && heuristic.extractionConfidence !== 'low') {
-    return heuristic;
+  if (heuristic) return heuristic;
+
+  if (options?.heuristicOnly) {
+    throw new Error(HEURISTIC_ONLY_ERROR);
   }
 
-  try {
-    const ai = await generateStructuredObject({
-      schema: balanceSheetExtractionSchema,
-      system: EXTRACTION_SYSTEM,
-      prompt: buildExtractionPrompt(doc),
-    });
-    return ai;
-  } catch (e) {
-    if (heuristic) return heuristic;
-    throw e;
-  }
+  const ai = await generateStructuredObject({
+    schema: balanceSheetExtractionSchema,
+    system: EXTRACTION_SYSTEM,
+    prompt: buildExtractionPrompt(doc),
+  });
+  return ai;
 }
 
 export async function analyzeDocument(
   doc: ExtractedDocument,
   meta: { dataSource: BalanceSheetReport['dataSource']; sourceUrl?: string; sourceFileName?: string },
+  options?: { heuristicOnly?: boolean },
 ): Promise<FinanceSession> {
-  const extracted = await extractBalanceSheet(doc);
+  const extracted = await extractBalanceSheet(doc, options);
 
   const report: BalanceSheetReport = {
     type: 'balance_sheet',

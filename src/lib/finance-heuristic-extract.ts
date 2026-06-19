@@ -13,28 +13,46 @@ function parseNumber(raw: string): number | null {
 
 const KNOWN_LINE_ITEMS = [
   'Property, Plant and Equipment',
+  'Property, plant and equipment',
   'Other Intangible Assets Under Development',
   'Other Intangible Assets',
   'Capital Work-in-Progress',
   'Other Non-Current Assets',
   'Other Current Assets',
   'Cash and Cash Equivalents',
+  'Cash and cash equivalents',
+  'Marketable securities',
+  'Accounts receivable',
+  'Other receivables',
   'Other Bank Balances',
   'Equity Share Capital',
+  'Common stock',
+  'Retained earnings',
+  'Accumulated other comprehensive income',
   'Non-Controlling Interest',
   'Deferred Tax Liabilities (Net)',
+  'Deferred tax liabilities',
   'Deferred Tax Assets (Net)',
+  'Deferred tax assets',
   'Financial Assets Investments',
   'Other Financial Assets',
   'Trade Receivables',
   'Trade Payables',
+  'Accounts payable',
+  'Accrued liabilities',
   'Lease Liabilities',
   'Other Equity',
   'Inventories',
   'Borrowings',
+  'Long-term debt',
+  'Short-term debt',
   'Goodwill',
   'Provisions',
   'Spectrum',
+  'Intangible assets',
+  'Other assets',
+  'Other current liabilities',
+  'Other non-current liabilities',
 ];
 
 const VALUE_PAIR_RE = /^(.+?)\s+([\d,()]+(?:\.\d+)?)(?:\s+[\d,()]+(?:\.\d+)?)?$/;
@@ -73,19 +91,48 @@ function countLineItems(block: string): number {
   return splitIntoSegments(block).map(parseLineItem).filter(Boolean).length;
 }
 
-function extractBalanceSheetBlock(text: string): string | null {
+function sliceToEnd(slice: string, endPatterns: RegExp[], minItems = 6): string | null {
+  for (const endRe of endPatterns) {
+    const endMatch = endRe.exec(slice);
+    if (!endMatch) continue;
+    const block = slice.slice(0, endMatch.index + endMatch[0].length);
+    if (countLineItems(block) >= minItems) return block;
+  }
+  return null;
+}
+
+function extractUsBalanceSheetBlock(text: string): string | null {
+  const headerRe =
+    /(?:consolidated\s+)?balance\s+sheets?|statements?\s+of\s+financial\s+position/gi;
+  const endPatterns = [
+    /total\s+liabilities\s+and\s+(?:shareholders?|stockholders?)(?:'|')?\s+equity[^\d]*[\d,()]+/i,
+    /total\s+liabilities\s+and\s+equity[^\d]*[\d,()]+/i,
+    /total\s+assets[^\d]*[\d,()]+(?:\s+[\d,()]+)?\s*$/im,
+  ];
+
+  let match: RegExpExecArray | null;
+  while ((match = headerRe.exec(text)) !== null) {
+    const slice = text.slice(match.index, match.index + 80_000);
+    const block = sliceToEnd(slice, endPatterns, 6);
+    if (block) return block;
+  }
+  return null;
+}
+
+function extractIndiaUkBalanceSheetBlock(text: string): string | null {
   const asAtRe = /as\s+at\s+\d{1,2}(?:st|nd|rd|th)?\s+\w+,?\s+\d{4}[\s\S]{0,120}?assets\s+non[- ]current/gi;
   let match: RegExpExecArray | null;
 
   while ((match = asAtRe.exec(text)) !== null) {
     const slice = text.slice(match.index);
-    const endMatch = /total\s+equity\s+and\s+liabilities\s+[\d,()]+\s+[\d,()]+/i.exec(slice);
-    if (!endMatch) continue;
-    const block = slice.slice(0, endMatch.index + endMatch[0].length);
-    if (countLineItems(block) >= 8) return block;
+    const block = sliceToEnd(slice, [/total\s+equity\s+and\s+liabilities\s+[\d,()]+\s+[\d,()]+/i], 8);
+    if (block) return block;
   }
-
   return null;
+}
+
+function extractBalanceSheetBlock(text: string): string | null {
+  return extractUsBalanceSheetBlock(text) ?? extractIndiaUkBalanceSheetBlock(text);
 }
 
 function inferCompanyName(text: string, fileName?: string): string {
@@ -127,6 +174,10 @@ function inferCompanyName(text: string, fileName?: string): string {
 function inferPeriod(text: string): string {
   const asAt = text.match(/as\s+at\s+(\d{1,2}(?:st|nd|rd|th)?\s+\w+,?\s+\d{4})/i);
   if (asAt) return asAt[1].replace(/\s+/g, ' ');
+  const usDate = text.match(
+    /\b((?:january|february|march|april|may|june|july|august|september|october|november|december)\s+\d{1,2},?\s+20\d{2})\b/i,
+  );
+  if (usDate) return usDate[1].replace(/\s+/g, ' ');
   const fy = text.match(/\bFY\s*(\d{4}(?:-\d{2,4})?)\b/i);
   if (fy) return `FY ${fy[1]}`;
   const year = text.match(/\b(20\d{2})\b/);
@@ -152,6 +203,13 @@ function classifyBlock(block: string): BalanceSheetExtraction | null {
   const eqAndLiab = lower.search(/equity and liabilities/);
   const liabHdr = lower.search(/liabilities\s+non[- ]current/);
   const curLiab = lower.search(/(?<![a-z-])current liabilities/);
+  const usLiabHdr = lower.search(
+    /(?:total\s+)?liabilities(?:\s+and\s+(?:shareholders?|stockholders?)(?:'|')?\s+equity)?\s*:?/,
+  );
+  const usEquityHdr = lower.search(
+    /(?:shareholders?|stockholders?)(?:'|')?\s+equity|total\s+shareholders?/,
+  );
+  const usNonCurLiab = lower.search(/non[- ]current liabilities/);
 
   for (const segment of splitIntoSegments(block)) {
     const item = parseLineItem(segment);
@@ -160,14 +218,28 @@ function classifyBlock(block: string): BalanceSheetExtraction | null {
     const idx = block.indexOf(segment);
     if (idx < 0) continue;
 
-    if (idx < totalAssets || (totalAssets < 0 && idx < eqAndLiab)) {
+    const inAssets =
+      totalAssets >= 0 ? idx < totalAssets : eqAndLiab >= 0 ? idx < eqAndLiab : usLiabHdr >= 0 && idx < usLiabHdr;
+
+    if (inAssets) {
       if (curAssets >= 0 && idx >= curAssets) assets.current.push(item);
       else assets.nonCurrent.push(item);
     } else if (eqAndLiab >= 0 && idx >= eqAndLiab && (liabHdr < 0 || idx < liabHdr)) {
       equity.push(item);
+    } else if (usEquityHdr >= 0 && idx >= usEquityHdr) {
+      equity.push(item);
     } else if (liabHdr >= 0 && idx >= liabHdr) {
       if (curLiab >= 0 && idx >= curLiab) liabilities.current.push(item);
       else liabilities.nonCurrent.push(item);
+    } else if (usLiabHdr >= 0 && idx >= usLiabHdr) {
+      if (usNonCurLiab >= 0 && idx >= usNonCurLiab) {
+        if (curLiab >= 0 && idx >= curLiab) liabilities.current.push(item);
+        else liabilities.nonCurrent.push(item);
+      } else if (curLiab >= 0 && idx >= curLiab) {
+        liabilities.current.push(item);
+      } else {
+        liabilities.nonCurrent.push(item);
+      }
     }
   }
 
