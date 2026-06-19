@@ -1,17 +1,36 @@
 'use client';
 
 import type { ExtractedDocument } from './finance-extract';
-import { focusBalanceSheetForUpload, MAX_STORED_CHARS } from './finance-focus';
+import { prepareUploadText } from './finance-upload-prep';
 
 const MAX_PDF_UPLOAD_BYTES = 15 * 1024 * 1024;
 const MAX_SPREADSHEET_UPLOAD_BYTES = 10 * 1024 * 1024;
 
+type PdfTextItem = { str: string; x: number; y: number };
 
+function pageTextItemsToLines(items: PdfTextItem[]): string {
+  const sorted = [...items].sort((a, b) => b.y - a.y || a.x - b.x);
+  const lines: string[] = [];
+  let currentY = Number.NaN;
+  let currentLine: string[] = [];
+
+  for (const item of sorted) {
+    if (!Number.isFinite(currentY) || Math.abs(item.y - currentY) > 4) {
+      if (currentLine.length > 0) lines.push(currentLine.join(' '));
+      currentLine = [item.str];
+      currentY = item.y;
+    } else {
+      currentLine.push(item.str);
+    }
+  }
+
+  if (currentLine.length > 0) lines.push(currentLine.join(' '));
+  return lines.join('\n');
+}
 
 async function extractPdfTextInBrowser(buffer: ArrayBuffer): Promise<string> {
   const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
-  const version = pdfjs.version ?? '4.10.38';
-  pdfjs.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${version}/legacy/build/pdf.worker.min.mjs`;
+  pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
 
   const pdf = await pdfjs.getDocument({ data: new Uint8Array(buffer) }).promise;
   const parts: string[] = [];
@@ -19,10 +38,18 @@ async function extractPdfTextInBrowser(buffer: ArrayBuffer): Promise<string> {
   for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
     const page = await pdf.getPage(pageNum);
     const content = await page.getTextContent();
-    const pageText = content.items
-      .map((item) => ('str' in item ? String(item.str) : ''))
-      .join(' ');
-    parts.push(pageText);
+    const items: PdfTextItem[] = [];
+
+    for (const item of content.items) {
+      if (!('str' in item) || !('transform' in item)) continue;
+      items.push({
+        str: String(item.str),
+        x: item.transform[4],
+        y: item.transform[5],
+      });
+    }
+
+    parts.push(pageTextItemsToLines(items));
   }
 
   return parts.join('\n');
@@ -49,10 +76,11 @@ async function extractSpreadsheetInBrowser(buffer: ArrayBuffer, fileName: string
   });
 
   const ext = fileName.split('.').pop()?.toLowerCase() ?? 'xlsx';
+  const raw = parts.join('\n\n');
   return {
     fileName,
     mimeType: ext === 'csv' ? 'text/csv' : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    text: focusBalanceSheetForUpload(parts.join('\n\n'), MAX_STORED_CHARS),
+    text: prepareUploadText(raw, fileName),
     sheetNames: workbook.SheetNames,
   };
 }
@@ -86,7 +114,7 @@ export async function extractUploadedFile(
       doc: {
         fileName: file.name,
         mimeType: 'application/pdf',
-        text: focusBalanceSheetForUpload(raw, MAX_STORED_CHARS),
+        text: prepareUploadText(raw, file.name),
       },
       dataSource: 'pdf',
     };

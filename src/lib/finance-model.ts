@@ -1,4 +1,5 @@
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
+import { createGroq } from '@ai-sdk/groq';
 import { generateObject, generateText } from 'ai';
 import type { z } from 'zod';
 
@@ -6,14 +7,20 @@ const google = createGoogleGenerativeAI({
   apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
 });
 
+const groq = createGroq({
+  apiKey: process.env.GROQ_API_KEY,
+});
+
 const MAX_PROMPT_CHARS = 12_000;
 
-/** Finance uses Gemini only — OpenRouter free Llama routes through Groq (12k TPM). */
 function getFinanceModels() {
   const models = [];
+  if (process.env.GROQ_API_KEY) {
+    models.push(groq('llama-3.3-70b-versatile'));
+  }
   if (process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
-    models.push(google('gemini-2.0-flash'));
     models.push(google('gemini-2.0-flash-lite'));
+    models.push(google('gemini-2.0-flash'));
   }
   return models;
 }
@@ -64,7 +71,7 @@ function friendlyFinanceError(e: unknown): Error {
   const msg = String((e as Error)?.message ?? e ?? '');
   if (/quota|billing|exceeded your current/i.test(msg)) {
     return new Error(
-      'Google Gemini quota exceeded (used for URL imports, not Groq). File uploads are parsed without AI — retry your upload, or use Top 25 US. For URL imports, update GOOGLE_GENERATIVE_AI_API_KEY on Vercel.',
+      'AI quota exceeded. File uploads use table parsing first, then Groq/Gemini as fallback. Retry shortly, or use Top 25 US for instant reports.',
     );
   }
   if (/tpm|request too large|token/i.test(msg)) {
@@ -117,7 +124,7 @@ export async function generateStructuredObject<T extends z.ZodType>(opts: {
 }) {
   const models = getFinanceModels();
   if (models.length === 0) {
-    throw new Error('No AI API keys configured. Add GOOGLE_GENERATIVE_AI_API_KEY.');
+    throw new Error('No AI API keys configured. Add GROQ_API_KEY or GOOGLE_GENERATIVE_AI_API_KEY.');
   }
 
   const prompt = trimPrompt(opts.prompt);

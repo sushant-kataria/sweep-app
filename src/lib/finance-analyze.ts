@@ -1,6 +1,7 @@
 import type { BalanceSheetReport, FinanceSession } from './finance-types';
 import { buildExtractionPrompt, type ExtractedDocument } from './finance-extract';
 import { tryHeuristicBalanceSheetExtraction } from './finance-heuristic-extract';
+import { prepareUploadText } from './finance-upload-prep';
 import { computeFinanceMetrics } from './finance-metrics';
 import { generateStructuredObject } from './finance-model';
 import { balanceSheetExtractionSchema, type BalanceSheetExtraction } from './finance-schemas';
@@ -20,7 +21,7 @@ RULES:
 - If multiple periods appear, use the most recent fiscal year-end.`;
 
 const HEURISTIC_ONLY_ERROR =
-  'Could not find a balance-sheet table in this file. Try a text-based PDF or Excel export with clear line items, or use Top 25 US for instant reports.';
+  'Could not find a balance-sheet table in this file. Use a text-based PDF (not scanned), an Excel export with line items, or Top 25 US for instant reports.';
 
 async function extractBalanceSheet(
   doc: ExtractedDocument,
@@ -46,7 +47,12 @@ export async function analyzeDocument(
   meta: { dataSource: BalanceSheetReport['dataSource']; sourceUrl?: string; sourceFileName?: string },
   options?: { heuristicOnly?: boolean },
 ): Promise<FinanceSession> {
-  const extracted = await extractBalanceSheet(doc, options);
+  const isUpload =
+    meta.dataSource === 'pdf' || meta.dataSource === 'excel' || meta.dataSource === 'csv';
+  const preparedDoc = isUpload
+    ? { ...doc, text: prepareUploadText(doc.text, doc.fileName) }
+    : doc;
+  const extracted = await extractBalanceSheet(preparedDoc, options);
 
   const report: BalanceSheetReport = {
     type: 'balance_sheet',

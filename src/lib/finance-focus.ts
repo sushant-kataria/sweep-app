@@ -31,7 +31,8 @@ function numericDensity(slice: string): number {
 export function extractBestBalanceSheetWindow(text: string, maxWindow = 50_000): string | null {
   const candidates: Array<{ start: number; end: number; score: number }> = [];
 
-  const endRe = /total\s+equity\s+and\s+liabilities\s+[\d,()₹$€£\s]+[\d,()₹$€£]+/gi;
+  const endRe =
+    /total\s+(?:equity\s+and\s+liabilities|liabilities\s+and\s+(?:shareholders?|stockholders?)(?:'|')?\s+equity)\s+[\d,()₹$€£\s]+[\d,()₹$€£]+/gi;
   let match: RegExpExecArray | null;
   while ((match = endRe.exec(text)) !== null) {
     const end = match.index + match[0].length;
@@ -81,6 +82,6 @@ export function extractBestBalanceSheetWindow(text: string, maxWindow = 50_000):
 /** Cap upload text while preserving the balance-sheet section from long PDFs. */
 export function focusBalanceSheetForUpload(text: string, maxChars = MAX_STORED_CHARS): string {
   const window = extractBestBalanceSheetWindow(text);
-  if (window && window.length >= 600) return capText(window, maxChars);
+  if (window && window.length >= 200) return capText(window, maxChars);
   return capText(text, maxChars);
 }
