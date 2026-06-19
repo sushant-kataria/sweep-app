@@ -565,12 +565,13 @@ function ConvSidebar({
 
 function Chat({
   convId, initialMessages, initialMode, theme, toggleTheme,
-  onUpdateConv, onOpenConvSidebar,
+  onUpdateConv, onOpenConvSidebar, onGoHome,
 }: {
   convId: string; initialMessages: any[]; initialMode: Mode;
   theme: 'dark' | 'light'; toggleTheme: () => void;
   onUpdateConv: (id: string, messages: any[], title: string, mode: Mode) => void;
   onOpenConvSidebar: () => void;
+  onGoHome: () => void;
 }) {
   const seededMessages = useRef(cloneForStorage(initialMessages));
   const { messages, sendMessage, regenerate, stop, status, error } = useChat({ id: convId, messages: seededMessages.current });
@@ -763,6 +764,19 @@ function Chat({
             <button onClick={onOpenConvSidebar} aria-label="Open conversations" className="grok-ghost-btn">
               <Menu className="h-[1.125rem] w-[1.125rem]" strokeWidth={2} />
             </button>
+            <Link
+              href="/"
+              onClick={(e) => {
+                e.preventDefault();
+                onGoHome();
+              }}
+              className="grok-header-home"
+              aria-label="Sweep home"
+            >
+              <span className="font-pixel text-base leading-none tracking-normal text-[var(--v-fg)] sm:text-lg">
+                Sweep
+              </span>
+            </Link>
           </div>
 
           <div className="grok-header-slot grok-header-slot--center" aria-hidden />
@@ -1225,6 +1239,7 @@ export default function App() {
         toggleTheme={toggleTheme}
         onUpdateConv={handleUpdateConv}
         onOpenConvSidebar={() => setShowConvSidebar(true)}
+        onGoHome={newConv}
       />
     </>
   );

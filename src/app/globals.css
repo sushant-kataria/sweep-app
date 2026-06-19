@@ -685,6 +685,7 @@ body {
 
 .grok-header-slot--left {
   justify-content: flex-start;
+  gap: 0.125rem;
 }
 
 .grok-header-slot--center {
