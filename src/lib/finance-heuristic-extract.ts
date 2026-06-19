@@ -3,10 +3,10 @@ import type { BalanceSheetExtraction } from './finance-schemas';
 type ParsedLine = { label: string; value: number };
 
 const SKIP_LABEL =
-  /^(assets|liabilities|equity|current|non[- ]current|total|as at|march|december|january|fy|in crore|usd|millions?|thousands?|\(|\)|annexure)/i;
+  /^(assets|liabilities|equity|current|non[- ]current|total|as at|march|december|january|fy|in crore|usd|millions?|thousands?|notes?|material|see accompanying|\(|\)|annexure|financial liabilities|due to)/i;
 
 function parseNumber(raw: string): number | null {
-  const cleaned = raw.replace(/[,\s₹$€£]/g, '').replace(/^\((.+)\)$/, '-$1');
+  const cleaned = raw.replace(/[,\s₹$€£H]/g, '').replace(/^\((.+)\)$/, '-$1');
   const n = Number(cleaned);
   return Number.isFinite(n) ? n : null;
 }
@@ -26,6 +26,7 @@ const KNOWN_LINE_ITEMS = [
   'Other receivables',
   'Other Bank Balances',
   'Equity Share Capital',
+  'Equity Share capital',
   'Common stock',
   'Retained earnings',
   'Accumulated other comprehensive income',
@@ -53,15 +54,48 @@ const KNOWN_LINE_ITEMS = [
   'Other assets',
   'Other current liabilities',
   'Other non-current liabilities',
+  'Loans',
 ];
 
-const VALUE_PAIR_RE = /^(.+?)\s+([\d,()]+(?:\.\d+)?)(?:\s+[\d,()]+(?:\.\d+)?)?$/;
+const VALUE_PAIR_RE =
+  /^(.+?)\s+(?:\d{1,2}\s+)?([\d,()₹$€£]{2,}(?:\.\d+)?)(?:\s+[\d,()₹$€£]+(?:\.\d+)?)*$/;
+
+function preprocessFinancialText(text: string): string {
+  let t = text.replace(/\r/g, '\n');
+  t = t.replace(/(\d{1,2})\s+(st|nd|rd|th)\b/gi, '$1$2');
+  t = t.replace(/\s+/g, ' ');
+
+  const breaks = [
+    'Balance Sheet',
+    'CONSOLIDATED BALANCE SHEET',
+    'Assets Non-Current',
+    'Non-Current Assets',
+    'Current Assets',
+    'Total Assets',
+    'Equity and Liabilities',
+    'Non-Current Liabilities',
+    'Current Liabilities',
+    'Total Equity and Liabilities',
+    'Total Liabilities',
+    'Shareholders equity',
+    'Shareholders equity',
+    ...KNOWN_LINE_ITEMS,
+  ];
+
+  for (const term of breaks) {
+    const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    t = t.replace(new RegExp(`\\s+(${escaped})`, 'gi'), '\n$1');
+  }
+
+  return t;
+}
 
 function normalizeLabel(raw: string): string {
+  const cleaned = raw.replace(/\s+/g, ' ').trim();
   for (const known of KNOWN_LINE_ITEMS) {
-    if (raw.includes(known)) return known;
+    if (cleaned.toLowerCase().includes(known.toLowerCase())) return known;
   }
-  return raw
+  return cleaned
     .replace(/^.*?(?:Non-Current Assets|Current Assets|Financial Liabilities|Equity and Liabilities Equity|Equity)\s+/i, '')
     .trim();
 }
@@ -74,7 +108,7 @@ function parseLineItem(line: string): ParsedLine | null {
   if (!twoCol) return null;
 
   const value = parseNumber(twoCol[2]);
-  if (value === null) return null;
+  if (value === null || Math.abs(value) < 10) return null;
 
   const label = normalizeLabel(twoCol[1].trim());
   if (SKIP_LABEL.test(label) || label.length < 3 || /^total\s/i.test(label)) return null;
@@ -82,16 +116,24 @@ function parseLineItem(line: string): ParsedLine | null {
 }
 
 function splitIntoSegments(block: string): string[] {
+  const normalized = preprocessFinancialText(block);
+  const lineSegments = normalized
+    .split(/\n+/)
+    .map((s) => s.trim())
+    .filter((s) => s.length > 4);
+
+  if (lineSegments.length >= 6) return lineSegments;
+
   const escaped = KNOWN_LINE_ITEMS.map((k) => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
-  const splitRe = new RegExp(`(?=(?:${escaped.join('|')})\\b)`, 'g');
-  return block.split(splitRe).map((s) => s.trim()).filter((s) => s.length > 4);
+  const splitRe = new RegExp(`(?=(?:${escaped.join('|')})\\b)`, 'gi');
+  return normalized.split(splitRe).map((s) => s.trim()).filter((s) => s.length > 4);
 }
 
 function countLineItems(block: string): number {
   return splitIntoSegments(block).map(parseLineItem).filter(Boolean).length;
 }
 
-function sliceToEnd(slice: string, endPatterns: RegExp[], minItems = 6): string | null {
+function sliceToEnd(slice: string, endPatterns: RegExp[], minItems = 5): string | null {
   for (const endRe of endPatterns) {
     const endMatch = endRe.exec(slice);
     if (!endMatch) continue;
@@ -101,38 +143,83 @@ function sliceToEnd(slice: string, endPatterns: RegExp[], minItems = 6): string 
   return null;
 }
 
+function extractByTotalEquityMarker(text: string): string | null {
+  const endRe = /total\s+equity\s+and\s+liabilities\s+[\d,()₹$€£\s]+[\d,()₹$€£]+/gi;
+  let match: RegExpExecArray | null;
+  let best: string | null = null;
+  let bestCount = 0;
+
+  while ((match = endRe.exec(text)) !== null) {
+    const end = match.index + match[0].length;
+    const startSearch = Math.max(0, match.index - 30_000);
+    const slice = text.slice(startSearch, end);
+    const startMarkers = [
+      /assets\s+non[- ]current/i,
+      /non[- ]current\s+assets/i,
+      /balance\s+sheet/i,
+      /equity\s+and\s+liabilities/i,
+    ];
+    let start = 0;
+    for (const marker of startMarkers) {
+      const idx = slice.search(marker);
+      if (idx >= 0) {
+        start = idx;
+        break;
+      }
+    }
+    const block = slice.slice(start);
+    const items = countLineItems(block);
+    if (items > bestCount) {
+      bestCount = items;
+      best = block;
+    }
+  }
+
+  return bestCount >= 5 ? best : null;
+}
+
 function extractUsBalanceSheetBlock(text: string): string | null {
   const headerRe =
     /(?:consolidated\s+)?balance\s+sheets?|statements?\s+of\s+financial\s+position/gi;
   const endPatterns = [
     /total\s+liabilities\s+and\s+(?:shareholders?|stockholders?)(?:'|')?\s+equity[^\d]*[\d,()]+/i,
     /total\s+liabilities\s+and\s+equity[^\d]*[\d,()]+/i,
-    /total\s+assets[^\d]*[\d,()]+(?:\s+[\d,()]+)?\s*$/im,
+    /total\s+assets[^\d]*[\d,()]+(?:\s+[\d,()]+)?/i,
   ];
 
   let match: RegExpExecArray | null;
   while ((match = headerRe.exec(text)) !== null) {
     const slice = text.slice(match.index, match.index + 80_000);
-    const block = sliceToEnd(slice, endPatterns, 6);
+    const block = sliceToEnd(slice, endPatterns, 5);
     if (block) return block;
   }
   return null;
 }
 
 function extractIndiaUkBalanceSheetBlock(text: string): string | null {
-  const asAtRe = /as\s+at\s+\d{1,2}(?:st|nd|rd|th)?\s+\w+,?\s+\d{4}[\s\S]{0,120}?assets\s+non[- ]current/gi;
+  const asAtRe =
+    /as\s+at\s+\d{1,2}\s*(?:st|nd|rd|th)?\s+\w+,?\s+\d{4}[\s\S]{0,300}?(?:assets\s+non[- ]current|equity\s+and\s+liabilities)/gi;
   let match: RegExpExecArray | null;
 
   while ((match = asAtRe.exec(text)) !== null) {
     const slice = text.slice(match.index);
-    const block = sliceToEnd(slice, [/total\s+equity\s+and\s+liabilities\s+[\d,()]+\s+[\d,()]+/i], 8);
+    const block = sliceToEnd(
+      slice,
+      [/total\s+equity\s+and\s+liabilities\s+[\d,()]+\s+[\d,()]+/i],
+      5,
+    );
     if (block) return block;
   }
   return null;
 }
 
 function extractBalanceSheetBlock(text: string): string | null {
-  return extractUsBalanceSheetBlock(text) ?? extractIndiaUkBalanceSheetBlock(text);
+  const normalized = preprocessFinancialText(text);
+  return (
+    extractByTotalEquityMarker(normalized) ??
+    extractUsBalanceSheetBlock(normalized) ??
+    extractIndiaUkBalanceSheetBlock(normalized)
+  );
 }
 
 function inferCompanyName(text: string, fileName?: string): string {
@@ -172,7 +259,7 @@ function inferCompanyName(text: string, fileName?: string): string {
 }
 
 function inferPeriod(text: string): string {
-  const asAt = text.match(/as\s+at\s+(\d{1,2}(?:st|nd|rd|th)?\s+\w+,?\s+\d{4})/i);
+  const asAt = text.match(/as\s+at\s+(\d{1,2}\s*(?:st|nd|rd|th)?\s+\w+,?\s+\d{4})/i);
   if (asAt) return asAt[1].replace(/\s+/g, ' ');
   const usDate = text.match(
     /\b((?:january|february|march|april|may|june|july|august|september|october|november|december)\s+\d{1,2},?\s+20\d{2})\b/i,
@@ -186,7 +273,7 @@ function inferPeriod(text: string): string {
 }
 
 function inferCurrency(text: string): string {
-  if (/\(.*?INR.*?\)|\bINR\b|₹|\(\s*₹\s*\)|\bin\s+crore\b/i.test(text)) return 'INR';
+  if (/\(.*?INR.*?\)|\bINR\b|₹|\(\s*₹\s*\)|\bin\s+crore\b|\(\s*H\s+in\s+crore\s*\)/i.test(text)) return 'INR';
   if (/\bEUR\b|€/i.test(text)) return 'EUR';
   if (/\bGBP\b|£/i.test(text)) return 'GBP';
   return 'USD';
@@ -197,7 +284,8 @@ function classifyBlock(block: string): BalanceSheetExtraction | null {
   const liabilities = { current: [] as ParsedLine[], nonCurrent: [] as ParsedLine[] };
   const equity: ParsedLine[] = [];
 
-  const lower = block.toLowerCase();
+  const normalized = preprocessFinancialText(block);
+  const lower = normalized.toLowerCase();
   const curAssets = lower.search(/(?<![a-z-])current assets/);
   const totalAssets = lower.search(/total assets/);
   const eqAndLiab = lower.search(/equity and liabilities/);
@@ -215,7 +303,7 @@ function classifyBlock(block: string): BalanceSheetExtraction | null {
     const item = parseLineItem(segment);
     if (!item) continue;
 
-    const idx = block.indexOf(segment);
+    const idx = normalized.toLowerCase().indexOf(segment.toLowerCase().slice(0, 24));
     if (idx < 0) continue;
 
     const inAssets =
@@ -250,7 +338,7 @@ function classifyBlock(block: string): BalanceSheetExtraction | null {
     liabilities.nonCurrent.length +
     equity.length;
 
-  if (totalItems < 8) return null;
+  if (totalItems < 5) return null;
 
   return {
     ticker: 'CUSTOM',

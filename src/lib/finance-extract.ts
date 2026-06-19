@@ -1,8 +1,8 @@
 import * as XLSX from 'xlsx';
 import { extractText, getDocumentProxy } from 'unpdf';
 
-/** Max chars stored after extraction */
-const MAX_STORED_CHARS = 60_000;
+import { focusBalanceSheetForUpload, MAX_STORED_CHARS } from './finance-focus';
+
 /** Max chars sent to AI (~3k tokens) — stays under provider TPM limits */
 const MAX_AI_CHARS = 12_000;
 const MAX_URL_BYTES = 12 * 1024 * 1024;
@@ -11,12 +11,14 @@ export const MAX_SPREADSHEET_UPLOAD_BYTES = 10 * 1024 * 1024;
 
 const HIGH_CONFIDENCE_MARKERS = [
   /consolidated\s+balance\s+sheet[\s\S]{0,120}?as\s+at/gi,
-  /as\s+at\s+\d{1,2}(?:st|nd|rd|th)?\s+\w+,?\s+\d{4}[\s\S]{0,80}?assets\s+non[- ]current/gi,
+  /as\s+at\s+\d{1,2}\s*(?:st|nd|rd|th)?\s+\w+,?\s+\d{4}[\s\S]{0,200}?assets\s+non[- ]current/gi,
+  /balance\s+sheet\s+as\s+at/gi,
   /condensed\s+consolidated\s+balance\s+sheets?/gi,
   /statements?\s+of\s+financial\s+position/gi,
+  /(?:consolidated\s+)?balance\s+sheets?/gi,
 ];
 
-const WINDOW_CHARS = 10_000;
+const WINDOW_CHARS = 25_000;
 
 export type ExtractedDocument = {
   fileName?: string;
@@ -142,7 +144,7 @@ export async function extractFromPdfFile(buffer: ArrayBuffer, fileName: string):
   return {
     fileName,
     mimeType: 'application/pdf',
-    text: capText(raw, MAX_STORED_CHARS),
+    text: focusBalanceSheetForUpload(raw),
   };
 }
 

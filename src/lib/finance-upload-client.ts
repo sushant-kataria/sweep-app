@@ -1,17 +1,12 @@
 'use client';
 
 import type { ExtractedDocument } from './finance-extract';
+import { focusBalanceSheetForUpload, MAX_STORED_CHARS } from './finance-focus';
 
-const MAX_STORED_CHARS = 60_000;
 const MAX_PDF_UPLOAD_BYTES = 15 * 1024 * 1024;
 const MAX_SPREADSHEET_UPLOAD_BYTES = 10 * 1024 * 1024;
 
-function capText(text: string, max: number) {
-  if (text.length <= max) return text;
-  const head = Math.floor(max * 0.55);
-  const tail = max - head - 40;
-  return `${text.slice(0, head)}\n\n[...content truncated...]\n\n${text.slice(-tail)}`;
-}
+
 
 async function extractPdfTextInBrowser(buffer: ArrayBuffer): Promise<string> {
   const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
@@ -57,7 +52,7 @@ async function extractSpreadsheetInBrowser(buffer: ArrayBuffer, fileName: string
   return {
     fileName,
     mimeType: ext === 'csv' ? 'text/csv' : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    text: capText(parts.join('\n\n'), MAX_STORED_CHARS),
+    text: focusBalanceSheetForUpload(parts.join('\n\n'), MAX_STORED_CHARS),
     sheetNames: workbook.SheetNames,
   };
 }
@@ -91,7 +86,7 @@ export async function extractUploadedFile(
       doc: {
         fileName: file.name,
         mimeType: 'application/pdf',
-        text: capText(raw, MAX_STORED_CHARS),
+        text: focusBalanceSheetForUpload(raw, MAX_STORED_CHARS),
       },
       dataSource: 'pdf',
     };
