@@ -15,14 +15,22 @@ const MAX_PROMPT_CHARS = 12_000;
 
 function getFinanceModels() {
   const models = [];
+  if (process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
+    models.push(google('gemini-2.0-flash'));
+    models.push(google('gemini-2.0-flash-lite'));
+  }
   if (process.env.GROQ_API_KEY) {
     models.push(groq('llama-3.3-70b-versatile'));
   }
-  if (process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
-    models.push(google('gemini-2.0-flash-lite'));
-    models.push(google('gemini-2.0-flash'));
-  }
   return models;
+}
+
+export function isFinanceRateLimitError(e: unknown): boolean {
+  return isRateLimit(e) || /quota|billing|exceeded your current/i.test(String((e as Error)?.message ?? e ?? ''));
+}
+
+export function hasFinanceAiConfigured(): boolean {
+  return Boolean(process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GROQ_API_KEY);
 }
 
 function trimPrompt(prompt: string) {
@@ -71,7 +79,7 @@ function friendlyFinanceError(e: unknown): Error {
   const msg = String((e as Error)?.message ?? e ?? '');
   if (/quota|billing|exceeded your current/i.test(msg)) {
     return new Error(
-      'AI quota exceeded. File uploads use table parsing first, then Groq/Gemini as fallback. Retry shortly, or use Top 25 US for instant reports.',
+      'AI quota exceeded and no balance-sheet table could be parsed from this file. Retry when quota resets, use a text-based PDF or Excel export, or Top 25 US.',
     );
   }
   if (/tpm|request too large|token/i.test(msg)) {

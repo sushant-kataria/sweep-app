@@ -3,7 +3,11 @@ import { buildExtractionPrompt, type ExtractedDocument } from './finance-extract
 import { tryHeuristicBalanceSheetExtraction } from './finance-heuristic-extract';
 import { prepareUploadText, tryHeuristicFromAllCandidates } from './finance-upload-prep';
 import { computeFinanceMetrics } from './finance-metrics';
-import { generateStructuredObject } from './finance-model';
+import {
+  generateStructuredObject,
+  hasFinanceAiConfigured,
+  isFinanceRateLimitError,
+} from './finance-model';
 import { balanceSheetExtractionSchema, type BalanceSheetExtraction } from './finance-schemas';
 import { buildTemplateAnalysis } from './finance-template-analysis';
 
@@ -20,28 +24,70 @@ RULES:
 - Set extractionConfidence to low if data is incomplete or ambiguous.
 - If multiple periods appear, use the most recent fiscal year-end.`;
 
+const HEURISTIC_FALLBACK_ERROR =
+  'Could not extract a balance sheet. AI quota may be exceeded and no table was found in this file. Use a text-based PDF, Excel export, or Top 25 US.';
+
 const HEURISTIC_ONLY_ERROR =
   'Could not find a balance-sheet table in this file. Use a text-based PDF (not scanned), an Excel export with line items, or Top 25 US for instant reports.';
+
+function runHeuristicExtraction(
+  doc: ExtractedDocument,
+  options?: { isUpload?: boolean },
+): BalanceSheetExtraction | null {
+  if (options?.isUpload) {
+    return tryHeuristicFromAllCandidates(doc.text, doc.fileName);
+  }
+
+  return (
+    tryHeuristicFromAllCandidates(prepareUploadText(doc.text), doc.fileName) ??
+    tryHeuristicBalanceSheetExtraction(doc.text, { fileName: doc.fileName })
+  );
+}
+
+function withHeuristicFallbackNote(result: BalanceSheetExtraction): BalanceSheetExtraction {
+  const note = 'Parsed from document tables (AI quota exceeded).';
+  return {
+    ...result,
+    extractionNotes: result.extractionNotes ? `${result.extractionNotes} ${note}` : note,
+  };
+}
 
 async function extractBalanceSheet(
   doc: ExtractedDocument,
   options?: { heuristicOnly?: boolean; isUpload?: boolean },
 ): Promise<BalanceSheetExtraction> {
-  const heuristic = options?.isUpload
-    ? tryHeuristicFromAllCandidates(doc.text, doc.fileName)
-    : tryHeuristicBalanceSheetExtraction(doc.text, { fileName: doc.fileName });
-  if (heuristic) return heuristic;
+  const heuristic = () => runHeuristicExtraction(doc, options);
 
-  if (options?.heuristicOnly || options?.isUpload) {
+  if (options?.heuristicOnly) {
+    const parsed = heuristic();
+    if (parsed) return parsed;
     throw new Error(HEURISTIC_ONLY_ERROR);
   }
 
-  const ai = await generateStructuredObject({
-    schema: balanceSheetExtractionSchema,
-    system: EXTRACTION_SYSTEM,
-    prompt: buildExtractionPrompt(doc),
-  });
-  return ai;
+  if (!hasFinanceAiConfigured()) {
+    const parsed = heuristic();
+    if (parsed) return parsed;
+    throw new Error(HEURISTIC_ONLY_ERROR);
+  }
+
+  try {
+    return await generateStructuredObject({
+      schema: balanceSheetExtractionSchema,
+      system: EXTRACTION_SYSTEM,
+      prompt: buildExtractionPrompt(doc),
+    });
+  } catch (e) {
+    const parsed = heuristic();
+    if (parsed) {
+      return withHeuristicFallbackNote(parsed);
+    }
+
+    if (isFinanceRateLimitError(e)) {
+      throw new Error(HEURISTIC_FALLBACK_ERROR);
+    }
+
+    throw e instanceof Error ? e : new Error(String(e));
+  }
 }
 
 export async function analyzeDocument(
@@ -54,7 +100,6 @@ export async function analyzeDocument(
   const preparedDoc = isUpload ? { ...doc, text: prepareUploadText(doc.text) } : doc;
   const extracted = await extractBalanceSheet(preparedDoc, {
     ...options,
-    heuristicOnly: options?.heuristicOnly ?? isUpload,
     isUpload,
   });
 
