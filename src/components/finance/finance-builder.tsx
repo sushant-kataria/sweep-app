@@ -4,6 +4,7 @@ import { useRef, useState } from 'react';
 import { FileSpreadsheet, Link2, Loader2, Upload } from 'lucide-react';
 import { COMPANY_OPTIONS, getDefaultPeriod, getPeriodsForTicker } from '@/lib/finance-data';
 import { buildPreloadedFinanceSession } from '@/lib/finance-session';
+import { extractUploadedFile } from '@/lib/finance-upload-client';
 import type { FinanceSession, ReportType } from '@/lib/finance-types';
 
 type SourceTab = 'demo' | 'url' | 'upload';
@@ -29,7 +30,25 @@ export function FinanceBuilder({ onSession, onError }: Props) {
 
   const periods = getPeriodsForTicker(ticker);
 
-  const runAnalyze = async (body: FormData | object) => {
+  const parseAnalyzeResponse = async (res: Response) => {
+    const raw = await res.text();
+    if (!raw.trim()) {
+      if (res.status === 413) {
+        throw new Error('Upload too large for the server. Try a smaller file or use Top 25 US.');
+      }
+      throw new Error(`Analysis failed (${res.status}). Please try again.`);
+    }
+    try {
+      return JSON.parse(raw) as FinanceSession & { error?: string };
+    } catch {
+      if (res.status === 413 || /too large|payload/i.test(raw)) {
+        throw new Error('File is too large for cloud upload. Processing locally — retry in a moment.');
+      }
+      throw new Error(raw.slice(0, 200) || 'Analysis failed — unexpected server response.');
+    }
+  };
+
+  const runAnalyze = async (body: object) => {
     setLoading(true);
     setStep(0);
     onError('');
@@ -39,17 +58,21 @@ export function FinanceBuilder({ onSession, onError }: Props) {
     }, 2200);
 
     try {
-      const isForm = body instanceof FormData;
       const res = await fetch('/api/finance/analyze', {
         method: 'POST',
-        headers: isForm ? undefined : { 'Content-Type': 'application/json' },
-        body: isForm ? body : JSON.stringify(body),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
       });
-      const data = await res.json();
+      const data = await parseAnalyzeResponse(res);
       if (!res.ok) throw new Error(data.error ?? 'Analysis failed.');
       onSession(data as FinanceSession);
     } catch (e) {
-      onError(e instanceof Error ? e.message : 'Analysis failed.');
+      const msg = e instanceof Error ? e.message : 'Analysis failed.';
+      onError(
+        /expected pattern/i.test(msg)
+          ? 'Could not read the server response. Large PDFs are processed in your browser first — please retry.'
+          : msg,
+      );
     } finally {
       clearInterval(stepTimer);
       setLoading(false);
@@ -92,9 +115,41 @@ export function FinanceBuilder({ onSession, onError }: Props) {
       onError('Choose a PDF or spreadsheet file first.');
       return;
     }
-    const form = new FormData();
-    form.append('file', file);
-    void runAnalyze(form);
+    void (async () => {
+      setLoading(true);
+      setStep(0);
+      onError('');
+      const stepTimer = window.setInterval(() => {
+        setStep((s) => Math.min(s + 1, STEPS.length - 1));
+      }, 2200);
+      try {
+        const { doc, dataSource } = await extractUploadedFile(file);
+        const res = await fetch('/api/finance/analyze', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            source: 'upload',
+            fileName: file.name,
+            dataSource,
+            doc: {
+              text: doc.text,
+              mimeType: doc.mimeType,
+              sheetNames: doc.sheetNames,
+            },
+          }),
+        });
+        const data = await parseAnalyzeResponse(res);
+        if (!res.ok) throw new Error(data.error ?? 'Analysis failed.');
+        onSession(data as FinanceSession);
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : 'Could not read this file.';
+        onError(/expected pattern/i.test(msg) ? 'Could not read the server response — please retry.' : msg);
+      } finally {
+        clearInterval(stepTimer);
+        setLoading(false);
+        setStep(0);
+      }
+    })();
   };
 
   const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -230,8 +285,8 @@ export function FinanceBuilder({ onSession, onError }: Props) {
               </span>
             </button>
             <p className="text-[11px] text-[var(--v-fg-4)]">
-              PDF annual reports up to 15 MB. Balance-sheet tables are parsed directly from text-based filings (no AI
-              needed). Scanned image PDFs are not supported yet.
+              PDF annual reports up to 15 MB. Text is extracted in your browser, then analyzed in the cloud — works on
+              Vercel with large filings. Scanned image PDFs are not supported yet.
             </p>
             <button type="button" onClick={handleUpload} disabled={loading || !fileName} className="finance-primary-btn">
               {loading ? <Loader2 className="mx-auto h-4 w-4 animate-spin" /> : 'Analyze document'}

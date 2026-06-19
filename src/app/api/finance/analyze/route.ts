@@ -71,12 +71,31 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { source, ticker, period, url } = body as {
-      source?: 'demo' | 'url';
+    const { source, ticker, period, url, doc, dataSource, fileName } = body as {
+      source?: 'demo' | 'url' | 'upload';
       ticker?: string;
       period?: string;
       url?: string;
+      doc?: { text: string; mimeType: string; sheetNames?: string[] };
+      dataSource?: 'pdf' | 'excel' | 'csv';
+      fileName?: string;
     };
+
+    if (source === 'upload' && doc?.text?.trim()) {
+      const session = await analyzeDocument(
+        {
+          fileName: fileName ?? 'upload',
+          mimeType: doc.mimeType ?? 'text/plain',
+          text: doc.text,
+          sheetNames: doc.sheetNames,
+        },
+        {
+          dataSource: dataSource ?? 'pdf',
+          sourceFileName: fileName,
+        },
+      );
+      return NextResponse.json(session);
+    }
 
     if (source === 'url' && url) {
       const doc = await extractFromUrl(url.trim());
