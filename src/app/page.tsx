@@ -16,8 +16,7 @@ import { BalanceSheet } from '@/components/dashboard/balance-sheet';
 import { PropertyPortfolio } from '@/components/dashboard/property-portfolio';
 import { ZillowProperty } from '@/components/dashboard/zillow-property';
 import { ZillowListings } from '@/components/dashboard/zillow-listings';
-import { SweepLogo } from '@/components/sweep-logo';
-import { SweepWordmark } from '@/components/sweep-wordmark';
+import { HomeLanding } from '@/components/home/home-landing';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -437,6 +436,7 @@ function ChatComposer({
   toggleVoice,
   onSubmit,
   onStop,
+  inputRef,
 }: {
   input: string;
   setInput: (v: string) => void;
@@ -446,11 +446,13 @@ function ChatComposer({
   toggleVoice: () => void;
   onSubmit: (e: React.FormEvent) => void;
   onStop: () => void;
+  inputRef?: React.RefObject<HTMLInputElement | null>;
 }) {
   return (
     <form onSubmit={onSubmit} className="w-full min-w-0">
       <div className="grok-composer">
         <input
+          ref={inputRef}
           value={input}
           onChange={(e) => setInput(e.target.value)}
           className="grok-composer-input"
@@ -583,6 +585,7 @@ function Chat({
   const [hasDashboardItems, setHasDashboardItems] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const mainRef = useRef<HTMLElement>(null);
+  const chatInputRef = useRef<HTMLInputElement>(null);
   const isNearBottomRef = useRef(true);
   const lastPersistedRef = useRef('');
 
@@ -811,43 +814,38 @@ function Chat({
 
       {/* ── MAIN ── */}
       <main ref={mainRef} className={`flex-1 overflow-y-auto overscroll-y-contain pt-[3.25rem] transition-all duration-300 ease-in-out sm:pt-14 ${showDashboard ? 'md:mr-[min(42%,520px)]' : ''}`}>
-        <div className={`mx-auto w-full px-3 sm:px-4 ${messages.length > 0 ? 'max-w-3xl pb-44' : 'max-w-2xl'}`}>
+        <div className={`mx-auto w-full px-3 sm:px-5 ${messages.length > 0 ? 'max-w-3xl pb-44' : 'max-w-6xl pb-32'}`}>
 
-          {/* HERO */}
           {messages.length === 0 ? (
-            <div className="flex min-h-[calc(100dvh-3rem)] flex-col items-center justify-center gap-8 py-8 sm:min-h-[calc(100dvh-3.5rem)] sm:py-12">
-              <div className="w-full space-y-3 text-center">
-                <div className="mx-auto flex justify-center">
-                  <SweepLogo className="h-12 w-12 sm:h-14 sm:w-14" />
+            <HomeLanding
+              onStartChat={() => {
+                chatInputRef.current?.focus();
+                chatInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              }}
+              chatSlot={
+                <div className="w-full space-y-4">
+                  <ModeSelector mode={mode} setMode={setMode} />
+                  <ChatComposer
+                    input={input}
+                    setInput={setInput}
+                    placeholder={placeholder}
+                    isStreaming={isLoading}
+                    isListening={isListening}
+                    toggleVoice={toggleVoice}
+                    onSubmit={handleSubmit}
+                    onStop={handleStop}
+                    inputRef={chatInputRef}
+                  />
+                  <div className="flex flex-wrap justify-center gap-2 pb-1">
+                    {suggestions.map((s, i) => (
+                      <button key={i} type="button" onClick={() => handleSuggestion(s.label)} className="grok-suggestion-chip">
+                        {s.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-                <h1 className="text-4xl text-[var(--v-fg)] sm:text-5xl">
-                  <SweepWordmark />
-                </h1>
-                <p className="text-sm text-[var(--v-fg-3)]">What do you want to know?</p>
-              </div>
-
-              <div className="w-full max-w-2xl space-y-4">
-                <ModeSelector mode={mode} setMode={setMode} />
-                <ChatComposer
-                  input={input}
-                  setInput={setInput}
-                  placeholder={placeholder}
-                  isStreaming={isLoading}
-                  isListening={isListening}
-                  toggleVoice={toggleVoice}
-                  onSubmit={handleSubmit}
-                  onStop={handleStop}
-                />
-              </div>
-
-              <div className="flex w-full max-w-2xl flex-wrap justify-center gap-2 pb-1">
-                {suggestions.map((s, i) => (
-                  <button key={i} type="button" onClick={() => handleSuggestion(s.label)} className="grok-suggestion-chip">
-                    {s.label}
-                  </button>
-                ))}
-              </div>
-            </div>
+              }
+            />
           ) : (
             /* MESSAGES */
             <div className="pb-4 pt-4 sm:pt-6">
