@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useChat } from '@ai-sdk/react';
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { ArrowUp, BarChart2, X, Search, MessageSquare, Code2, Copy, Check, Sun, Moon, Mic, MicOff, FileDown, Menu, Plus, Trash2, Pencil, RotateCcw, Square, FileSpreadsheet } from 'lucide-react';
+import { ArrowUp, BarChart2, X, Search, MessageSquare, Code2, Copy, Check, Sun, Moon, Mic, MicOff, FileDown, Menu, Pencil, RotateCcw, Square } from 'lucide-react';
 
 import { BarChartPro } from '@/components/dashboard/bar-chart-pro';
 import { LineChartPro } from '@/components/dashboard/line-chart-pro';
@@ -17,6 +17,8 @@ import { PropertyPortfolio } from '@/components/dashboard/property-portfolio';
 import { ZillowProperty } from '@/components/dashboard/zillow-property';
 import { ZillowListings } from '@/components/dashboard/zillow-listings';
 import { HomeLanding } from '@/components/home/home-landing';
+import { AuthButton } from '@/components/auth/auth-button';
+import { SweepMobileMenu } from '@/components/sweep-mobile-menu';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -496,84 +498,21 @@ function ChatComposer({
   );
 }
 
-// ─── Conversation Sidebar ─────────────────────────────────────────────────────
-
-function ConvSidebar({
-  convs, currentId, onSelect, onNew, onDelete, onClose,
-}: {
-  convs: StoredConv[]; currentId: string;
-  onSelect: (id: string) => void; onNew: () => void;
-  onDelete: (id: string) => void; onClose: () => void;
-}) {
-  return (
-    <>
-      {/* Backdrop */}
-      <div className="fixed inset-0 z-40 bg-[var(--v-fg)]/10 backdrop-blur-sm" onClick={onClose} />
-      {/* Panel */}
-      <div className="safe-top fixed bottom-0 left-0 top-0 z-50 flex w-full max-w-sm flex-col border-r border-[var(--v-border)] bg-[var(--v-bg)] sm:w-72">
-        <div className="flex shrink-0 items-center justify-between border-b border-[var(--v-border)] px-4 py-3">
-          <span className="text-sm font-medium text-[var(--v-fg)]">History</span>
-          <button onClick={onClose} className="grok-ghost-btn">
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-
-        <div className="shrink-0 px-3 pt-3">
-          <button
-            type="button"
-            onClick={() => { onClose(); onNew(); }}
-            className="flex w-full items-center gap-2 rounded-xl border border-[var(--v-border)] bg-[var(--v-surface)] px-3 py-2.5 text-sm font-medium text-[var(--v-fg)] transition-colors hover:bg-[var(--v-border)]"
-          >
-            <Plus className="w-4 h-4 text-[var(--v-fg-3)]" />
-            New chat
-          </button>
-        </div>
-
-        <div className="flex-1 overflow-y-auto px-3 py-3 space-y-1">
-          {convs.length === 0 && (
-            <p className="text-xs text-[var(--v-fg-4)] text-center py-8">No conversations yet</p>
-          )}
-          {convs.map((c) => (
-            <div key={c.id} className={`group relative flex items-center rounded-lg transition-colors ${c.id === currentId ? 'bg-[var(--v-surface)] border border-[var(--v-border)]' : 'hover:bg-[var(--v-surface)]'}`}>
-              <button
-                type="button"
-                onClick={() => onSelect(c.id)}
-                className="flex-1 text-left px-3 py-2.5 min-w-0"
-              >
-                <p className="text-sm text-[var(--v-fg)] truncate">{c.title}</p>
-                <p className="text-[11px] text-[var(--v-fg-4)] mt-0.5">
-                  {new Date(c.updatedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-                </p>
-              </button>
-              <button
-                onClick={(e) => { e.stopPropagation(); onDelete(c.id); }}
-                className="shrink-0 mr-2 w-6 h-6 rounded flex items-center justify-center text-[var(--v-fg-5)] hover:text-[var(--v-fg-3)] opacity-0 group-hover:opacity-100 transition-all"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          ))}
-        </div>
-
-        <p className="shrink-0 border-t border-[var(--v-border)] px-4 py-3 text-center text-[10px] text-[var(--v-fg-5)]">
-          Chats saved in this browser for 5 minutes
-        </p>
-      </div>
-    </>
-  );
-}
-
 // ─── Chat (inner, keyed per conversation) ────────────────────────────────────
 
 function Chat({
   convId, initialMessages, initialMode, theme, toggleTheme,
-  onUpdateConv, onOpenConvSidebar, onGoHome,
+  onUpdateConv, onGoHome,
+  convs, onSelectConv, onNewConv, onDeleteConv,
 }: {
   convId: string; initialMessages: any[]; initialMode: Mode;
   theme: 'dark' | 'light'; toggleTheme: () => void;
   onUpdateConv: (id: string, messages: any[], title: string, mode: Mode) => void;
-  onOpenConvSidebar: () => void;
   onGoHome: () => void;
+  convs: StoredConv[];
+  onSelectConv: (id: string) => void;
+  onNewConv: () => void;
+  onDeleteConv: (id: string) => void;
 }) {
   const seededMessages = useRef(cloneForStorage(initialMessages));
   const { messages, sendMessage, regenerate, stop, status, error } = useChat({ id: convId, messages: seededMessages.current });
@@ -583,6 +522,7 @@ function Chat({
   const [mode, setMode] = useState<Mode>(initialMode);
   const [showDashboard, setShowDashboard] = useState(false);
   const [hasDashboardItems, setHasDashboardItems] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const mainRef = useRef<HTMLElement>(null);
   const chatInputRef = useRef<HTMLInputElement>(null);
@@ -756,15 +696,35 @@ function Chat({
   const suggestions = suggestionsByMode[mode];
   const convTitle = messages.find(m => m.role === 'user')?.parts?.find((p: any) => p.type === 'text')?.text?.slice(0, 60) ?? 'New chat';
   const latestDashboardMessage = getLatestDashboardMessage(messages);
+  const isLanding = messages.length === 0;
+
+  const openHeaderMenu = () => {
+    setShowMobileMenu(true);
+  };
 
   return (
     <div className="bg-[var(--v-bg)] text-[var(--v-fg)] flex flex-col" style={{ position: 'fixed', inset: 0, overflow: 'hidden' }}>
+
+      <SweepMobileMenu
+        open={showMobileMenu}
+        onClose={() => setShowMobileMenu(false)}
+        includeChat={!isLanding}
+        convs={convs}
+        currentConvId={convId}
+        onSelectConv={onSelectConv}
+        onNewConv={onNewConv}
+        onDeleteConv={onDeleteConv}
+      />
 
       {/* ── HEADER ── */}
       <header className={`grok-header safe-top fixed top-0 left-0 right-0 z-30 transition-[margin] duration-300 ${showDashboard ? 'md:mr-[min(42%,520px)]' : ''}`}>
         <div className="grok-header-inner">
           <div className="grok-header-slot grok-header-slot--left">
-            <button onClick={onOpenConvSidebar} aria-label="Open conversations" className="grok-ghost-btn">
+            <button
+              onClick={openHeaderMenu}
+              aria-label="Open menu"
+              className="grok-ghost-btn"
+            >
               <Menu className="h-[1.125rem] w-[1.125rem]" strokeWidth={2} />
             </button>
             <Link
@@ -785,10 +745,7 @@ function Chat({
           <div className="grok-header-slot grok-header-slot--center" aria-hidden />
 
           <div className="grok-header-slot grok-header-slot--right">
-            <Link href="/finance" className="grok-ghost-btn grok-ghost-btn--wide" title="Finance reports" aria-label="Finance reports">
-              <FileSpreadsheet className="h-4 w-4" />
-              <span className="hidden text-xs text-[var(--v-fg-3)] md:inline">Finance</span>
-            </Link>
+            <AuthButton />
             {messages.length > 0 && hasDashboardItems && (
               <button
                 onClick={() => setShowDashboard(v => !v)}
@@ -814,38 +771,10 @@ function Chat({
 
       {/* ── MAIN ── */}
       <main ref={mainRef} className={`flex-1 overflow-y-auto overscroll-y-contain pt-[3.25rem] transition-all duration-300 ease-in-out sm:pt-14 ${showDashboard ? 'md:mr-[min(42%,520px)]' : ''}`}>
-        <div className={`mx-auto w-full px-3 sm:px-5 ${messages.length > 0 ? 'max-w-3xl pb-44' : 'max-w-6xl pb-32'}`}>
+        <div className={`mx-auto w-full px-3 sm:px-5 ${messages.length > 0 ? 'max-w-3xl pb-8' : 'max-w-6xl pb-12'}`}>
 
           {messages.length === 0 ? (
-            <HomeLanding
-              onStartChat={() => {
-                chatInputRef.current?.focus();
-                chatInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-              }}
-              chatSlot={
-                <div className="w-full space-y-4">
-                  <ModeSelector mode={mode} setMode={setMode} />
-                  <ChatComposer
-                    input={input}
-                    setInput={setInput}
-                    placeholder={placeholder}
-                    isStreaming={isLoading}
-                    isListening={isListening}
-                    toggleVoice={toggleVoice}
-                    onSubmit={handleSubmit}
-                    onStop={handleStop}
-                    inputRef={chatInputRef}
-                  />
-                  <div className="flex flex-wrap justify-center gap-2 pb-1">
-                    {suggestions.map((s, i) => (
-                      <button key={i} type="button" onClick={() => handleSuggestion(s.label)} className="grok-suggestion-chip">
-                        {s.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              }
-            />
+            <HomeLanding />
           ) : (
             /* MESSAGES */
             <div className="pb-4 pt-4 sm:pt-6">
@@ -1010,29 +939,27 @@ function Chat({
                 </div>
               )}
               <div ref={messagesEndRef} />
+
+              <div className="mt-6 space-y-2">
+                <ModeSelector mode={mode} setMode={setMode} compact />
+                <ChatComposer
+                  input={input}
+                  setInput={setInput}
+                  placeholder={placeholder}
+                  isStreaming={isLoading}
+                  isListening={isListening}
+                  toggleVoice={toggleVoice}
+                  onSubmit={handleSubmit}
+                  onStop={handleStop}
+                  inputRef={chatInputRef}
+                />
+                <p className="pb-1 text-center text-[11px] text-[var(--v-fg-5)]">
+                  Sweep can make mistakes. Verify important information.
+                </p>
+              </div>
             </div>
           )}
         </div>
-
-        {/* FIXED BOTTOM COMPOSER */}
-        {messages.length > 0 && (
-          <div className={`grok-dock safe-bottom fixed bottom-0 left-0 right-0 z-30 pt-6 ${showDashboard ? 'md:right-[min(42%,520px)]' : ''}`}>
-            <div className="mx-auto w-full max-w-3xl space-y-2 px-3 sm:px-4">
-              <ModeSelector mode={mode} setMode={setMode} compact />
-              <ChatComposer
-                input={input}
-                setInput={setInput}
-                placeholder={placeholder}
-                isStreaming={isLoading}
-                isListening={isListening}
-                toggleVoice={toggleVoice}
-                onSubmit={handleSubmit}
-                onStop={handleStop}
-              />
-              <p className="pb-1 text-center text-[11px] text-[var(--v-fg-5)]">Sweep can make mistakes. Verify important information.</p>
-            </div>
-          </div>
-        )}
       </main>
 
       {/* MOBILE DASHBOARD SHEET */}
@@ -1077,10 +1004,6 @@ function Chat({
           {latestDashboardMessage ? renderDashboardItems(latestDashboardMessage) : null}
         </div>
       </aside>
-
-      <div className={`pointer-events-none fixed bottom-2 right-4 z-10 select-none text-[10px] font-light text-[var(--v-fg-5)] safe-bottom ${showDashboard ? 'md:right-[min(calc(42%+12px),532px)]' : ''}`}>
-        by Sushant Kataria
-      </div>
     </div>
   );
 }
@@ -1092,8 +1015,6 @@ export default function App() {
   const [convs, setConvs] = useState<StoredConv[]>([]);
   const [currentId, setCurrentId] = useState<string>('');
   const [chatSession, setChatSession] = useState(0);
-  const [showConvSidebar, setShowConvSidebar] = useState(false);
-
   // Load theme + conversations from localStorage on mount
   useEffect(() => {
     const savedTheme = localStorage.getItem(THEME_KEY) as 'dark' | 'light' | null;
@@ -1179,14 +1100,12 @@ export default function App() {
   }, []);
 
   const selectConv = (id: string) => {
-    setShowConvSidebar(false);
     setCurrentId(id);
     saveCurrentConvId(id);
     setChatSession((n) => n + 1);
   };
 
   const newConv = () => {
-    setShowConvSidebar(false);
     const id = genId();
     setCurrentId(id);
     saveCurrentConvId(id);
@@ -1217,28 +1136,19 @@ export default function App() {
   const currentConv = convs.find(c => c.id === currentId);
 
   return (
-    <>
-      {showConvSidebar && (
-        <ConvSidebar
-          convs={convs}
-          currentId={currentId}
-          onSelect={selectConv}
-          onNew={newConv}
-          onDelete={deleteConv}
-          onClose={() => setShowConvSidebar(false)}
-        />
-      )}
-      <Chat
-        key={`${currentId}-${chatSession}`}
-        convId={currentId}
-        initialMessages={currentConv?.messages ?? []}
-        initialMode={currentConv?.mode ?? 'chat'}
-        theme={theme}
-        toggleTheme={toggleTheme}
-        onUpdateConv={handleUpdateConv}
-        onOpenConvSidebar={() => setShowConvSidebar(true)}
-        onGoHome={newConv}
-      />
-    </>
+    <Chat
+      key={`${currentId}-${chatSession}`}
+      convId={currentId}
+      initialMessages={currentConv?.messages ?? []}
+      initialMode={currentConv?.mode ?? 'chat'}
+      theme={theme}
+      toggleTheme={toggleTheme}
+      onUpdateConv={handleUpdateConv}
+      onGoHome={newConv}
+      convs={convs}
+      onSelectConv={selectConv}
+      onNewConv={newConv}
+      onDeleteConv={deleteConv}
+    />
   );
 }

@@ -1,8 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import { ArrowRight, Building2, FileSpreadsheet, LineChart, Sparkles } from 'lucide-react';
+import { ArrowRight, Building2, FileSpreadsheet, LineChart } from 'lucide-react';
 import { AnimatedReportPanel } from './animated-report-panel';
+import { HeroTypewriter } from './hero-typewriter';
 
 const PILLARS = [
   {
@@ -23,8 +24,8 @@ const PILLARS = [
     tag: 'charts · comps · fundamentals',
     description:
       'Ask for price history, sector comparisons, and balance sheets inline. Live dashboards render next to your conversation.',
-    href: '/',
-    cta: 'Query markets',
+    href: '/stock',
+    cta: 'Open Stock',
     accent: 'home-pillar--markets',
   },
   {
@@ -34,18 +35,13 @@ const PILLARS = [
     tag: 'listings · portfolio · comps',
     description:
       'Search properties, model portfolios, and pull Zillow-style comps — grounded answers with map-ready visualizations.',
-    href: '/',
-    cta: 'Explore listings',
+    href: '/real-estate',
+    cta: 'Open Real Estate',
     accent: 'home-pillar--realty',
   },
 ] as const;
 
-type HomeLandingProps = {
-  chatSlot: React.ReactNode;
-  onStartChat: () => void;
-};
-
-export function HomeLanding({ chatSlot, onStartChat }: HomeLandingProps) {
+export function HomeLanding() {
   return (
     <div className="home-landing">
       <div className="home-grid" aria-hidden />
@@ -53,15 +49,10 @@ export function HomeLanding({ chatSlot, onStartChat }: HomeLandingProps) {
 
       <section className="home-hero">
         <div className="home-hero-content">
-          <div className="home-hero-badge font-mono">
-            <Sparkles className="h-3.5 w-3.5" />
-            <span>finance · markets · real estate</span>
-          </div>
-
           <h1 className="home-hero-title font-pixel">
             Intelligence
             <br />
-            <span className="home-hero-title-accent">for every asset</span>
+            <HeroTypewriter />
           </h1>
 
           <p className="home-hero-lead">
@@ -74,9 +65,9 @@ export function HomeLanding({ chatSlot, onStartChat }: HomeLandingProps) {
               Open Finance
               <ArrowRight className="h-4 w-4" />
             </Link>
-            <button type="button" onClick={onStartChat} className="home-btn home-btn--ghost">
-              Start chatting
-            </button>
+            <Link href="/stock" className="home-btn home-btn--ghost">
+              Open Stock
+            </Link>
           </div>
 
           <div className="home-stats font-mono">
@@ -146,13 +137,6 @@ export function HomeLanding({ chatSlot, onStartChat }: HomeLandingProps) {
         </div>
       </section>
 
-      <section className="home-chat-section">
-        <div className="home-chat-head">
-          <h2 className="font-pixel text-xl sm:text-2xl">What do you want to know?</h2>
-          <p className="text-sm text-[var(--home-muted)]">Try a prompt below or pick a suggestion.</p>
-        </div>
-        <div className="home-chat-composer">{chatSlot}</div>
-      </section>
     </div>
   );
 }

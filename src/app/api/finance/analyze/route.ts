@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 
 import { analyzeDocument } from '@/lib/finance-analyze';
+import { isGeneratedReportRequest, requireFinanceReportAuth } from '@/lib/finance-auth';
 import {
   extractFromPdfFile,
   extractFromSpreadsheet,
@@ -20,11 +21,21 @@ function buildDemoSession(ticker: string, period: string): FinanceSession {
   return session;
 }
 
+async function authRequiredResponse() {
+  return NextResponse.json(
+    { error: 'Sign in required to generate reports from uploads and annual report links.' },
+    { status: 401 },
+  );
+}
+
 export async function POST(req: Request) {
   try {
     const contentType = req.headers.get('content-type') ?? '';
 
     if (contentType.includes('multipart/form-data')) {
+      if (!(await requireFinanceReportAuth())) {
+        return authRequiredResponse();
+      }
       const form = await req.formData();
       const file = form.get('file');
       const url = String(form.get('url') ?? '').trim();
@@ -77,6 +88,12 @@ export async function POST(req: Request) {
       dataSource?: 'pdf' | 'excel' | 'csv';
       fileName?: string;
     };
+
+    if (isGeneratedReportRequest(body)) {
+      if (!(await requireFinanceReportAuth())) {
+        return authRequiredResponse();
+      }
+    }
 
     if (source === 'upload' && doc?.text?.trim()) {
       const session = await analyzeDocument(

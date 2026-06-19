@@ -15,13 +15,17 @@ import { dashboardTools } from '@/ai/dashboard-tools';
 export const runtime = 'edge';
 export const maxDuration = 60;
 
-type Mode = 'chat' | 'search' | 'code' | 'finance';
+type Mode = 'chat' | 'search' | 'code' | 'finance' | 'stock' | 'real-estate';
 
 type FinanceReportContext = {
   report: Record<string, unknown>;
   metrics: Record<string, unknown>;
   analysis?: Record<string, unknown>;
 };
+
+type StockReportContext = Record<string, unknown>;
+
+type RealEstateReportContext = Record<string, unknown>;
 
 function buildFinanceSystemPrompt(ctx: FinanceReportContext): string {
   return `You are Sweep Finance — a world-class equity research analyst. Answer questions using ONLY the ACTIVE REPORT, DERIVED METRICS, and PRE-COMPUTED ANALYSIS below.
@@ -43,6 +47,36 @@ ${JSON.stringify(ctx.metrics)}
 
 PRE-COMPUTED ANALYSIS:
 ${JSON.stringify(ctx.analysis ?? {})}`;
+}
+
+function buildStockSystemPrompt(ctx: StockReportContext): string {
+  return `You are Sweep Stock — a sell-side equity research analyst. Answer questions using ONLY the ACTIVE EQUITY PROFILE below.
+
+RULES:
+- Cite exact figures from price history, fundamentals, peers, and analysis. Never invent numbers.
+- Explain valuation (P/E, forward P/E) and momentum with institutional rigor.
+- Compare to peers when relevant using the peer table data.
+- If the answer is not in the data, say what is missing.
+- Plain text only. No markdown bold or italic.
+- Educational analysis only — not investment advice.
+
+ACTIVE EQUITY PROFILE:
+${JSON.stringify(ctx)}`;
+}
+
+function buildRealEstateSystemPrompt(ctx: RealEstateReportContext): string {
+  return `You are Sweep Real Estate — an institutional property analyst. Answer questions using ONLY the ACTIVE MARKET/PORTFOLIO DATA below.
+
+RULES:
+- Cite exact figures from metrics, listings, portfolio, and analysis. Never invent numbers.
+- Explain cap rates, yield, occupancy, and market dynamics with rigor.
+- Distinguish market-scan vs portfolio mode in your answers.
+- If the answer is not in the data, say what is missing.
+- Plain text only. No markdown bold or italic.
+- Educational analysis only — not investment advice.
+
+ACTIVE PROPERTY DATA:
+${JSON.stringify(ctx)}`;
 }
 
 const CHAT_SYSTEM_PROMPT = `You are Sweep — a helpful AI assistant with dashboard tools. Answer naturally in plain text. Never use ** or * markdown.
@@ -276,10 +310,32 @@ export async function POST(req: Request) {
     messages,
     mode = 'chat',
     reportContext,
-  }: { messages: UIMessage[]; mode?: Mode; reportContext?: FinanceReportContext } = await req.json();
+    stockContext,
+    realEstateContext,
+  }: {
+    messages: UIMessage[];
+    mode?: Mode;
+    reportContext?: FinanceReportContext;
+    stockContext?: StockReportContext;
+    realEstateContext?: RealEstateReportContext;
+  } = await req.json();
 
   if (mode === 'finance' && !reportContext?.report) {
     return new Response(JSON.stringify({ error: 'Finance mode requires an active report.' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
+  if (mode === 'stock' && !stockContext?.ticker) {
+    return new Response(JSON.stringify({ error: 'Stock mode requires an active equity profile.' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
+  if (mode === 'real-estate' && !realEstateContext?.market) {
+    return new Response(JSON.stringify({ error: 'Real estate mode requires an active market or portfolio.' }), {
       status: 400,
       headers: { 'Content-Type': 'application/json' },
     });
@@ -293,6 +349,8 @@ export async function POST(req: Request) {
   const modelMessages = convertToModelMessages(messages);
   const isChat = mode === 'chat';
   const isFinance = mode === 'finance';
+  const isStock = mode === 'stock';
+  const isRealEstate = mode === 'real-estate';
 
   if (isChat) {
     const shortcut = findChartShortcut(getLastUserText(messages));
@@ -316,6 +374,20 @@ export async function POST(req: Request) {
         ? streamText({
             model,
             system: buildFinanceSystemPrompt(reportContext!),
+            messages: modelMessages,
+            maxRetries: 0,
+          })
+        : isStock
+        ? streamText({
+            model,
+            system: buildStockSystemPrompt(stockContext!),
+            messages: modelMessages,
+            maxRetries: 0,
+          })
+        : isRealEstate
+        ? streamText({
+            model,
+            system: buildRealEstateSystemPrompt(realEstateContext!),
             messages: modelMessages,
             maxRetries: 0,
           })

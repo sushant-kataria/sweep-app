@@ -1,6 +1,8 @@
 'use client';
 
+import Link from 'next/link';
 import { useRef, useState } from 'react';
+import { useAuth } from '@workos-inc/authkit-nextjs/components';
 import { FileSpreadsheet, Link2, Loader2, Upload } from 'lucide-react';
 import { COMPANY_OPTIONS, getDefaultPeriod, getPeriodsForTicker } from '@/lib/finance-data';
 import { buildPreloadedFinanceSession } from '@/lib/finance-session';
@@ -17,6 +19,7 @@ type Props = {
 const STEPS = ['Reading document', 'Extracting balance sheet', 'Computing metrics', 'Generating analysis'];
 
 export function FinanceBuilder({ onSession, onError }: Props) {
+  const { user } = useAuth();
   const [tab, setTab] = useState<SourceTab>('demo');
   const [ticker, setTicker] = useState('AAPL');
   const [period, setPeriod] = useState(() => getDefaultPeriod('AAPL'));
@@ -64,6 +67,9 @@ export function FinanceBuilder({ onSession, onError }: Props) {
         body: JSON.stringify(body),
       });
       const data = await parseAnalyzeResponse(res);
+      if (res.status === 401) {
+        throw new Error('Sign in required to generate reports from uploads and annual report links.');
+      }
       if (!res.ok) throw new Error(data.error ?? 'Analysis failed.');
       onSession(data as FinanceSession);
     } catch (e) {
@@ -94,7 +100,14 @@ export function FinanceBuilder({ onSession, onError }: Props) {
     onSession(session);
   };
 
+  const requireSignIn = () => {
+    if (user) return true;
+    onError('Sign in required to generate reports from uploads and annual report links.');
+    return false;
+  };
+
   const handleUrl = () => {
+    if (!requireSignIn()) return;
     const trimmed = url.trim();
     if (!trimmed) {
       onError('Paste a link to an annual report, 10-K, or filing page.');
@@ -110,6 +123,7 @@ export function FinanceBuilder({ onSession, onError }: Props) {
   };
 
   const handleUpload = () => {
+    if (!requireSignIn()) return;
     const file = fileBlobRef.current;
     if (!file) {
       onError('Choose a PDF or spreadsheet file first.');
@@ -139,6 +153,9 @@ export function FinanceBuilder({ onSession, onError }: Props) {
           }),
         });
         const data = await parseAnalyzeResponse(res);
+        if (res.status === 401) {
+          throw new Error('Sign in required to generate reports from uploads and annual report links.');
+        }
         if (!res.ok) throw new Error(data.error ?? 'Analysis failed.');
         onSession(data as FinanceSession);
       } catch (e) {
@@ -244,6 +261,14 @@ export function FinanceBuilder({ onSession, onError }: Props) {
 
         {tab === 'url' && (
           <>
+            {!user && (
+              <p className="rounded-lg border border-[var(--v-border)] bg-[var(--v-surface)] px-3 py-2 text-xs text-[var(--v-fg-3)]">
+                Sign in required to analyze annual report links.{' '}
+                <Link href="/login?returnPathname=%2Ffinance" className="text-[var(--v-fg)] underline">
+                  Sign in
+                </Link>
+              </p>
+            )}
             <label className="finance-field">
               <span>Annual statement URL</span>
               <input
@@ -266,6 +291,14 @@ export function FinanceBuilder({ onSession, onError }: Props) {
 
         {tab === 'upload' && (
           <>
+            {!user && (
+              <p className="rounded-lg border border-[var(--v-border)] bg-[var(--v-surface)] px-3 py-2 text-xs text-[var(--v-fg-3)]">
+                Sign in required to analyze uploaded documents.{' '}
+                <Link href="/login?returnPathname=%2Ffinance" className="text-[var(--v-fg)] underline">
+                  Sign in
+                </Link>
+              </p>
+            )}
             <input
               ref={fileRef}
               type="file"

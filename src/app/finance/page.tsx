@@ -1,9 +1,7 @@
 'use client';
 
-import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
-import { ArrowLeft, FileSpreadsheet, Moon, Sun } from 'lucide-react';
 import { BalanceSheet } from '@/components/dashboard/balance-sheet';
 import { FinanceAnalysisPanel } from '@/components/finance/finance-analysis-panel';
 import { FinanceBuilder } from '@/components/finance/finance-builder';
@@ -11,17 +9,16 @@ import { FinanceChat } from '@/components/finance/finance-chat';
 import { FinanceDownloadButton } from '@/components/finance/finance-download-button';
 import { FinanceSplitView } from '@/components/finance/finance-split-view';
 import { FinanceMetricsPanel } from '@/components/finance/finance-metrics-panel';
-import { SweepLogo } from '@/components/sweep-logo';
+import { WorkspacePageHeader } from '@/components/workspace/workspace-page-header';
+import { useSweepTheme } from '@/hooks/use-sweep-theme';
 import { getDefaultPeriod } from '@/lib/finance-data';
 import { buildPreloadedFinanceSession } from '@/lib/finance-session';
 import { clearFinanceSession, loadFinanceSession, saveFinanceSession } from '@/lib/finance-storage';
 import type { FinanceSession } from '@/lib/finance-types';
 
-const THEME_KEY = 'sweep-theme';
-
 function FinancePageContent() {
   const searchParams = useSearchParams();
-  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+  const { theme, toggleTheme } = useSweepTheme();
   const [session, setSession] = useState<FinanceSession | null>(null);
   const [error, setError] = useState('');
   const [hydrated, setHydrated] = useState(false);
@@ -34,9 +31,6 @@ function FinancePageContent() {
   };
 
   useEffect(() => {
-    const savedTheme = localStorage.getItem(THEME_KEY) as 'dark' | 'light' | null;
-    if (savedTheme) setTheme(savedTheme);
-
     const paramTicker = searchParams.get('ticker')?.toUpperCase();
     const shouldGenerate = searchParams.get('generate') === '1';
     const saved = loadFinanceSession();
@@ -51,13 +45,6 @@ function FinancePageContent() {
     setHydrated(true);
   }, [searchParams]);
 
-  useEffect(() => {
-    const root = document.documentElement;
-    if (theme === 'dark') root.classList.add('dark');
-    else root.classList.remove('dark');
-    localStorage.setItem(THEME_KEY, theme);
-  }, [theme]);
-
   const resetReport = () => {
     setSession(null);
     clearFinanceSession();
@@ -70,35 +57,7 @@ function FinancePageContent() {
 
   return (
     <div className="finance-shell">
-      <header className="finance-header safe-top">
-        <div className="finance-header-inner">
-          <div className="flex items-center gap-3">
-            <Link href="/" className="grok-ghost-btn" aria-label="Back to chat">
-              <ArrowLeft className="h-4 w-4" />
-            </Link>
-            <Link href="/" className="grok-header-home">
-              <SweepLogo className="h-7 w-7" showWordmark={false} />
-            </Link>
-            <div>
-              <p className="font-pixel text-base text-[var(--v-fg)] sm:text-lg">Finance</p>
-              <p className="text-[11px] text-[var(--v-fg-4)]">Institutional analysis & grounded Q&A</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Link href="/" className="grok-ghost-btn grok-ghost-btn--wide hidden sm:inline-flex">
-              Chat
-            </Link>
-            <button
-              type="button"
-              onClick={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
-              className="grok-ghost-btn"
-              aria-label="Toggle theme"
-            >
-              {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-            </button>
-          </div>
-        </div>
-      </header>
+      <WorkspacePageHeader theme={theme} onToggleTheme={toggleTheme} />
 
       <main className="finance-main">
         <FinanceSplitView
