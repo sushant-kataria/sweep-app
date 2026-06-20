@@ -45,7 +45,6 @@ export function FinanceMarketPanel({ ticker }: { ticker: string }) {
         if (!cancelled) setSnapshot(data);
       } catch (e) {
         if (!cancelled) {
-          setSnapshot(null);
           setError(e instanceof Error ? e.message : 'Market data unavailable.');
         }
       } finally {
@@ -57,6 +56,9 @@ export function FinanceMarketPanel({ ticker }: { ticker: string }) {
       cancelled = true;
     };
   }, [ticker, range]);
+
+  const displaySnapshot = snapshot?.range === range ? snapshot : null;
+  const showChart = displaySnapshot && !loading;
 
   return (
     <section className="finance-market-panel space-y-3">
