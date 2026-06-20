@@ -31,6 +31,14 @@ const statements = [
     fetched_at TEXT NOT NULL
   )`,
   `CREATE INDEX IF NOT EXISTS idx_company_reports_ticker ON company_reports(ticker)`,
+  `CREATE TABLE IF NOT EXISTS market_snapshots (
+    cache_key TEXT PRIMARY KEY,
+    ticker TEXT NOT NULL,
+    range_key TEXT NOT NULL,
+    snapshot_json TEXT NOT NULL,
+    fetched_at TEXT NOT NULL
+  )`,
+  `CREATE INDEX IF NOT EXISTS idx_market_snapshots_ticker ON market_snapshots(ticker)`,
 ];
 
 for (const sql of statements) {

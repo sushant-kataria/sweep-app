@@ -8,6 +8,7 @@ import { FinanceBuilder } from '@/components/finance/finance-builder';
 import { FinanceChat } from '@/components/finance/finance-chat';
 import { FinanceDownloadButton } from '@/components/finance/finance-download-button';
 import { FinanceSplitView } from '@/components/finance/finance-split-view';
+import { FinanceMarketPanel } from '@/components/finance/finance-market-panel';
 import { FinanceMetricsPanel } from '@/components/finance/finance-metrics-panel';
 import { WorkspacePageHeader } from '@/components/workspace/workspace-page-header';
 import { useSweepTheme } from '@/hooks/use-sweep-theme';
@@ -86,6 +87,8 @@ function FinancePageContent() {
                       </button>
                     </div>
                   </div>
+
+                  <FinanceMarketPanel ticker={session.report.ticker} />
 
                   <FinanceMetricsPanel metrics={session.metrics} />
 
