@@ -10,32 +10,38 @@ export function normalizeCik(cik: string | number): string {
 
 export async function getCompanyCount(): Promise<number> {
   if (!isTursoConfigured()) return 0;
-  const db = getTurso();
-  const result = await db.execute('SELECT COUNT(*) AS count FROM companies');
-  return Number(result.rows[0]?.count ?? 0);
+  try {
+    const db = getTurso();
+    const result = await db.execute('SELECT COUNT(*) AS count FROM companies');
+    return Number(result.rows[0]?.count ?? 0);
+  } catch {
+    return 0;
+  }
 }
 
 export async function searchCompanies(query: string, limit = 15): Promise<CompanySearchResult[]> {
   const q = query.trim();
+  const safeLimit = Number.isFinite(limit) ? Math.min(Math.max(1, Math.floor(limit)), 30) : 15;
   if (q.length < 1) return [];
 
   if (isTursoConfigured()) {
     const count = await getCompanyCount();
     if (count > 0) {
-      return searchCompaniesTurso(q, limit);
+      return searchCompaniesTurso(q, safeLimit);
     }
   }
 
-  return searchCompaniesSecFallback(q, limit);
+  return searchCompaniesSecFallback(q, safeLimit);
 }
 
 async function searchCompaniesTurso(query: string, limit: number): Promise<CompanySearchResult[]> {
-  const db = getTurso();
-  const upper = query.toUpperCase();
-  const tickerPrefix = `${upper}%`;
-  const namePattern = `%${query}%`;
+  try {
+    const db = getTurso();
+    const upper = query.toUpperCase();
+    const tickerPrefix = `${upper}%`;
+    const namePattern = `%${query}%`;
 
-  const result = await db.execute({
+    const result = await db.execute({
     sql: `
       SELECT cik, ticker, name
       FROM companies
@@ -60,6 +66,9 @@ async function searchCompaniesTurso(query: string, limit: number): Promise<Compa
     ticker: String(row.ticker),
     name: String(row.name),
   }));
+  } catch {
+    return searchCompaniesSecFallback(query, limit);
+  }
 }
 
 let secTickerCache: SecCompany[] | null = null;
@@ -123,18 +132,22 @@ export async function getCompanyByTicker(ticker: string): Promise<SecCompany | n
   if (isTursoConfigured()) {
     const count = await getCompanyCount();
     if (count > 0) {
-      const db = getTurso();
-      const result = await db.execute({
-        sql: 'SELECT cik, ticker, name FROM companies WHERE UPPER(ticker) = ? LIMIT 1',
-        args: [normalized],
-      });
-      const row = result.rows[0];
-      if (row) {
-        return {
-          cik: String(row.cik),
-          ticker: String(row.ticker),
-          name: String(row.name),
-        };
+      try {
+        const db = getTurso();
+        const result = await db.execute({
+          sql: 'SELECT cik, ticker, name FROM companies WHERE UPPER(ticker) = ? LIMIT 1',
+          args: [normalized],
+        });
+        const row = result.rows[0];
+        if (row) {
+          return {
+            cik: String(row.cik),
+            ticker: String(row.ticker),
+            name: String(row.name),
+          };
+        }
+      } catch {
+        // Fall through to SEC cache.
       }
     }
   }
