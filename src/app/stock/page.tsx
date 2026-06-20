@@ -42,6 +42,7 @@ function StockPageContent() {
   const [hydrated, setHydrated] = useState(false);
   const [loading, setLoading] = useState(false);
   const [screenerLoading, setScreenerLoading] = useState(false);
+  const [screenerError, setScreenerError] = useState('');
   const [market, setMarket] = useState<MarketSnapshot | null>(null);
   const [isSecFiler, setIsSecFiler] = useState<boolean | null>(null);
 
@@ -61,6 +62,7 @@ function StockPageContent() {
 
   const loadScreener = async (ticker: string) => {
     setScreenerLoading(true);
+    setScreenerError('');
     try {
       const res = await fetch(`/api/stock/${encodeURIComponent(ticker)}/screener`);
       const data = (await res.json()) as StockScreenerData & { error?: string };
@@ -69,6 +71,7 @@ function StockPageContent() {
     } catch (e) {
       console.warn('[stock] screener load failed', e);
       setScreener(null);
+      setScreenerError(e instanceof Error ? e.message : 'Could not load SEC financials.');
     } finally {
       setScreenerLoading(false);
     }
@@ -80,6 +83,7 @@ function StockPageContent() {
     setError('');
     setMarket(null);
     setScreener(null);
+    setScreenerError('');
     setIsSecFiler(null);
     void checkSecFiler(next.ticker);
     void loadScreener(next.ticker);
@@ -124,6 +128,7 @@ function StockPageContent() {
   const resetView = () => {
     setSession(null);
     setScreener(null);
+    setScreenerError('');
     clearStockSession();
     setError('');
     setIsSecFiler(null);
@@ -236,7 +241,13 @@ function StockPageContent() {
                             </Link>
                           </p>
                         </>
-                      ) : null}
+                      ) : screenerError ? (
+                        <p className="text-sm text-red-500">{screenerError}</p>
+                      ) : (
+                        <p className="text-sm text-[var(--v-fg-4)]">
+                          SEC financials could not be loaded. The price chart below may still work from market data.
+                        </p>
+                      )}
                     </section>
 
                     <section id="chart">
@@ -259,7 +270,7 @@ function StockPageContent() {
                       )}
                     </section>
 
-                    {screener && (
+                    {screener ? (
                       <>
                         <StockFinancialTable table={screener.quarterlyResults} />
                         <StockFinancialTable table={screener.profitAndLoss} />
@@ -268,7 +279,20 @@ function StockPageContent() {
                         <StockFinancialTable table={screener.ratios} />
                         <StockDocumentsList documents={screener.documents} />
                       </>
-                    )}
+                    ) : !screenerLoading ? (
+                      <>
+                        <section id="quarterly-results" className="stock-financial-section">
+                          <h2 className="stock-section-title">Quarterly results</h2>
+                          <p className="text-sm text-[var(--v-fg-4)]">
+                            {screenerError || 'Financial tables load after SEC XBRL is fetched for this ticker.'}
+                          </p>
+                        </section>
+                        <section id="documents" className="stock-financial-section">
+                          <h2 className="stock-section-title">Documents</h2>
+                          <p className="text-sm text-[var(--v-fg-4)]">No SEC filing links loaded yet.</p>
+                        </section>
+                      </>
+                    ) : null}
 
                     <section id="analysis" className="stock-financial-section">
                       <h2 className="stock-section-title">Research note</h2>

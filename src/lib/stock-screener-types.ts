@@ -4,14 +4,15 @@
 export const SCREENER_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 
 /** Bump when screener parsing shape changes — invalidates Turso cache rows. */
-export const SCREENER_PARSER_VERSION = 1;
+export const SCREENER_PARSER_VERSION = 2;
 
 export type FinancialPeriod = {
   key: string;
   label: string;
   end: string;
-  form: '10-K' | '10-Q';
+  form: '10-K' | '10-Q' | '20-F' | '6-K';
   fp?: string;
+  frame?: string | null;
 };
 
 export type FinancialTable = {

@@ -10,7 +10,7 @@ export function StockSecFilerBadge({ isSecFiler, loading }: Props) {
     return (
       <span
         className="stock-sec-badge stock-sec-badge--filer"
-        title="Registered with the SEC — quarterly and annual financials from EDGAR (10-K/10-Q)."
+        title="Registered with the SEC — financials from EDGAR (10-K/10-Q or 20-F/6-K for foreign issuers)."
       >
         SEC filer
       </span>

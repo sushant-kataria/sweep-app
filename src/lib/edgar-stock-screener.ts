@@ -1,4 +1,10 @@
 import { fetchEdgarCompanyFacts, SEC_USER_AGENT } from './finance-edgar';
+import {
+  isAnnualFactEntry,
+  isQuarterlyFactEntry,
+  isResearchFilingForm,
+  normalizeResearchFormLabel,
+} from './edgar-filing-forms';
 import { SCREENER_CACHE_TTL_MS } from './stock-screener-types';
 import type {
   FinancialPeriod,
@@ -90,6 +96,18 @@ function formatRatio(v: number | null): string {
   return v.toFixed(2);
 }
 
+function matchesPeriod(entry: EdgarFactEntry, period: FinancialPeriod): boolean {
+  if (entry.end !== period.end) return false;
+  if (period.frame) return entry.frame === period.frame;
+  if (period.form === '10-Q' || period.form === '6-K') {
+    return isQuarterlyFactEntry(entry) && (!period.fp || entry.fp === period.fp);
+  }
+  if (period.form === '20-F') {
+    return isAnnualFactEntry(entry);
+  }
+  return normalizeResearchFormLabel(entry.form) === period.form && (!period.fp || entry.fp === period.fp);
+}
+
 function pickFactValue(
   facts: EdgarFacts,
   tags: readonly string[],
@@ -101,17 +119,8 @@ function pickFactValue(
     const units = entry?.units?.[unit];
     if (!units) continue;
 
-    const matches = units.filter(
-      (u) => u.end === period.end && u.form === period.form && (period.fp ? u.fp === period.fp : true),
-    );
+    const matches = units.filter((u) => matchesPeriod(u, period));
     if (!matches.length) continue;
-
-    if (period.form === '10-Q' && unit === 'USD') {
-      const framed = matches.filter((u) => u.frame && /Q[1-4]$/.test(u.frame));
-      const pool = framed.length ? framed : matches;
-      const best = pool.sort((a, b) => String(b.filed).localeCompare(String(a.filed)))[0];
-      if (best) return unit === 'USD' ? toMillions(best.val) : best.val;
-    }
 
     const best = matches.sort((a, b) => String(b.filed).localeCompare(String(a.filed)))[0];
     if (best) return unit === 'USD' ? toMillions(best.val) : best.val;
@@ -128,22 +137,25 @@ function pickLatestFact(facts: EdgarFacts, tags: readonly string[], unit: string
     const units = facts[tag]?.units?.[unit];
     if (!units?.length) continue;
     const best = [...units]
-      .filter((u) => u.form === '10-K' || u.form === '10-Q')
+      .filter((u) => isAnnualFactEntry(u))
       .sort((a, b) => new Date(b.end).getTime() - new Date(a.end).getTime())[0];
     if (best) return unit === 'USD' ? toMillions(best.val) : best.val;
   }
   return null;
 }
 
-function dedupePeriods(entries: EdgarFactEntry[], form: '10-K' | '10-Q', limit: number): FinancialPeriod[] {
+function dedupePeriods(entries: EdgarFactEntry[], kind: 'annual' | 'quarterly', limit: number): FinancialPeriod[] {
   const byKey = new Map<string, EdgarFactEntry>();
 
   for (const entry of entries) {
-    if (entry.form !== form) continue;
-    if (form === '10-K' && entry.fp && entry.fp !== 'FY') continue;
-    if (form === '10-Q' && entry.fp && !/^Q[1-4]$/.test(entry.fp)) continue;
+    const match = kind === 'annual' ? isAnnualFactEntry(entry) : isQuarterlyFactEntry(entry);
+    if (!match) continue;
 
-    const key = `${entry.end}:${entry.fp ?? ''}`;
+    const key =
+      kind === 'annual'
+        ? `${entry.end}:${entry.form}`
+        : `${entry.end}:${entry.frame ?? entry.fp ?? 'q'}`;
+
     const existing = byKey.get(key);
     if (!existing || String(entry.filed ?? '') > String(existing.filed ?? '')) {
       byKey.set(key, entry);
@@ -154,11 +166,12 @@ function dedupePeriods(entries: EdgarFactEntry[], form: '10-K' | '10-Q', limit: 
     .sort((a, b) => new Date(b.end).getTime() - new Date(a.end).getTime())
     .slice(0, limit)
     .map((entry) => ({
-      key: `${entry.end}:${entry.fp ?? form}`,
-      label: form === '10-K' ? fiscalYearLabel(entry) : quarterLabel(entry),
+      key: kind === 'annual' ? `${entry.end}:annual` : `${entry.end}:${entry.frame ?? entry.fp ?? 'q'}`,
+      label: kind === 'annual' ? fiscalYearLabel(entry) : quarterLabel(entry),
       end: entry.end,
-      form,
+      form: normalizeResearchFormLabel(entry.form),
       fp: entry.fp,
+      frame: entry.frame,
     }))
     .reverse();
 }
@@ -175,13 +188,13 @@ function quarterLabel(entry: EdgarFactEntry): string {
   return `${mon} '${year}`;
 }
 
-function collectPeriods(facts: EdgarFacts, tags: readonly string[], form: '10-K' | '10-Q', limit: number): FinancialPeriod[] {
+function collectPeriods(facts: EdgarFacts, tags: readonly string[], kind: 'annual' | 'quarterly', limit: number): FinancialPeriod[] {
   const all: EdgarFactEntry[] = [];
   for (const tag of tags) {
     const units = facts[tag]?.units?.USD ?? [];
     all.push(...units);
   }
-  return dedupePeriods(all, form, limit);
+  return dedupePeriods(all, kind, limit);
 }
 
 function buildTable(
@@ -499,7 +512,7 @@ async function fetchRecentFilings(cik: string): Promise<StockDocumentLink[]> {
     const links: StockDocumentLink[] = [];
     for (let i = 0; i < recent.form.length && links.length < 8; i++) {
       const form = recent.form[i];
-      if (form !== '10-K' && form !== '10-Q') continue;
+      if (!isResearchFilingForm(form)) continue;
       const accession = recent.accessionNumber?.[i]?.replace(/-/g, '');
       const doc = recent.primaryDocument?.[i];
       if (!accession || !doc) continue;
@@ -525,8 +538,8 @@ export async function buildStockScreenerData(input: {
   const { entityName, facts } = await fetchEdgarCompanyFacts(input.company.cik);
   const gaap = facts as EdgarFacts;
 
-  const annualPeriods = collectPeriods(gaap, REVENUE_TAGS, '10-K', 10);
-  const quarterlyPeriods = collectPeriods(gaap, REVENUE_TAGS, '10-Q', 12);
+  const annualPeriods = collectPeriods(gaap, REVENUE_TAGS, 'annual', 10);
+  const quarterlyPeriods = collectPeriods(gaap, REVENUE_TAGS, 'quarterly', 12);
 
   const profitAndLoss = buildTable('Profit & Loss', 'Annual · SEC XBRL · USD millions', gaap, annualPeriods, PL_ROWS);
   const quarterlyResults = buildTable(
