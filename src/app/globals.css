@@ -1629,6 +1629,61 @@ body.finance-split-dragging--vertical {
   margin-inline: auto;
 }
 
+.finance-market-panel {
+  border-radius: 0.75rem;
+  border: 1px solid var(--v-border);
+  background: var(--v-surface);
+  padding: 0.875rem;
+}
+
+.finance-market-ranges {
+  display: flex;
+  gap: 0.25rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--v-border);
+  padding: 0.125rem;
+}
+
+.finance-market-range {
+  border-radius: 0.375rem;
+  padding: 0.25rem 0.625rem;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: var(--v-fg-4);
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.finance-market-range:hover {
+  color: var(--v-fg-2);
+}
+
+.finance-market-range--active {
+  background: var(--v-fg);
+  color: var(--v-bg);
+}
+
+.finance-market-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.finance-market-stat-label {
+  display: block;
+  font-size: 0.625rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--v-fg-5);
+}
+
+.finance-market-stat-value {
+  display: block;
+  margin-top: 0.125rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--v-fg-2);
+}
+
 .finance-metrics {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
