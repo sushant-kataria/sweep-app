@@ -7,6 +7,12 @@ export type BalanceSheetSection = {
   nonCurrent: Array<{ label: string; value: number }>;
 };
 
+export type BalanceSheetAuthoritativeTotals = {
+  totalAssets?: number;
+  totalLiabilities?: number;
+  totalEquity?: number;
+};
+
 export type BalanceSheetReport = {
   type: 'balance_sheet';
   ticker: string;
@@ -21,6 +27,8 @@ export type BalanceSheetReport = {
   dataSource?: DataSourceType;
   sourceUrl?: string;
   sourceFileName?: string;
+  /** SEC XBRL filing totals — preferred over summing parsed line items when present. */
+  authoritativeTotals?: BalanceSheetAuthoritativeTotals;
 };
 
 export type FinanceMetrics = {
@@ -62,6 +70,8 @@ export type FinanceSession = {
   metrics: FinanceMetrics;
   analysis: FinanceAnalysis;
   generatedAt: number;
+  /** Bumped when EDGAR parsing logic changes — invalidates stale Turso cache entries. */
+  parserVersion?: number;
 };
 
 export type FinanceReportContext = {

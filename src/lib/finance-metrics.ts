@@ -29,10 +29,11 @@ export function computeFinanceMetrics(report: BalanceSheetReport): FinanceMetric
   const nonCurrentAssets = sum(report.assets.nonCurrent);
   const currentLiabilities = sum(report.liabilities.current);
   const nonCurrentLiabilities = sum(report.liabilities.nonCurrent);
-  const totalEquity = sum(report.equity);
+  const auth = report.authoritativeTotals;
 
-  const totalAssets = currentAssets + nonCurrentAssets;
-  const totalLiabilities = currentLiabilities + nonCurrentLiabilities;
+  const totalAssets = auth?.totalAssets ?? currentAssets + nonCurrentAssets;
+  const totalLiabilities = auth?.totalLiabilities ?? currentLiabilities + nonCurrentLiabilities;
+  const totalEquity = auth?.totalEquity ?? sum(report.equity);
   const cashAndEquivalents = findCash(report.assets);
   const totalDebt = findDebt(report);
   const quickAssets = findQuickAssets(report.assets);

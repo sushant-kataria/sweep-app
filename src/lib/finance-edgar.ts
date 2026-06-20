@@ -100,12 +100,12 @@ export function buildBalanceSheetFromEdgarFacts(
   let totalEquity = toMillions(entries.equity?.val);
   let totalLiabilities = toMillions(entries.totalLiabilities?.val);
 
-  if (!totalAssets) {
+  if (totalAssets == null) {
     throw new Error('Could not extract total assets from SEC XBRL data for this company.');
   }
-  if (!totalEquity && totalLiabilities) totalEquity = totalAssets - totalLiabilities;
-  if (!totalLiabilities && totalEquity) totalLiabilities = totalAssets - totalEquity;
-  if (!totalLiabilities || !totalEquity) {
+  if (totalEquity == null && totalLiabilities != null) totalEquity = totalAssets - totalLiabilities;
+  if (totalLiabilities == null && totalEquity != null) totalLiabilities = totalAssets - totalEquity;
+  if (totalLiabilities == null || totalEquity == null) {
     throw new Error('Incomplete balance sheet totals in SEC filing — try uploading the annual report PDF.');
   }
 
@@ -121,9 +121,9 @@ export function buildBalanceSheetFromEdgarFacts(
   const accountsPayable = toMillions(entries.accountsPayable?.val) ?? Math.round(currentLiabilities * 0.35);
   const longTermDebt = toMillions(entries.longTermDebt?.val) ?? Math.round(nonCurrentLiabilities * 0.5);
   const shortTermDebt = toMillions(entries.shortTermDebt?.val) ?? 0;
-  const retained = toMillions(entries.retainedEarnings?.val) ?? Math.round(totalEquity * 0.8);
-
+  const retained = toMillions(entries.retainedEarnings?.val);
   const equityTotal = totalEquity;
+  const equityLines = buildEquityLineItems(equityTotal, retained);
   const otherCurrentAssets = Math.max(currentAssets - cash - receivables - inventory, 0);
   const otherNonCurrentAssets = Math.max(nonCurrentAssets - ppe, 0);
   const otherCurrentLiab = Math.max(currentLiabilities - accountsPayable - shortTermDebt, 0);
@@ -164,11 +164,32 @@ export function buildBalanceSheetFromEdgarFacts(
         ...(otherNonCurrentLiab ? [{ label: 'Other long-term liabilities', value: otherNonCurrentLiab }] : []),
       ],
     },
-    equity: [
-      { label: 'Retained earnings', value: retained },
-      { label: 'Other equity', value: Math.max(equityTotal - retained, 0) },
-    ].filter((e) => e.value > 0),
+    equity: equityLines,
+    authoritativeTotals: {
+      totalAssets,
+      totalLiabilities,
+      totalEquity: equityTotal,
+    },
   };
+}
+
+function buildEquityLineItems(
+  totalEquity: number,
+  retained: number | null,
+): Array<{ label: string; value: number }> {
+  if (retained == null) {
+    return [{ label: "Total stockholders' equity", value: totalEquity }];
+  }
+
+  const other = totalEquity - retained;
+  const lines: Array<{ label: string; value: number }> = [{ label: 'Retained earnings', value: retained }];
+  if (other !== 0) {
+    lines.push({
+      label: 'Other equity (APIC, treasury stock, AOCI, etc.)',
+      value: other,
+    });
+  }
+  return lines;
 }
 
 export async function fetchEdgarBalanceSheetReport(meta: {

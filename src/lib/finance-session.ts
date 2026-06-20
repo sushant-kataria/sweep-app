@@ -1,6 +1,6 @@
 import { getBalanceSheetReport } from './finance-data';
 import { fetchEdgarBalanceSheetReport } from './finance-edgar';
-import { getCachedFinanceSession, setCachedFinanceSession } from './finance-report-cache';
+import { getCachedFinanceSession, REPORT_PARSER_VERSION, setCachedFinanceSession } from './finance-report-cache';
 import { computeFinanceMetrics } from './finance-metrics';
 import { buildTemplateAnalysis } from './finance-template-analysis';
 import type { FinanceSession } from './finance-types';
