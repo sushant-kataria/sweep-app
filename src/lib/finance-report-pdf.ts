@@ -231,11 +231,12 @@ function buildBalanceSheetPage(doc: jsPDF, report: BalanceSheetReport) {
 
   const totalCurrentAssets = sum(currentAssets);
   const totalNonCurrentAssets = sum(nonCurrentAssets);
-  const totalAssets = totalCurrentAssets + totalNonCurrentAssets;
   const totalCurrentLiabilities = sum(currentLiabilities);
   const totalNonCurrentLiabilities = sum(nonCurrentLiabilities);
-  const totalLiabilities = totalCurrentLiabilities + totalNonCurrentLiabilities;
-  const totalEquity = sum(equity);
+  const auth = report.authoritativeTotals;
+  const totalAssets = auth?.totalAssets ?? totalCurrentAssets + totalNonCurrentAssets;
+  const totalLiabilities = auth?.totalLiabilities ?? totalCurrentLiabilities + totalNonCurrentLiabilities;
+  const totalEquity = auth?.totalEquity ?? sum(equity);
   const totalLiabilitiesAndEquity = totalLiabilities + totalEquity;
 
   const body: Array<Array<string | { content: string; styles?: Record<string, unknown> }>> = [

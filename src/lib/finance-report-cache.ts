@@ -2,6 +2,8 @@ import type { FinanceSession } from './finance-types';
 import { getTurso, isTursoConfigured } from './turso';
 
 const CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+/** Increment when balance-sheet parsing changes so cached sessions are refreshed. */
+export const REPORT_PARSER_VERSION = 2;
 
 export async function ensureReportCacheTable(): Promise<void> {
   if (!isTursoConfigured()) return;
@@ -35,10 +37,16 @@ export async function getCachedFinanceSession(cik: string): Promise<FinanceSessi
       return null;
     }
 
-    return JSON.parse(String(row.session_json)) as FinanceSession;
+    const session = JSON.parse(String(row.session_json)) as FinanceSession;
+    if (!isCacheSessionValid(session)) return null;
+    return session;
   } catch {
     return null;
   }
+}
+
+function isCacheSessionValid(session: FinanceSession): boolean {
+  return session.parserVersion === REPORT_PARSER_VERSION;
 }
 
 export async function setCachedFinanceSession(

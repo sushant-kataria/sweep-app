@@ -101,7 +101,7 @@ async function fetchCompany(company) {
   if (!totalAssets) throw new Error(`Missing assets for ${company.ticker}`);
   if (!totalEquity && totalLiabilities) totalEquity = totalAssets - totalLiabilities;
   if (!totalLiabilities && totalEquity) totalLiabilities = totalAssets - totalEquity;
-  if (!totalLiabilities || !totalEquity) throw new Error(`Missing totals for ${company.ticker}`);
+  if (totalLiabilities == null || totalEquity == null) throw new Error(`Missing totals for ${company.ticker}`);
 
   const currentAssets = toMillions(entries.currentAssets?.val) ?? Math.round(totalAssets * 0.35);
   const nonCurrentAssets = Math.max(totalAssets - currentAssets, 0);
@@ -115,9 +115,17 @@ async function fetchCompany(company) {
   const accountsPayable = toMillions(entries.accountsPayable?.val) ?? Math.round(currentLiabilities * 0.35);
   const longTermDebt = toMillions(entries.longTermDebt?.val) ?? Math.round(nonCurrentLiabilities * 0.5);
   const shortTermDebt = toMillions(entries.shortTermDebt?.val) ?? 0;
-  const retained = toMillions(entries.retainedEarnings?.val) ?? Math.round((totalEquity ?? totalAssets - totalLiabilities) * 0.8);
-
+  const retained = toMillions(entries.retainedEarnings?.val);
   const equityTotal = totalEquity ?? totalAssets - totalLiabilities;
+  const equityLines =
+    retained == null
+      ? [{ label: "Total stockholders' equity", value: equityTotal }]
+      : [
+          { label: 'Retained earnings', value: retained },
+          ...(equityTotal - retained !== 0
+            ? [{ label: 'Other equity (APIC, treasury stock, AOCI, etc.)', value: equityTotal - retained }]
+            : []),
+        ];
   const otherCurrentAssets = Math.max(currentAssets - cash - receivables - inventory, 0);
   const otherNonCurrentAssets = Math.max(nonCurrentAssets - ppe, 0);
   const otherCurrentLiab = Math.max(currentLiabilities - accountsPayable - shortTermDebt, 0);
@@ -157,10 +165,12 @@ async function fetchCompany(company) {
         ...(otherNonCurrentLiab ? [{ label: 'Other long-term liabilities', value: otherNonCurrentLiab }] : []),
       ],
     },
-    equity: [
-      { label: 'Retained earnings', value: retained },
-      { label: 'Other equity', value: Math.max(equityTotal - retained, 0) },
-    ].filter((e) => e.value > 0),
+    equity: equityLines,
+    authoritativeTotals: {
+      totalAssets,
+      totalLiabilities,
+      totalEquity: equityTotal,
+    },
   };
 }
 
