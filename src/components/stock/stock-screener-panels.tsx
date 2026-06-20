@@ -134,8 +134,8 @@ export function StockDocumentsList({ documents }: { documents: StockDocumentLink
 }
 
 export const STOCK_SECTIONS = [
-  { id: 'summary', label: 'Summary' },
   { id: 'chart', label: 'Chart' },
+  { id: 'summary', label: 'Summary' },
   { id: 'peers', label: 'Peers' },
   { id: 'quarterly-results', label: 'Quarters' },
   { id: 'profit-loss', label: 'Profit & Loss' },

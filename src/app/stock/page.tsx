@@ -221,6 +221,15 @@ function StockPageContent() {
 
                     <StockDataFreshness screener={screener} market={market} />
 
+                    <section id="chart">
+                      <StockMarketPanel
+                        ticker={session.ticker}
+                        companyName={session.companyName}
+                        liveProfile={session.liveData}
+                        onSnapshot={handleMarketSnapshot}
+                      />
+                    </section>
+
                     <section id="summary" className="stock-summary space-y-4">
                       {screenerLoading && !screener ? (
                         <p className="text-sm text-[var(--v-fg-4)]">Loading SEC financials…</p>
@@ -245,18 +254,9 @@ function StockPageContent() {
                         <p className="text-sm text-red-500">{screenerError}</p>
                       ) : (
                         <p className="text-sm text-[var(--v-fg-4)]">
-                          SEC financials could not be loaded. The price chart below may still work from market data.
+                          SEC financials could not be loaded. The price chart above may still work from market data.
                         </p>
                       )}
-                    </section>
-
-                    <section id="chart">
-                      <StockMarketPanel
-                        ticker={session.ticker}
-                        companyName={session.companyName}
-                        liveProfile={session.liveData}
-                        onSnapshot={handleMarketSnapshot}
-                      />
                     </section>
 
                     <section id="peers" className="stock-financial-section">
