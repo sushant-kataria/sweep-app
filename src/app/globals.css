@@ -2636,6 +2636,131 @@ body.finance-split-dragging--vertical {
   color: var(--home-muted);
 }
 
+.home-capabilities {
+  position: relative;
+  padding: 2.5rem 0 3rem;
+  border-top: 1px solid var(--home-border);
+}
+
+.home-capabilities-lead {
+  max-width: 42rem;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: var(--home-muted);
+}
+
+.home-capability-grid {
+  display: grid;
+  gap: 0.85rem;
+}
+
+@media (min-width: 640px) {
+  .home-capability-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .home-capability-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.home-capability {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  border-radius: 0.75rem;
+  border: 1px solid var(--home-border);
+  background: var(--home-surface);
+  padding: 1rem;
+}
+
+.home-capability-icon {
+  display: inline-flex;
+  height: 2rem;
+  width: 2rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.45rem;
+  border: 1px solid var(--home-border);
+  color: var(--home-accent-2);
+  background: color-mix(in srgb, var(--v-fg) 4%, transparent);
+}
+
+.home-capability-title {
+  font-size: 0.875rem;
+  color: var(--v-fg);
+}
+
+.home-capability-desc {
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: var(--home-muted);
+}
+
+.home-quickstart {
+  position: relative;
+  padding: 2.5rem 0 3rem;
+  border-top: 1px solid var(--home-border);
+}
+
+.home-quickstart-grid {
+  display: grid;
+  gap: 0.65rem;
+}
+
+@media (min-width: 640px) {
+  .home-quickstart-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 900px) {
+  .home-quickstart-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.home-quickstart-card {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  border-radius: 0.625rem;
+  border: 1px solid var(--home-border);
+  background: var(--home-surface);
+  padding: 0.85rem 1rem;
+  font-size: 0.6875rem;
+  color: var(--home-muted);
+  transition: border-color 0.15s ease, transform 0.12s ease, background 0.15s ease;
+}
+
+.home-quickstart-card:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--v-fg) 18%, var(--home-border));
+  background: color-mix(in srgb, var(--v-fg) 4%, transparent);
+  color: var(--v-fg);
+}
+
+.home-quickstart-ticker {
+  font-size: 0.8125rem;
+  color: var(--v-fg);
+}
+
+.home-quickstart-label {
+  flex: 1;
+}
+
+.home-quickstart-arrow {
+  opacity: 0.45;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.home-quickstart-card:hover .home-quickstart-arrow {
+  opacity: 1;
+  transform: translateX(2px);
+}
+
 .home-section-head,
 .home-api-copy,
 .home-chat-head {
@@ -2751,6 +2876,11 @@ body.finance-split-dragging--vertical {
   font-size: 0.875rem;
   line-height: 1.6;
   color: var(--home-muted);
+}
+
+.home-api-stack {
+  display: grid;
+  gap: 0.85rem;
 }
 
 .home-api-code {
