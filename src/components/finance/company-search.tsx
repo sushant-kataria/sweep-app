@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useRef, useState } from 'react';
 import { Loader2, Search } from 'lucide-react';
+import { StockLogo } from '@/components/stock/stock-logo';
 import type { CompanySearchResult } from '@/lib/company-types';
 
 type Props = {
@@ -95,7 +96,15 @@ export function CompanySearch({
     <div ref={rootRef} className={`company-search ${compact ? 'company-search--compact' : ''}`}>
       <label className="finance-field" htmlFor={listId}>
         {!compact && <span>Company</span>}
-        <div className="company-search-input-wrap">
+        <div className={`company-search-input-wrap ${value ? 'company-search-input-wrap--has-logo' : ''}`}>
+          {value && (
+            <StockLogo
+              ticker={value.ticker}
+              companyName={value.name}
+              size="xs"
+              className="company-search-input-logo"
+            />
+          )}
           <Search className="company-search-icon" aria-hidden />
           <input
             id={listId}
@@ -135,9 +144,12 @@ export function CompanySearch({
                 role="option"
                 onClick={() => pick(company)}
               >
-                <span className="company-search-ticker">{company.ticker}</span>
-                <span className="company-search-name">{company.name}</span>
-                <span className="company-search-cik">CIK {company.cik}</span>
+                <StockLogo ticker={company.ticker} companyName={company.name} size="sm" className="company-search-option-logo" />
+                <span className="company-search-option-text">
+                  <span className="company-search-ticker">{company.ticker}</span>
+                  <span className="company-search-name">{company.name}</span>
+                  <span className="company-search-cik">CIK {company.cik}</span>
+                </span>
               </button>
             </li>
           ))}

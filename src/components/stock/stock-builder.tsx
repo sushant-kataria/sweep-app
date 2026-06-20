@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { BarChart3, LineChart, Loader2, Search } from 'lucide-react';
 import { CompanySearch } from '@/components/finance/company-search';
+import { StockLogo } from '@/components/stock/stock-logo';
 import type { CompanySearchResult } from '@/lib/company-types';
 import { loadStockSessionByTicker } from '@/lib/stock-client';
 import { DEFAULT_STOCK_TICKER, STOCK_OPTIONS, STOCK_SECTORS, getStocksBySector } from '@/lib/stock-data';
@@ -122,6 +123,21 @@ export function StockBuilder({ onSession, onError }: Props) {
 
         {tab === 'watchlist' && (
           <>
+            <div className="stock-ticker-chips" role="listbox" aria-label="Watchlist">
+              {STOCK_OPTIONS.map((s) => (
+                <button
+                  key={s.ticker}
+                  type="button"
+                  role="option"
+                  aria-selected={ticker === s.ticker}
+                  className={`stock-ticker-chip ${ticker === s.ticker ? 'stock-ticker-chip--active' : ''}`}
+                  onClick={() => setTicker(s.ticker)}
+                >
+                  <StockLogo ticker={s.ticker} companyName={s.name} size="sm" />
+                  <span className="stock-ticker-chip-label">{s.ticker}</span>
+                </button>
+              ))}
+            </div>
             <label className="finance-field">
               <span>Equity</span>
               <select value={ticker} onChange={(e) => setTicker(e.target.value)} className="finance-input">
@@ -155,6 +171,21 @@ export function StockBuilder({ onSession, onError }: Props) {
             </label>
             <label className="finance-field">
               <span>Company</span>
+              <div className="stock-ticker-chips stock-ticker-chips--compact" role="listbox" aria-label="Sector companies">
+                {sectorStocks.map((s) => (
+                  <button
+                    key={s.ticker}
+                    type="button"
+                    role="option"
+                    aria-selected={ticker === s.ticker}
+                    className={`stock-ticker-chip ${ticker === s.ticker ? 'stock-ticker-chip--active' : ''}`}
+                    onClick={() => setTicker(s.ticker)}
+                  >
+                    <StockLogo ticker={s.ticker} companyName={s.name} size="sm" />
+                    <span className="stock-ticker-chip-label">{s.ticker}</span>
+                  </button>
+                ))}
+              </div>
               <select
                 value={ticker}
                 onChange={(e) => setTicker(e.target.value)}

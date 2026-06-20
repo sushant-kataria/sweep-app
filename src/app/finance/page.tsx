@@ -12,6 +12,7 @@ import { FinanceDownloadButton } from '@/components/finance/finance-download-but
 import { FinanceSplitView } from '@/components/finance/finance-split-view';
 import { FinanceMarketPanel } from '@/components/finance/finance-market-panel';
 import { FinanceMetricsPanel } from '@/components/finance/finance-metrics-panel';
+import { StockLogo } from '@/components/stock/stock-logo';
 import { WorkspacePageHeader } from '@/components/workspace/workspace-page-header';
 import { useSweepTheme } from '@/hooks/use-sweep-theme';
 import { toCompanySearchResult } from '@/lib/company-search-utils';
@@ -109,13 +110,21 @@ function FinancePageContent() {
                     </div>
                   )}
                   <div className="finance-report-header">
-                    <div>
-                      <h1 className="text-lg font-semibold text-[var(--v-fg)]">
-                        {session.report.companyName} ({session.report.ticker})
-                      </h1>
-                      <p className="text-xs text-[var(--v-fg-4)]">
-                        {session.report.period} · {session.report.source}
-                      </p>
+                    <div className="stock-report-identity">
+                      <StockLogo
+                        ticker={session.report.ticker}
+                        companyName={session.report.companyName}
+                        size="xl"
+                        className="stock-report-logo"
+                      />
+                      <div className="stock-report-meta">
+                        <h1 className="text-lg font-semibold text-[var(--v-fg)]">
+                          {session.report.companyName} ({session.report.ticker})
+                        </h1>
+                        <p className="text-xs text-[var(--v-fg-4)]">
+                          {session.report.period} · {session.report.source}
+                        </p>
+                      </div>
                     </div>
                     <div className="finance-report-header-actions">
                       <CompanySearch
