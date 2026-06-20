@@ -5,15 +5,11 @@ import { computeFinanceMetrics } from './finance-metrics';
 import { buildTemplateAnalysis } from './finance-template-analysis';
 import type { FinanceSession } from './finance-types';
 
-export function buildFinanceSessionFromReport(
-  report: FinanceSession['report'],
-  dataSource: FinanceSession['report']['dataSource'] = 'demo',
-): FinanceSession {
-  const enriched = { ...report, dataSource: dataSource ?? report.dataSource };
-  const metrics = computeFinanceMetrics(enriched);
-  const analysis = buildTemplateAnalysis(enriched, metrics);
+export function buildFinanceSessionFromReport(report: FinanceSession['report']): FinanceSession {
+  const metrics = computeFinanceMetrics(report);
+  const analysis = buildTemplateAnalysis(report, metrics);
   return {
-    report: enriched,
+    report,
     metrics,
     analysis,
     generatedAt: Date.now(),
