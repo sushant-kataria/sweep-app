@@ -4,7 +4,7 @@ import { getCompanyByTicker } from '@/lib/companies-db';
 import { buildStockScreenerData } from '@/lib/edgar-stock-screener';
 import { buildEdgarFinanceSession } from '@/lib/finance-session';
 import { getMarketSnapshot } from '@/lib/market-cache';
-import { getStockOption } from '@/lib/stock-data';
+import { getFundamentals, getStockOption } from '@/lib/stock-data';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -35,11 +35,13 @@ export async function GET(_req: Request, context: RouteContext) {
     ]);
 
     const option = getStockOption(normalized);
+    const preloadedFundamentals = getFundamentals(normalized);
     const data = await buildStockScreenerData({
       company,
       market,
       metrics: financeSession?.metrics ?? null,
       sector: option?.sector,
+      preloadedFundamentals,
     });
 
     return NextResponse.json(data);

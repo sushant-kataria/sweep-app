@@ -11,6 +11,7 @@ type YahooChartResult = {
     fiftyTwoWeekHigh?: number;
     fiftyTwoWeekLow?: number;
     regularMarketTime?: number;
+    regularMarketVolume?: number;
   };
   timestamp?: number[];
   indicators?: { quote?: Array<{ close?: Array<number | null> }> };
@@ -85,6 +86,7 @@ export async function fetchYahooMarketSnapshot(
     fiftyTwoWeekLow: meta.fiftyTwoWeekLow ?? null,
     marketCap: null,
     peRatio: null,
+    volume: meta.regularMarketVolume ?? null,
     asOf: meta.regularMarketTime
       ? new Date(meta.regularMarketTime * 1000).toISOString()
       : new Date().toISOString(),
