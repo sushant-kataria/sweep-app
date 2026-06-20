@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { LineChartPro } from '@/components/dashboard/line-chart-pro';
 import { useMarketSnapshot } from '@/hooks/use-market-snapshot';
-import type { MarketRange } from '@/lib/market-types';
+import type { MarketRange, MarketSnapshot } from '@/lib/market-types';
 
 const RANGES: { id: MarketRange; label: string }[] = [
   { id: '6mo', label: '6M' },
@@ -27,15 +28,26 @@ function formatAsOf(iso: string) {
   return d.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
 }
 
-export function FinanceMarketPanel({ ticker }: { ticker: string }) {
+type Props = {
+  ticker: string;
+  companyName: string;
+  liveProfile?: boolean;
+  onSnapshot?: (snapshot: MarketSnapshot | null) => void;
+};
+
+export function StockMarketPanel({ ticker, companyName, liveProfile = false, onSnapshot }: Props) {
   const [range, setRange] = useState<MarketRange>('1y');
   const { displaySnapshot, loading, error } = useMarketSnapshot(ticker, range);
+
+  useEffect(() => {
+    onSnapshot?.(displaySnapshot);
+  }, [displaySnapshot, onSnapshot]);
 
   return (
     <section className="finance-market-panel space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <p className="text-[10px] font-medium uppercase tracking-wider text-[var(--v-fg-5)]">Market</p>
+          <p className="text-[10px] font-medium uppercase tracking-wider text-[var(--v-fg-5)]">Price chart</p>
           {loading && !displaySnapshot ? (
             <p className="text-sm text-[var(--v-fg-4)]">Loading price data…</p>
           ) : displaySnapshot ? (
@@ -85,15 +97,28 @@ export function FinanceMarketPanel({ ticker }: { ticker: string }) {
               <span className="finance-market-stat-label">Prev close</span>
               <span className="finance-market-stat-value">{formatUsd(displaySnapshot.previousClose)}</span>
             </div>
+            <div>
+              <span className="finance-market-stat-label">Day change</span>
+              <span
+                className={`finance-market-stat-value ${displaySnapshot.change >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500'}`}
+              >
+                {formatUsd(displaySnapshot.change)}
+              </span>
+            </div>
           </div>
 
-          <LineChartPro
-            title={`${displaySnapshot.ticker} Stock Price`}
-            data={displaySnapshot.history}
-            unit="USD"
-          />
+          <LineChartPro title={`${companyName} (${ticker})`} data={displaySnapshot.history} unit="USD" />
         </>
       )}
+
+      <p className="text-[11px] text-[var(--v-fg-4)]">
+        {liveProfile
+          ? 'Live market data for this SEC filer. '
+          : 'Live price chart with pre-loaded research fundamentals below. '}
+        <Link href={`/finance?ticker=${encodeURIComponent(ticker)}`} className="text-[var(--v-fg-3)] underline-offset-2 hover:underline">
+          View SEC balance sheet →
+        </Link>
+      </p>
     </section>
   );
 }
