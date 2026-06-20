@@ -1,15 +1,15 @@
 'use client';
 
 import { useSearchParams } from 'next/navigation';
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useCallback, useEffect, useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { ComparisonTable } from '@/components/dashboard/comparison-table';
-import { LineChartPro } from '@/components/dashboard/line-chart-pro';
 import { CompanySearch } from '@/components/finance/company-search';
 import { FinanceSplitView } from '@/components/finance/finance-split-view';
 import { StockAnalysisPanel } from '@/components/stock/stock-analysis-panel';
 import { StockBuilder } from '@/components/stock/stock-builder';
 import { StockChat } from '@/components/stock/stock-chat';
+import { StockMarketPanel } from '@/components/stock/stock-market-panel';
 import { StockMetricsPanel } from '@/components/stock/stock-metrics-panel';
 import { WorkspacePageHeader } from '@/components/workspace/workspace-page-header';
 import { useSweepTheme } from '@/hooks/use-sweep-theme';
@@ -18,6 +18,7 @@ import { loadStockSessionByTicker } from '@/lib/stock-client';
 import { DEFAULT_STOCK_TICKER } from '@/lib/stock-data';
 import { buildStockSession } from '@/lib/stock-session';
 import { clearStockSession, loadStockSession, saveStockSession } from '@/lib/stock-storage';
+import type { MarketSnapshot } from '@/lib/market-types';
 import type { StockSession } from '@/lib/stock-types';
 
 function StockPageContent() {
@@ -28,12 +29,18 @@ function StockPageContent() {
   const [hydrated, setHydrated] = useState(false);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'analysis' | 'peers'>('analysis');
+  const [market, setMarket] = useState<MarketSnapshot | null>(null);
+
+  const handleMarketSnapshot = useCallback((snapshot: MarketSnapshot | null) => {
+    setMarket(snapshot);
+  }, []);
 
   const handleSession = (next: StockSession) => {
     setSession(next);
     saveStockSession(next);
     setActiveTab('analysis');
     setError('');
+    setMarket(null);
   };
 
   const loadTicker = async (symbol: string) => {
@@ -80,7 +87,8 @@ function StockPageContent() {
     return <div className="finance-shell min-h-dvh bg-[var(--v-bg)]" />;
   }
 
-  const chartTitle = session ? `${session.companyName} (${session.ticker}) Stock Price` : '';
+  const chatPrice = market?.price ?? session?.lastPrice ?? 0;
+  const chatHistory = market?.history ?? session?.priceHistory ?? [];
 
   return (
     <div className="finance-shell">
@@ -117,7 +125,7 @@ function StockPageContent() {
                       </h1>
                       <p className="text-xs text-[var(--v-fg-4)]">
                         {session.sector} · {session.currency} ·{' '}
-                        {session.liveData ? 'Live market view' : 'Equity research view'}
+                        {session.liveData ? 'Live market + SEC filer' : 'Research profile + live chart'}
                       </p>
                     </div>
                     <div className="finance-report-header-actions">
@@ -137,9 +145,14 @@ function StockPageContent() {
                     </div>
                   </div>
 
-                  <LineChartPro title={chartTitle} data={session.priceHistory} unit="USD" />
+                  <StockMarketPanel
+                    ticker={session.ticker}
+                    companyName={session.companyName}
+                    liveProfile={session.liveData}
+                    onSnapshot={handleMarketSnapshot}
+                  />
 
-                  <StockMetricsPanel fundamentals={session.fundamentals} lastPrice={session.lastPrice} />
+                  <StockMetricsPanel session={session} market={market} />
 
                   <div className="finance-view-tabs">
                     <button
@@ -176,9 +189,9 @@ function StockPageContent() {
                     ticker: session.ticker,
                     companyName: session.companyName,
                     sector: session.sector,
-                    lastPrice: session.lastPrice,
+                    lastPrice: chatPrice,
                     currency: session.currency,
-                    priceHistory: session.priceHistory,
+                    priceHistory: chatHistory,
                     fundamentals: session.fundamentals,
                     peers: session.peers,
                     analysis: session.analysis,
