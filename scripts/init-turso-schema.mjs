@@ -23,6 +23,14 @@ const statements = [
   )`,
   `CREATE INDEX IF NOT EXISTS idx_companies_ticker ON companies(ticker)`,
   `CREATE INDEX IF NOT EXISTS idx_companies_name ON companies(name)`,
+  `CREATE TABLE IF NOT EXISTS company_reports (
+    cik TEXT PRIMARY KEY,
+    ticker TEXT NOT NULL,
+    period_key TEXT NOT NULL,
+    session_json TEXT NOT NULL,
+    fetched_at TEXT NOT NULL
+  )`,
+  `CREATE INDEX IF NOT EXISTS idx_company_reports_ticker ON company_reports(ticker)`,
 ];
 
 for (const sql of statements) {

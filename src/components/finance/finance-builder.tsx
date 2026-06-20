@@ -103,7 +103,16 @@ export function FinanceBuilder({ onSession, onError }: Props) {
     }
   };
 
-  const handleDemo = () => {
+const SEC_STEPS = ['Looking up SEC filer', 'Fetching XBRL from EDGAR', 'Building balance sheet', 'Computing analysis'];
+
+  const runLoadingSteps = (steps: string[]) => {
+    setStep(0);
+    return window.setInterval(() => {
+      setStep((s) => Math.min(s + 1, steps.length - 1));
+    }, 1800);
+  };
+
+  const handleDemo = async () => {
     if (!selectedCompany) {
       onError('Search and select an SEC-listed company first.');
       return;
@@ -113,16 +122,28 @@ export function FinanceBuilder({ onSession, onError }: Props) {
       return;
     }
     onError('');
-    const session = buildPreloadedFinanceSession(ticker, period);
-    if (!session) {
-      onError(
-        hasPreloaded
-          ? 'No pre-loaded report for that company yet.'
-          : `${ticker} is in the SEC index. Instant reports are ready for Top 25 filers today — Phase 2 loads any ticker from EDGAR. Try upload or pick AAPL, MSFT, NVDA.`,
-      );
+
+    const preloaded = buildPreloadedFinanceSession(ticker, period);
+    if (preloaded) {
+      onSession(preloaded);
       return;
     }
-    onSession(session);
+
+    setLoading(true);
+    const stepTimer = runLoadingSteps(SEC_STEPS);
+    try {
+      const res = await fetch(`/api/companies/${encodeURIComponent(ticker)}/report`);
+      const data = await parseAnalyzeResponse(res);
+      if (!res.ok) throw new Error(data.error ?? 'Could not load SEC balance sheet.');
+      onSession(data as FinanceSession);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Could not load SEC balance sheet.';
+      onError(msg);
+    } finally {
+      clearInterval(stepTimer);
+      setLoading(false);
+      setStep(0);
+    }
   };
 
   const requireSignIn = () => {
@@ -240,7 +261,7 @@ export function FinanceBuilder({ onSession, onError }: Props) {
             {selectedCompany && (
               <p className="text-[11px] text-[var(--v-fg-4)]">
                 CIK {selectedCompany.cik} · SEC EDGAR filer
-                {hasPreloaded ? ' · instant report available' : ' · full report in Phase 2'}
+                {hasPreloaded ? ' · cached Top 25 snapshot' : ' · live XBRL from EDGAR'}
               </p>
             )}
             {hasPreloaded && (
@@ -270,7 +291,7 @@ export function FinanceBuilder({ onSession, onError }: Props) {
                   Generate report
                 </button>
                 <p className="text-[11px] text-[var(--v-fg-4)]">
-                  Search any SEC-listed company. Top 25 have instant quarterly balance sheets — all others unlock in Phase 2.
+                  Search any SEC-listed company. Top 25 load instantly; all others fetch the latest balance sheet from EDGAR (may take a few seconds).
                 </p>
           </>
         )}
@@ -345,7 +366,7 @@ export function FinanceBuilder({ onSession, onError }: Props) {
 
         {loading && (
           <div className="finance-loading-steps">
-            {STEPS.map((label, i) => (
+            {(tab === 'demo' && !hasPreloaded ? SEC_STEPS : STEPS).map((label, i) => (
               <p key={label} className={i <= step ? 'finance-loading-step finance-loading-step--active' : 'finance-loading-step'}>
                 {i < step ? '✓' : i === step ? '…' : '○'} {label}
               </p>
