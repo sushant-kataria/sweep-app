@@ -2,6 +2,7 @@
 
 import { useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
+import { Loader2 } from 'lucide-react';
 import { ComparisonTable } from '@/components/dashboard/comparison-table';
 import { LineChartPro } from '@/components/dashboard/line-chart-pro';
 import { FinanceSplitView } from '@/components/finance/finance-split-view';
@@ -11,6 +12,7 @@ import { StockChat } from '@/components/stock/stock-chat';
 import { StockMetricsPanel } from '@/components/stock/stock-metrics-panel';
 import { WorkspacePageHeader } from '@/components/workspace/workspace-page-header';
 import { useSweepTheme } from '@/hooks/use-sweep-theme';
+import { loadStockSessionByTicker } from '@/lib/stock-client';
 import { DEFAULT_STOCK_TICKER } from '@/lib/stock-data';
 import { buildStockSession } from '@/lib/stock-session';
 import { clearStockSession, loadStockSession, saveStockSession } from '@/lib/stock-storage';
@@ -22,12 +24,32 @@ function StockPageContent() {
   const [session, setSession] = useState<StockSession | null>(null);
   const [error, setError] = useState('');
   const [hydrated, setHydrated] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'analysis' | 'peers'>('analysis');
 
   const handleSession = (next: StockSession) => {
     setSession(next);
     saveStockSession(next);
     setActiveTab('analysis');
+    setError('');
+  };
+
+  const loadTicker = async (symbol: string) => {
+    setLoading(true);
+    setError('');
+    try {
+      const preloaded = buildStockSession(symbol);
+      if (preloaded) {
+        handleSession(preloaded);
+        return;
+      }
+      const loaded = await loadStockSessionByTicker(symbol);
+      handleSession(loaded);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : `No equity profile for ${symbol}.`);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -35,8 +57,7 @@ function StockPageContent() {
     const saved = loadStockSession();
 
     if (paramTicker) {
-      const built = buildStockSession(paramTicker);
-      if (built) handleSession(built);
+      void loadTicker(paramTicker);
     } else if (saved) {
       setSession(saved);
     } else {
@@ -67,7 +88,12 @@ function StockPageContent() {
         <FinanceSplitView
           start={
             <section className="finance-report-panel finance-scroll">
-              {!session ? (
+              {loading && !session ? (
+                <div className="flex min-h-[320px] flex-col items-center justify-center gap-3 text-sm text-[var(--v-fg-3)]">
+                  <Loader2 className="h-8 w-8 animate-spin" aria-hidden />
+                  Loading equity profile…
+                </div>
+              ) : !session ? (
                 <>
                   {error && <p className="mb-3 text-center text-sm text-red-500">{error}</p>}
                   <StockBuilder onSession={handleSession} onError={setError} />
@@ -80,7 +106,8 @@ function StockPageContent() {
                         {session.companyName} ({session.ticker})
                       </h1>
                       <p className="text-xs text-[var(--v-fg-4)]">
-                        {session.sector} · USD · Equity research view
+                        {session.sector} · {session.currency} ·{' '}
+                        {session.liveData ? 'Live market view' : 'Equity research view'}
                       </p>
                     </div>
                     <button type="button" onClick={resetView} className="finance-secondary-btn">
@@ -138,7 +165,7 @@ function StockPageContent() {
                 <div className="finance-chat-placeholder">
                   <p className="text-sm text-[var(--v-fg-3)]">Load an equity profile to unlock sell-side style Q&A.</p>
                   <ul className="mt-4 space-y-2 text-xs text-[var(--v-fg-4)]">
-                    <li>· Screen mega-cap watchlist or sector peers</li>
+                    <li>· Search any SEC filer or use the mega-cap watchlist</li>
                     <li>· Review price action and valuation multiples</li>
                     <li>· Ask grounded questions on thesis and risks</li>
                   </ul>

@@ -1,12 +1,21 @@
 'use client';
 
 import { useState } from 'react';
-import { BarChart3, LineChart, Search } from 'lucide-react';
+import { BarChart3, LineChart, Loader2, Search } from 'lucide-react';
+import { CompanySearch } from '@/components/finance/company-search';
+import type { CompanySearchResult } from '@/lib/company-types';
+import { loadStockSessionByTicker } from '@/lib/stock-client';
 import { DEFAULT_STOCK_TICKER, STOCK_OPTIONS, STOCK_SECTORS, getStocksBySector } from '@/lib/stock-data';
 import { buildStockSession } from '@/lib/stock-session';
 import type { StockSession } from '@/lib/stock-types';
 
-type SourceTab = 'watchlist' | 'ticker' | 'sector';
+type SourceTab = 'watchlist' | 'sec' | 'sector';
+
+const DEFAULT_COMPANY: CompanySearchResult = {
+  cik: '0000320193',
+  ticker: 'AAPL',
+  name: 'Apple Inc.',
+};
 
 type Props = {
   onSession: (session: StockSession) => void;
@@ -14,19 +23,35 @@ type Props = {
 };
 
 export function StockBuilder({ onSession, onError }: Props) {
-  const [tab, setTab] = useState<SourceTab>('watchlist');
+  const [tab, setTab] = useState<SourceTab>('sec');
   const [ticker, setTicker] = useState(DEFAULT_STOCK_TICKER);
   const [sector, setSector] = useState(STOCK_SECTORS[0] ?? 'Technology');
-  const [customTicker, setCustomTicker] = useState('');
+  const [selectedCompany, setSelectedCompany] = useState<CompanySearchResult | null>(DEFAULT_COMPANY);
+  const [loading, setLoading] = useState(false);
 
-  const loadTicker = (symbol: string) => {
+  const loadTicker = async (symbol: string) => {
     onError('');
-    const session = buildStockSession(symbol);
-    if (!session) {
-      onError(`No equity profile for ${symbol.toUpperCase()} yet. Try AAPL, NVDA, or MSFT.`);
+    const normalized = symbol.trim().toUpperCase();
+    if (!normalized) {
+      onError('Select or search for a company first.');
       return;
     }
-    onSession(session);
+
+    const preloaded = buildStockSession(normalized);
+    if (preloaded) {
+      onSession(preloaded);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const session = await loadStockSessionByTicker(normalized);
+      onSession(session);
+    } catch (e) {
+      onError(e instanceof Error ? e.message : `No equity profile for ${normalized}.`);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const sectorStocks = getStocksBySector(sector);
@@ -39,14 +64,14 @@ export function StockBuilder({ onSession, onError }: Props) {
       <h1 className="text-xl font-semibold text-[var(--v-fg)]">Equity research terminal</h1>
       <p className="mt-1 max-w-lg text-sm text-[var(--v-fg-3)]">
         Screen mega-cap equities with price action, valuation multiples, and peer-relative positioning.
-        Build a research view in seconds — then ask grounded questions in the analyst chat.
+        Search any SEC filer or use the pre-loaded watchlist — then ask grounded questions in the analyst chat.
       </p>
 
       <div className="finance-source-tabs">
         {(
           [
+            { id: 'sec' as const, label: 'SEC companies', icon: Search },
             { id: 'watchlist' as const, label: 'Top watchlist', icon: BarChart3 },
-            { id: 'ticker' as const, label: 'Ticker lookup', icon: Search },
             { id: 'sector' as const, label: 'Sector screen', icon: LineChart },
           ] as const
         ).map(({ id, label, icon: Icon }) => (
@@ -63,6 +88,38 @@ export function StockBuilder({ onSession, onError }: Props) {
       </div>
 
       <div className="finance-builder-form">
+        {tab === 'sec' && (
+          <>
+            <CompanySearch
+              value={selectedCompany}
+              onChange={setSelectedCompany}
+              disabled={loading}
+              placeholder="Search ticker or company name (e.g. F, Ford)"
+            />
+            {selectedCompany && (
+              <p className="text-[11px] text-[var(--v-fg-4)]">
+                CIK {selectedCompany.cik} · SEC EDGAR filer
+                {buildStockSession(selectedCompany.ticker) ? ' · full research profile' : ' · live market data'}
+              </p>
+            )}
+            <button
+              type="button"
+              onClick={() => selectedCompany && loadTicker(selectedCompany.ticker)}
+              disabled={loading || !selectedCompany}
+              className="finance-primary-btn"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 inline h-4 w-4 animate-spin" aria-hidden />
+                  Loading equity profile…
+                </>
+              ) : (
+                'Open research view'
+              )}
+            </button>
+          </>
+        )}
+
         {tab === 'watchlist' && (
           <>
             <label className="finance-field">
@@ -75,36 +132,11 @@ export function StockBuilder({ onSession, onError }: Props) {
                 ))}
               </select>
             </label>
-            <button type="button" onClick={() => loadTicker(ticker)} className="finance-primary-btn">
+            <button type="button" onClick={() => loadTicker(ticker)} disabled={loading} className="finance-primary-btn">
               Open research view
             </button>
             <p className="text-[11px] text-[var(--v-fg-4)]">
               Pre-loaded price history, fundamentals, and peer comps for top US mega-caps.
-            </p>
-          </>
-        )}
-
-        {tab === 'ticker' && (
-          <>
-            <label className="finance-field">
-              <span>Ticker symbol</span>
-              <input
-                type="text"
-                value={customTicker}
-                onChange={(e) => setCustomTicker(e.target.value.toUpperCase())}
-                placeholder="e.g. NVDA"
-                className="finance-input"
-              />
-            </label>
-            <button
-              type="button"
-              onClick={() => loadTicker(customTicker || ticker)}
-              className="finance-primary-btn"
-            >
-              Load equity profile
-            </button>
-            <p className="text-[11px] text-[var(--v-fg-4)]">
-              Supported: {STOCK_OPTIONS.map((s) => s.ticker).join(', ')}.
             </p>
           </>
         )}
@@ -135,7 +167,7 @@ export function StockBuilder({ onSession, onError }: Props) {
                 ))}
               </select>
             </label>
-            <button type="button" onClick={() => loadTicker(ticker)} className="finance-primary-btn">
+            <button type="button" onClick={() => loadTicker(ticker)} disabled={loading} className="finance-primary-btn">
               Screen sector peer
             </button>
           </>
