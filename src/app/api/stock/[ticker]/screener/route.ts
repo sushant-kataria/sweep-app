@@ -1,10 +1,7 @@
 import { NextResponse } from 'next/server';
 
 import { getCompanyByTicker } from '@/lib/companies-db';
-import { buildStockScreenerData } from '@/lib/edgar-stock-screener';
-import { buildEdgarFinanceSession } from '@/lib/finance-session';
-import { getMarketSnapshot } from '@/lib/market-cache';
-import { getFundamentals, getStockOption } from '@/lib/stock-data';
+import { getOrBuildStockScreener } from '@/lib/stock-screener-cache';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -25,25 +22,7 @@ export async function GET(_req: Request, context: RouteContext) {
       return NextResponse.json({ error: 'Company not found in SEC index.' }, { status: 404 });
     }
 
-    const [market, financeSession] = await Promise.all([
-      getMarketSnapshot(normalized, '1y').catch(() => null),
-      buildEdgarFinanceSession({
-        cik: company.cik,
-        ticker: company.ticker,
-        companyName: company.name,
-      }).catch(() => null),
-    ]);
-
-    const option = getStockOption(normalized);
-    const preloadedFundamentals = getFundamentals(normalized);
-    const data = await buildStockScreenerData({
-      company,
-      market,
-      metrics: financeSession?.metrics ?? null,
-      sector: option?.sector,
-      preloadedFundamentals,
-    });
-
+    const data = await getOrBuildStockScreener({ company });
     return NextResponse.json(data);
   } catch (e) {
     const message = e instanceof Error ? e.message : 'Could not load stock screener data.';

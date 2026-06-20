@@ -19,6 +19,8 @@ import {
   StockProsConsPanel,
   StockSectionNav,
 } from '@/components/stock/stock-screener-panels';
+import { StockDataFreshness } from '@/components/stock/stock-data-freshness';
+import { StockSecFilerBadge } from '@/components/stock/stock-sec-filer-badge';
 import { WorkspacePageHeader } from '@/components/workspace/workspace-page-header';
 import { useSweepTheme } from '@/hooks/use-sweep-theme';
 import { toCompanySearchResult } from '@/lib/company-search-utils';
@@ -40,10 +42,21 @@ function StockPageContent() {
   const [loading, setLoading] = useState(false);
   const [screenerLoading, setScreenerLoading] = useState(false);
   const [market, setMarket] = useState<MarketSnapshot | null>(null);
+  const [isSecFiler, setIsSecFiler] = useState<boolean | null>(null);
 
   const handleMarketSnapshot = useCallback((snapshot: MarketSnapshot | null) => {
     setMarket(snapshot);
   }, []);
+
+  const checkSecFiler = async (ticker: string) => {
+    setIsSecFiler(null);
+    try {
+      const res = await fetch(`/api/companies/${encodeURIComponent(ticker)}`);
+      setIsSecFiler(res.ok);
+    } catch {
+      setIsSecFiler(false);
+    }
+  };
 
   const loadScreener = async (ticker: string) => {
     setScreenerLoading(true);
@@ -66,6 +79,8 @@ function StockPageContent() {
     setError('');
     setMarket(null);
     setScreener(null);
+    setIsSecFiler(null);
+    void checkSecFiler(next.ticker);
     void loadScreener(next.ticker);
   };
 
@@ -95,6 +110,7 @@ function StockPageContent() {
       void loadTicker(paramTicker);
     } else if (saved) {
       setSession(saved);
+      void checkSecFiler(saved.ticker);
       void loadScreener(saved.ticker);
     } else {
       const built = buildStockSession(DEFAULT_STOCK_TICKER);
@@ -109,6 +125,7 @@ function StockPageContent() {
     setScreener(null);
     clearStockSession();
     setError('');
+    setIsSecFiler(null);
   };
 
   if (!hydrated) {
@@ -149,11 +166,24 @@ function StockPageContent() {
 
                     <div className="finance-report-header">
                       <div>
-                        <h1 className="text-lg font-semibold text-[var(--v-fg)]">
-                          {session.companyName} ({session.ticker})
+                        <h1 className="stock-report-title text-lg font-semibold text-[var(--v-fg)]">
+                          <span>
+                            {session.companyName} ({session.ticker})
+                          </span>
+                          <StockSecFilerBadge
+                            isSecFiler={isSecFiler ?? (screener?.cik ? true : null)}
+                            loading={isSecFiler === null && (loading || screenerLoading)}
+                          />
                         </h1>
                         <p className="text-xs text-[var(--v-fg-4)]">
-                          {session.sector} · CIK {screener?.cik ?? '—'} · SEC EDGAR + live market
+                          {session.sector}
+                          {isSecFiler || screener?.cik ? (
+                            <> · CIK {screener?.cik ?? '—'} · SEC EDGAR + live market</>
+                          ) : isSecFiler === false ? (
+                            <> · Market data only · Yahoo Finance</>
+                          ) : (
+                            <> · Loading coverage…</>
+                          )}
                         </p>
                       </div>
                       <div className="finance-report-header-actions">
@@ -174,6 +204,8 @@ function StockPageContent() {
                     </div>
 
                     <StockSectionNav />
+
+                    <StockDataFreshness screener={screener} market={market} />
 
                     <section id="summary" className="stock-summary space-y-4">
                       {screenerLoading && !screener ? (

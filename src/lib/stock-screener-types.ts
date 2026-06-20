@@ -1,5 +1,11 @@
 /** Screener.in-style stock page data shapes (US SEC adaptation). */
 
+/** Screener fundamentals refresh at least once per day. */
+export const SCREENER_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+
+/** Bump when screener parsing shape changes — invalidates Turso cache rows. */
+export const SCREENER_PARSER_VERSION = 1;
+
 export type FinancialPeriod = {
   key: string;
   label: string;
@@ -59,4 +65,12 @@ export type StockScreenerData = {
   documents: StockDocumentLink[];
   financeReportUrl: string;
   loadedAt: number;
+  /** Unix ms when this payload expires (24h cache). */
+  expiresAt: number;
+  /** ISO timestamp of last market price used in summary. */
+  marketAsOf?: string | null;
+  /** Most recent SEC 10-K/10-Q filing date in documents list. */
+  latestFilingDate?: string | null;
+  /** True when served from Turso cache. */
+  fromCache?: boolean;
 };

@@ -1938,6 +1938,62 @@ body.finance-split-dragging--vertical {
   margin-top: 1.5rem;
 }
 
+.stock-freshness {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: 0.5rem;
+  padding: 0.625rem 0.75rem;
+  border-radius: 0.625rem;
+  border: 1px solid var(--v-border);
+  background: var(--v-surface);
+  font-size: 0.6875rem;
+}
+
+.stock-freshness-label {
+  display: block;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--v-fg-5);
+}
+
+.stock-freshness-value {
+  display: block;
+  margin-top: 0.125rem;
+  font-weight: 500;
+  color: var(--v-fg-2);
+}
+
+.stock-report-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.stock-sec-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  line-height: 1.25;
+}
+
+.stock-sec-badge--filer {
+  color: #166534;
+  background: rgba(34, 197, 94, 0.12);
+  border: 1px solid rgba(34, 197, 94, 0.35);
+}
+
+.stock-sec-badge--non-filer {
+  color: #92400e;
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+}
+
 .finance-market-stat-label {
   display: block;
   font-size: 0.625rem;
