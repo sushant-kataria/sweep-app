@@ -1729,6 +1729,215 @@ body.finance-split-dragging--vertical {
   color: var(--v-fg-5);
 }
 
+.stock-screener-view {
+  max-width: 56rem;
+}
+
+.stock-section-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--v-border);
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: var(--v-bg);
+  padding-top: 0.25rem;
+}
+
+.stock-section-nav-link {
+  border-radius: 0.375rem;
+  padding: 0.3125rem 0.625rem;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: var(--v-fg-4);
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.stock-section-nav-link:hover {
+  background: var(--v-btn-bg);
+  color: var(--v-fg-2);
+}
+
+.stock-section-nav-link--active {
+  background: var(--v-fg);
+  color: var(--v-bg);
+}
+
+.stock-section-title {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--v-fg);
+}
+
+.stock-section-subtitle {
+  margin-top: 0.125rem;
+  font-size: 0.6875rem;
+  color: var(--v-fg-4);
+}
+
+.stock-key-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(7.5rem, 1fr));
+  gap: 0.5rem;
+}
+
+.stock-key-metric {
+  border-radius: 0.625rem;
+  border: 1px solid var(--v-border);
+  background: var(--v-surface);
+  padding: 0.625rem 0.75rem;
+}
+
+.stock-key-metric-label {
+  display: block;
+  font-size: 0.625rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--v-fg-5);
+}
+
+.stock-key-metric-value {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--v-fg);
+}
+
+.stock-growth-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(8rem, 1fr));
+  gap: 0.5rem;
+}
+
+.stock-growth-card {
+  border-radius: 0.5rem;
+  border: 1px solid var(--v-border);
+  padding: 0.5rem 0.625rem;
+  background: var(--v-surface);
+}
+
+.stock-growth-label {
+  display: block;
+  font-size: 0.625rem;
+  color: var(--v-fg-5);
+}
+
+.stock-growth-value {
+  display: block;
+  margin-top: 0.125rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--v-fg-2);
+}
+
+.stock-pros-cons {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: 0.75rem;
+}
+
+.stock-pros-cons-col {
+  border-radius: 0.625rem;
+  border: 1px solid var(--v-border);
+  padding: 0.75rem;
+  font-size: 0.8125rem;
+}
+
+.stock-pros-cons-col--pro {
+  background: color-mix(in srgb, var(--v-surface) 90%, #10b981 10%);
+}
+
+.stock-pros-cons-col--con {
+  background: color-mix(in srgb, var(--v-surface) 90%, #ef4444 10%);
+}
+
+.stock-pros-cons-title {
+  margin-bottom: 0.375rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.stock-pros-cons-col ul {
+  margin: 0;
+  padding-left: 1rem;
+  color: var(--v-fg-3);
+}
+
+.stock-pros-cons-col li + li {
+  margin-top: 0.25rem;
+}
+
+.stock-table-wrap {
+  overflow-x: auto;
+  border-radius: 0.625rem;
+  border: 1px solid var(--v-border);
+}
+
+.stock-table {
+  width: 100%;
+  min-width: 36rem;
+  border-collapse: collapse;
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.stock-table th,
+.stock-table td {
+  padding: 0.4375rem 0.625rem;
+  text-align: right;
+  border-bottom: 1px solid var(--v-border);
+  white-space: nowrap;
+}
+
+.stock-table th:first-child,
+.stock-table td:first-child {
+  text-align: left;
+}
+
+.stock-table thead th {
+  font-weight: 600;
+  color: var(--v-fg-4);
+  background: var(--v-surface);
+}
+
+.stock-table-sticky {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: var(--v-bg);
+  font-weight: 500;
+  color: var(--v-fg-2);
+}
+
+.stock-table-row--highlight td {
+  font-weight: 600;
+  color: var(--v-fg);
+}
+
+.stock-documents {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.stock-document-link {
+  display: block;
+  padding: 0.375rem 0;
+  font-size: 0.8125rem;
+  color: var(--v-fg-3);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.stock-financial-section + .stock-financial-section {
+  margin-top: 1.5rem;
+}
+
 .finance-market-stat-label {
   display: block;
   font-size: 0.625rem;
