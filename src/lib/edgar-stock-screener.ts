@@ -1,4 +1,5 @@
 import { fetchEdgarCompanyFacts, SEC_USER_AGENT } from './finance-edgar';
+import { enrichMarketSnapshot, formatVolume } from './market-enrich';
 import type {
   FinancialPeriod,
   FinancialTable,
@@ -8,9 +9,10 @@ import type {
   StockProsCons,
   StockScreenerData,
 } from './stock-screener-types';
-import type { MarketSnapshot } from './market-types';
+import type { MarketSnapshot, MarketRange } from './market-types';
 import type { FinanceMetrics } from './finance-types';
 import type { SecCompany } from './company-types';
+import type { StockFundamentals } from './stock-types';
 
 type EdgarFactEntry = {
   val: number;
@@ -22,7 +24,11 @@ type EdgarFactEntry = {
   frame?: string | null;
 };
 
-type EdgarFacts = Record<string, { units?: { USD?: EdgarFactEntry[]; shares?: EdgarFactEntry[] } }>;
+type EdgarFacts = Record<string, { units?: Record<string, EdgarFactEntry[]> }>;
+
+const EPS_TAGS = ['EarningsPerShareDiluted', 'EarningsPerShareBasic'] as const;
+const SHARES_TAGS = ['EntityCommonStockSharesOutstanding', 'CommonStockSharesOutstanding'] as const;
+const DIVIDEND_TAGS = ['CommonStockDividendsPerShareDeclared', 'CommonStockDividendsPerShareCashPaid'] as const;
 
 const REVENUE_TAGS = [
   'RevenueFromContractWithCustomerExcludingAssessedTax',
@@ -84,10 +90,15 @@ function formatRatio(v: number | null): string {
   return v.toFixed(2);
 }
 
-function pickTagValue(facts: EdgarFacts, tags: readonly string[], period: FinancialPeriod): number | null {
+function pickFactValue(
+  facts: EdgarFacts,
+  tags: readonly string[],
+  period: FinancialPeriod,
+  unit = 'USD',
+): number | null {
   for (const tag of tags) {
     const entry = facts[tag];
-    const units = entry?.units?.USD;
+    const units = entry?.units?.[unit];
     if (!units) continue;
 
     const matches = units.filter(
@@ -95,15 +106,31 @@ function pickTagValue(facts: EdgarFacts, tags: readonly string[], period: Financ
     );
     if (!matches.length) continue;
 
-    if (period.form === '10-Q') {
+    if (period.form === '10-Q' && unit === 'USD') {
       const framed = matches.filter((u) => u.frame && /Q[1-4]$/.test(u.frame));
       const pool = framed.length ? framed : matches;
       const best = pool.sort((a, b) => String(b.filed).localeCompare(String(a.filed)))[0];
-      if (best) return toMillions(best.val);
+      if (best) return unit === 'USD' ? toMillions(best.val) : best.val;
     }
 
     const best = matches.sort((a, b) => String(b.filed).localeCompare(String(a.filed)))[0];
-    if (best) return toMillions(best.val);
+    if (best) return unit === 'USD' ? toMillions(best.val) : best.val;
+  }
+  return null;
+}
+
+function pickTagValue(facts: EdgarFacts, tags: readonly string[], period: FinancialPeriod): number | null {
+  return pickFactValue(facts, tags, period, 'USD');
+}
+
+function pickLatestFact(facts: EdgarFacts, tags: readonly string[], unit: string): number | null {
+  for (const tag of tags) {
+    const units = facts[tag]?.units?.[unit];
+    if (!units?.length) continue;
+    const best = [...units]
+      .filter((u) => u.form === '10-K' || u.form === '10-Q')
+      .sort((a, b) => new Date(b.end).getTime() - new Date(a.end).getTime())[0];
+    if (best) return unit === 'USD' ? toMillions(best.val) : best.val;
   }
   return null;
 }
@@ -188,7 +215,10 @@ function computeCagr(values: Array<number | null>, years: number): number | null
   return (Math.pow(end / start, 1 / span) - 1) * 100;
 }
 
-function buildGrowthStats(pl: FinancialTable, priceHistory?: MarketSnapshot['history']): GrowthStat[] {
+function buildGrowthStats(
+  pl: FinancialTable,
+  market?: MarketSnapshot | null,
+): GrowthStat[] {
   const salesRow = pl.rows.find((r) => r.label === 'Sales');
   const profitRow = pl.rows.find((r) => r.label === 'Net profit');
 
@@ -206,13 +236,15 @@ function buildGrowthStats(pl: FinancialTable, priceHistory?: MarketSnapshot['his
     stats.push({ label, value: cagr != null ? `${cagr.toFixed(0)}%` : '—' });
   }
 
-  if (priceHistory && priceHistory.length >= 2) {
-    const first = priceHistory[0].value;
-    const last = priceHistory[priceHistory.length - 1].value;
-    if (first > 0 && last > 0) {
-      const years = priceHistory.length / 252;
-      const cagr = years > 0 ? (Math.pow(last / first, 1 / years) - 1) * 100 : null;
-      stats.push({ label: 'Price CAGR (period)', value: cagr != null ? `${cagr.toFixed(0)}%` : '—' });
+  const history = market?.history;
+  if (history && history.length >= 2) {
+    const first = history[0].value;
+    const last = history[history.length - 1].value;
+    const rangeYears: Record<MarketRange, number> = { '6mo': 0.5, '1y': 1, '5y': 5 };
+    const years = rangeYears[market?.range ?? '1y'];
+    if (first > 0 && last > 0 && years > 0) {
+      const cagr = (Math.pow(last / first, 1 / years) - 1) * 100;
+      stats.push({ label: `Price CAGR (${market?.range ?? '1y'})`, value: `${cagr.toFixed(0)}%` });
     }
   }
 
@@ -299,40 +331,153 @@ function buildKeyMetrics(
   facts: EdgarFacts,
   latestAnnual: FinancialPeriod | undefined,
   metrics: FinanceMetrics | null,
+  preloaded: StockFundamentals | null,
 ): StockKeyMetric[] {
-  const equity = latestAnnual ? pickTagValue(facts, ['StockholdersEquity'], latestAnnual) : null;
+  const equity =
+    metrics?.totalEquity ??
+    (latestAnnual ? pickTagValue(facts, ['StockholdersEquity'], latestAnnual) : null);
   const assets = latestAnnual ? pickTagValue(facts, ['Assets'], latestAnnual) : null;
   const netProfit = latestAnnual ? pickTagValue(facts, ['NetIncomeLoss'], latestAnnual) : null;
+  const sales = latestAnnual ? pickTagValue(facts, REVENUE_TAGS, latestAnnual) : null;
+  const operatingProfit = latestAnnual ? pickTagValue(facts, ['OperatingIncomeLoss'], latestAnnual) : null;
+  const cash = latestAnnual ? pickTagValue(facts, ['CashAndCashEquivalentsAtCarryingValue'], latestAnnual) : null;
+  const totalDebt = latestAnnual
+    ? pickTagValue(facts, ['LongTermDebtNoncurrent', 'LongTermDebt'], latestAnnual)
+    : null;
 
-  let bookValuePerShare = '—';
-  const sharesTag =
-    facts['EntityCommonStockSharesOutstanding']?.units?.shares ?? facts['CommonStockSharesOutstanding']?.units?.shares;
-  if (sharesTag?.length && equity != null) {
-    const latestShares = [...sharesTag].sort((a, b) => new Date(b.end).getTime() - new Date(a.end).getTime())[0];
-    if (latestShares?.val > 0) {
-      bookValuePerShare = formatUsd((equity * 1e6) / latestShares.val);
-    }
+  const sharesOutstanding = pickLatestFact(facts, SHARES_TAGS, 'shares');
+  const eps =
+    (latestAnnual ? pickFactValue(facts, EPS_TAGS, latestAnnual, 'USD/shares') : null) ??
+    preloaded?.eps ??
+    null;
+
+  let bookValuePerShare: number | null = null;
+  if (sharesOutstanding != null && sharesOutstanding > 0 && equity != null) {
+    bookValuePerShare = (equity * 1e6) / sharesOutstanding;
   }
 
-  const roe = netProfit != null && equity != null && equity !== 0 ? (netProfit / equity) * 100 : null;
+  const enrichedMarket =
+    market != null
+      ? enrichMarketSnapshot(market, { sharesOutstanding, epsDiluted: eps })
+      : null;
+
+  let peRatio = enrichedMarket?.peRatio ?? preloaded?.peRatio ?? null;
+  if (peRatio == null && enrichedMarket?.price && eps != null && eps > 0) {
+    peRatio = enrichedMarket.price / eps;
+  }
+
+  let marketCap = enrichedMarket?.marketCap ?? null;
+  if (marketCap == null && enrichedMarket?.price && sharesOutstanding != null) {
+    marketCap = enrichedMarket.price * sharesOutstanding;
+  }
+
+  const roe =
+    metrics?.totalEquity != null && netProfit != null && metrics.totalEquity !== 0
+      ? (netProfit / metrics.totalEquity) * 100
+      : netProfit != null && equity != null && equity !== 0
+        ? (netProfit / equity) * 100
+        : null;
+
+  const roce =
+    operatingProfit != null && assets != null && metrics?.currentLiabilities != null
+      ? (operatingProfit / (assets - metrics.currentLiabilities)) * 100
+      : null;
+
+  const dividendPerShare = pickLatestFact(facts, DIVIDEND_TAGS, 'USD/shares');
+  let dividendYield: number | null = preloaded?.dividendYield ?? null;
+  if (dividendYield == null && dividendPerShare != null && enrichedMarket?.price) {
+    dividendYield = (dividendPerShare / enrichedMarket.price) * 100;
+  }
+
+  const netDebt = totalDebt != null && cash != null ? totalDebt - cash : null;
 
   return [
-    { label: 'Market cap', value: market?.marketCap ? formatMarketCap(market.marketCap) : '—' },
-    { label: 'Current price', value: formatUsd(market?.price) },
+    { label: 'Market cap', value: marketCap != null ? formatMarketCap(marketCap) : preloaded?.marketCap ?? '—' },
+    { label: 'Current price', value: formatUsd(enrichedMarket?.price) },
     {
       label: 'High / Low',
       value:
-        market?.fiftyTwoWeekHigh != null && market?.fiftyTwoWeekLow != null
-          ? `${formatUsd(market.fiftyTwoWeekHigh)} / ${formatUsd(market.fiftyTwoWeekLow)}`
+        enrichedMarket?.fiftyTwoWeekHigh != null && enrichedMarket?.fiftyTwoWeekLow != null
+          ? `${formatUsd(enrichedMarket.fiftyTwoWeekHigh)} / ${formatUsd(enrichedMarket.fiftyTwoWeekLow)}`
           : '—',
     },
-    { label: 'Stock P/E', value: market?.peRatio != null ? formatRatio(market.peRatio) : '—' },
-    { label: 'Book value', value: bookValuePerShare },
+    { label: 'Stock P/E', value: peRatio != null ? formatRatio(peRatio) : '—' },
+    {
+      label: 'Forward P/E',
+      value: preloaded?.forwardPe != null ? formatRatio(preloaded.forwardPe) : '—',
+    },
+    { label: 'Book value', value: bookValuePerShare != null ? formatUsd(bookValuePerShare) : '—' },
+    { label: 'EPS (diluted)', value: eps != null ? formatUsd(eps) : '—' },
+    { label: 'Revenue', value: sales != null ? formatMillions(sales) : preloaded?.revenue ?? '—' },
+    { label: 'Net profit', value: netProfit != null ? formatMillions(netProfit) : '—' },
+    { label: 'Operating profit', value: operatingProfit != null ? formatMillions(operatingProfit) : '—' },
+    {
+      label: 'Dividend yield',
+      value: dividendYield != null ? `${dividendYield.toFixed(2)}%` : '—',
+    },
     { label: 'ROE', value: formatPct(roe) },
+    { label: 'ROCE', value: formatPct(roce) },
     { label: 'Debt / equity', value: metrics?.debtToEquity != null ? formatRatio(metrics.debtToEquity) : '—' },
     { label: 'Current ratio', value: metrics?.currentRatio != null ? formatRatio(metrics.currentRatio) : '—' },
+    { label: 'Cash & equivalents', value: cash != null ? formatMillions(cash) : formatMillions(metrics?.cashAndEquivalents ?? null) },
+    { label: 'Total debt', value: totalDebt != null ? formatMillions(totalDebt) : formatMillions(metrics?.totalDebt ?? null) },
+    { label: 'Net debt', value: netDebt != null ? formatMillions(netDebt) : formatMillions(metrics?.netDebt ?? null) },
+    {
+      label: 'Working capital',
+      value: metrics?.workingCapital != null ? formatMillions(metrics.workingCapital) : '—',
+    },
     { label: 'Total assets', value: assets != null ? formatMillions(assets) : '—' },
+    {
+      label: 'Volume',
+      value: enrichedMarket?.volume != null ? formatVolume(enrichedMarket.volume) : preloaded?.avgVolume ?? '—',
+    },
+    {
+      label: 'Beta',
+      value: preloaded?.beta != null && preloaded.beta > 0 ? preloaded.beta.toFixed(2) : '—',
+    },
   ];
+}
+
+async function fetchCompanyProfile(cik: string): Promise<{
+  sicDescription?: string;
+  exchanges?: string[];
+  category?: string;
+}> {
+  const padded = cik.replace(/\D/g, '').padStart(10, '0');
+  try {
+    const res = await fetch(`https://data.sec.gov/submissions/CIK${padded}.json`, {
+      headers: { 'User-Agent': SEC_USER_AGENT, Accept: 'application/json' },
+      next: { revalidate: 86400 },
+    });
+    if (!res.ok) return {};
+    const json = (await res.json()) as {
+      sicDescription?: string;
+      exchanges?: string[];
+      category?: string;
+    };
+    return {
+      sicDescription: json.sicDescription,
+      exchanges: json.exchanges,
+      category: json.category,
+    };
+  } catch {
+    return {};
+  }
+}
+
+function buildAbout(
+  companyName: string,
+  ticker: string,
+  cik: string,
+  profile: { sicDescription?: string; exchanges?: string[]; category?: string },
+): string {
+  const parts = [`${companyName} (${ticker})`];
+  if (profile.sicDescription) parts.push(`operates in ${profile.sicDescription}`);
+  if (profile.exchanges?.length) parts.push(`listed on ${profile.exchanges.join(', ')}`);
+  if (profile.category) parts.push(`${profile.category}`);
+  parts.push(`CIK ${cik}`);
+  parts.push('Financials from SEC EDGAR XBRL; market data from Yahoo Finance.');
+  return `${parts.join(' · ')}.`;
 }
 
 async function fetchRecentFilings(cik: string): Promise<StockDocumentLink[]> {
@@ -375,6 +520,7 @@ export async function buildStockScreenerData(input: {
   market: MarketSnapshot | null;
   metrics: FinanceMetrics | null;
   sector?: string;
+  preloadedFundamentals?: StockFundamentals | null;
 }): Promise<StockScreenerData> {
   const { entityName, facts } = await fetchEdgarCompanyFacts(input.company.cik);
   const gaap = facts as EdgarFacts;
@@ -395,17 +541,27 @@ export async function buildStockScreenerData(input: {
   const ratios = buildRatiosTable(gaap, annualPeriods, profitAndLoss, balanceSheet);
 
   const latestAnnual = annualPeriods[annualPeriods.length - 1];
-  const keyMetrics = buildKeyMetrics(input.market, gaap, latestAnnual, input.metrics);
-  const growthStats = buildGrowthStats(profitAndLoss, input.market?.history);
+  const [profile, documents] = await Promise.all([
+    fetchCompanyProfile(input.company.cik),
+    fetchRecentFilings(input.company.cik),
+  ]);
+
+  const keyMetrics = buildKeyMetrics(
+    input.market,
+    gaap,
+    latestAnnual,
+    input.metrics,
+    input.preloadedFundamentals ?? null,
+  );
+  const growthStats = buildGrowthStats(profitAndLoss, input.market);
   const prosCons = buildProsCons(input.metrics, input.market);
-  const documents = await fetchRecentFilings(input.company.cik);
 
   return {
     ticker: input.company.ticker,
     companyName: entityName || input.company.name,
     cik: input.company.cik,
     sector: input.sector ?? 'SEC filer',
-    about: `${entityName || input.company.name} is an SEC-registered company (CIK ${input.company.cik}). Figures below are sourced from EDGAR XBRL filings and live market data.`,
+    about: buildAbout(entityName || input.company.name, input.company.ticker, input.company.cik, profile),
     keyMetrics,
     quarterlyResults,
     profitAndLoss,

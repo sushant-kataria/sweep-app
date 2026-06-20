@@ -16,6 +16,7 @@ export type MarketSnapshot = {
   fiftyTwoWeekLow: number | null;
   marketCap: number | null;
   peRatio: number | null;
+  volume: number | null;
   asOf: string;
   source: 'yahoo' | 'finnhub';
   range: MarketRange;
