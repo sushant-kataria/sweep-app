@@ -13,6 +13,7 @@ import {
   getSeriesStats,
   useChartGradientId,
 } from './chart-utils';
+import { StockLogo } from '@/components/stock/stock-logo';
 
 export function LineChartPro({
   title,
@@ -36,7 +37,12 @@ export function LineChartPro({
       <div className="grok-chart-header">
         <div className="min-w-0 flex-1">
           <div className="mb-2 flex flex-wrap items-center gap-2">
-            {ticker && <span className="grok-chart-ticker">{ticker}</span>}
+            {ticker && (
+              <span className="grok-chart-ticker grok-chart-ticker--with-logo">
+                <StockLogo ticker={ticker} size="sm" plain />
+                <span>{ticker}</span>
+              </span>
+            )}
             {title && (
               <p className="grok-chart-title truncate">{title}</p>
             )}

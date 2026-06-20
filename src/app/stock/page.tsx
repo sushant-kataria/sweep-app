@@ -20,6 +20,7 @@ import {
   StockSectionNav,
 } from '@/components/stock/stock-screener-panels';
 import { StockDataFreshness } from '@/components/stock/stock-data-freshness';
+import { StockLogo } from '@/components/stock/stock-logo';
 import { StockSecFilerBadge } from '@/components/stock/stock-sec-filer-badge';
 import { WorkspacePageHeader } from '@/components/workspace/workspace-page-header';
 import { useSweepTheme } from '@/hooks/use-sweep-theme';
@@ -165,26 +166,34 @@ function StockPageContent() {
                     )}
 
                     <div className="finance-report-header">
-                      <div>
-                        <h1 className="stock-report-title text-lg font-semibold text-[var(--v-fg)]">
-                          <span>
-                            {session.companyName} ({session.ticker})
-                          </span>
-                          <StockSecFilerBadge
-                            isSecFiler={isSecFiler ?? (screener?.cik ? true : null)}
-                            loading={isSecFiler === null && (loading || screenerLoading)}
-                          />
-                        </h1>
-                        <p className="text-xs text-[var(--v-fg-4)]">
-                          {session.sector}
-                          {isSecFiler || screener?.cik ? (
-                            <> · CIK {screener?.cik ?? '—'} · SEC EDGAR + live market</>
-                          ) : isSecFiler === false ? (
-                            <> · Market data only · Yahoo Finance</>
-                          ) : (
-                            <> · Loading coverage…</>
-                          )}
-                        </p>
+                      <div className="stock-report-identity">
+                        <StockLogo
+                          ticker={session.ticker}
+                          companyName={session.companyName}
+                          size="xl"
+                          className="stock-report-logo"
+                        />
+                        <div className="stock-report-meta">
+                          <h1 className="stock-report-title text-lg font-semibold text-[var(--v-fg)]">
+                            <span>
+                              {session.companyName} ({session.ticker})
+                            </span>
+                            <StockSecFilerBadge
+                              isSecFiler={isSecFiler ?? (screener?.cik ? true : null)}
+                              loading={isSecFiler === null && (loading || screenerLoading)}
+                            />
+                          </h1>
+                          <p className="text-xs text-[var(--v-fg-4)]">
+                            {session.sector}
+                            {isSecFiler || screener?.cik ? (
+                              <> · CIK {screener?.cik ?? '—'} · SEC EDGAR + live market</>
+                            ) : isSecFiler === false ? (
+                              <> · Market data only · Yahoo Finance</>
+                            ) : (
+                              <> · Loading coverage…</>
+                            )}
+                          </p>
+                        </div>
                       </div>
                       <div className="finance-report-header-actions">
                         <CompanySearch

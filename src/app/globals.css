@@ -1525,6 +1525,22 @@ body.finance-split-dragging--vertical {
   position: relative;
 }
 
+.company-search-input-wrap--has-logo .company-search-icon {
+  left: 2.75rem;
+}
+
+.company-search-input-wrap--has-logo .company-search-input {
+  padding-left: 4.75rem;
+}
+
+.company-search-input-logo {
+  position: absolute;
+  left: 0.625rem;
+  top: 50%;
+  z-index: 1;
+  transform: translateY(-50%);
+}
+
 .company-search-icon {
   pointer-events: none;
   position: absolute;
@@ -1567,13 +1583,25 @@ body.finance-split-dragging--vertical {
 }
 
 .company-search-option {
-  display: grid;
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
   width: 100%;
-  gap: 0.125rem;
   border-radius: 0.5rem;
   padding: 0.5rem 0.625rem;
   text-align: left;
   transition: background 0.12s ease;
+}
+
+.company-search-option-text {
+  display: grid;
+  min-width: 0;
+  flex: 1;
+  gap: 0.125rem;
+}
+
+.company-search-option-logo {
+  flex-shrink: 0;
 }
 
 .company-search-option:hover {
@@ -1961,6 +1989,129 @@ body.finance-split-dragging--vertical {
   margin-top: 0.125rem;
   font-weight: 500;
   color: var(--v-fg-2);
+}
+
+.stock-report-identity {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.stock-report-meta {
+  min-width: 0;
+}
+
+.stock-report-logo {
+  flex-shrink: 0;
+  margin-top: 0.125rem;
+}
+
+.stock-logo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: 0.5rem;
+  border: 1px solid var(--v-border);
+  background: var(--v-surface);
+  flex-shrink: 0;
+}
+
+.stock-logo img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #fff;
+}
+
+.stock-logo-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  font-size: 0.55em;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--v-fg-3);
+  background: var(--v-surface);
+}
+
+.stock-logo--plain {
+  border: none;
+  background: transparent;
+}
+
+.stock-logo--plain .stock-logo-fallback {
+  background: transparent;
+}
+
+.stock-logo--xs {
+  border-radius: 0.375rem;
+}
+
+.stock-logo--sm {
+  border-radius: 0.4375rem;
+}
+
+.stock-logo--xl {
+  border-radius: 0.75rem;
+}
+
+.comparison-table-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.grok-chart-ticker--with-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding-right: 0.5rem;
+}
+
+.stock-ticker-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.stock-ticker-chips--compact {
+  margin-top: 0.375rem;
+  margin-bottom: 0.5rem;
+}
+
+.stock-ticker-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  border-radius: 9999px;
+  border: 1px solid var(--v-border);
+  background: var(--v-surface);
+  padding: 0.25rem 0.625rem 0.25rem 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--v-fg-2);
+  transition: border-color 0.12s ease, background 0.12s ease;
+}
+
+.stock-ticker-chip:hover {
+  border-color: var(--v-border-2);
+}
+
+.stock-ticker-chip--active {
+  border-color: var(--v-fg-4);
+  background: var(--v-bg);
+  color: var(--v-fg);
+}
+
+.stock-ticker-chip-label {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  letter-spacing: 0.02em;
 }
 
 .stock-report-title {

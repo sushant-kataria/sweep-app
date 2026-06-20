@@ -1,4 +1,6 @@
 // components/dashboard/comparison-table.tsx
+import { StockLogo } from '@/components/stock/stock-logo';
+
 type ComparisonProps = {
   title: string;
   items: Array<{
@@ -30,7 +32,12 @@ export const ComparisonTable = ({ title, items }: ComparisonProps) => {
           <tbody>
             {items.map((item, i) => (
               <tr key={i} className="border-b border-[var(--v-chart-card-border)]">
-                <td className="py-2 pr-2 text-[var(--v-chart-fg)]">{item.name}</td>
+                <td className="py-2 pr-2 text-[var(--v-chart-fg)]">
+                  <span className="comparison-table-name">
+                    <StockLogo ticker={item.name} size="sm" />
+                    <span>{item.name}</span>
+                  </span>
+                </td>
                 {metricKeys.map((key) => (
                   <td key={key} className="px-2 py-2 text-right text-[var(--v-chart-tick)]">
                     {typeof item.metrics[key] === 'number'
