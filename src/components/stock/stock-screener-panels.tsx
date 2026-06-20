@@ -25,11 +25,15 @@ export function StockKeyMetricsGrid({ metrics }: { metrics: StockKeyMetric[] }) 
 }
 
 export function StockFinancialTable({ table }: { table: FinancialTable }) {
+  const section = sectionId(table.title);
   if (!table.periods.length) {
     return (
-      <section className="stock-financial-section">
+      <section className="stock-financial-section" id={section}>
         <h2 className="stock-section-title">{table.title}</h2>
-        <p className="text-sm text-[var(--v-fg-4)]">No SEC XBRL data available for this section.</p>
+        <p className="text-sm text-[var(--v-fg-4)]">
+          No SEC XBRL data for this section. Some foreign issuers file 20-F/6-K instead of 10-K/10-Q — if you
+          expected data here, the filing may use tags we do not parse yet.
+        </p>
       </section>
     );
   }
@@ -103,7 +107,16 @@ export function StockProsConsPanel({ prosCons }: { prosCons: StockProsCons }) {
 }
 
 export function StockDocumentsList({ documents }: { documents: StockDocumentLink[] }) {
-  if (!documents.length) return null;
+  if (!documents.length) {
+    return (
+      <section className="stock-financial-section" id="documents">
+        <h2 className="stock-section-title">Documents</h2>
+        <p className="text-sm text-[var(--v-fg-4)]">
+          No recent 10-K, 10-Q, 20-F, or 6-K links found. Check SEC EDGAR directly for this filer.
+        </p>
+      </section>
+    );
+  }
   return (
     <section className="stock-financial-section" id="documents">
       <h2 className="stock-section-title">Documents</h2>

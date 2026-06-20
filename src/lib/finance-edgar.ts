@@ -1,4 +1,8 @@
 import type { BalanceSheetReport } from './finance-types';
+import {
+  isAnnualFactEntry,
+  isQuarterlyFactEntry,
+} from './edgar-filing-forms';
 
 export const SEC_USER_AGENT = 'Sweep Finance sweep-app/1.0 (isushantkataria@gmail.com)';
 
@@ -40,7 +44,7 @@ function pickLatestFiling(facts: EdgarFacts, tagNames: readonly string[]): Edgar
     const entry = facts[tag];
     if (!entry?.units?.USD) continue;
     const filings = entry.units.USD
-      .filter((u) => u.form === '10-Q' || u.form === '10-K')
+      .filter((u) => isAnnualFactEntry(u) || isQuarterlyFactEntry(u))
       .sort((a, b) => new Date(b.end).getTime() - new Date(a.end).getTime());
     if (filings.length) return filings[0];
   }
