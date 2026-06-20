@@ -5,6 +5,7 @@ import { Suspense, useEffect, useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { ComparisonTable } from '@/components/dashboard/comparison-table';
 import { LineChartPro } from '@/components/dashboard/line-chart-pro';
+import { CompanySearch } from '@/components/finance/company-search';
 import { FinanceSplitView } from '@/components/finance/finance-split-view';
 import { StockAnalysisPanel } from '@/components/stock/stock-analysis-panel';
 import { StockBuilder } from '@/components/stock/stock-builder';
@@ -12,6 +13,7 @@ import { StockChat } from '@/components/stock/stock-chat';
 import { StockMetricsPanel } from '@/components/stock/stock-metrics-panel';
 import { WorkspacePageHeader } from '@/components/workspace/workspace-page-header';
 import { useSweepTheme } from '@/hooks/use-sweep-theme';
+import { toCompanySearchResult } from '@/lib/company-search-utils';
 import { loadStockSessionByTicker } from '@/lib/stock-client';
 import { DEFAULT_STOCK_TICKER } from '@/lib/stock-data';
 import { buildStockSession } from '@/lib/stock-session';
@@ -99,8 +101,16 @@ function StockPageContent() {
                   <StockBuilder onSession={handleSession} onError={setError} />
                 </>
               ) : (
-                <div className="finance-report-view space-y-4">
-                  <div className="flex flex-wrap items-start justify-between gap-3">
+                <>
+                  {error && <p className="mb-3 text-center text-sm text-red-500">{error}</p>}
+                <div className={`finance-report-view space-y-4 ${loading ? 'finance-report-view--loading' : ''}`}>
+                  {loading && (
+                    <div className="finance-report-loading-overlay" aria-live="polite">
+                      <Loader2 className="h-7 w-7 animate-spin" aria-hidden />
+                      Loading equity profile…
+                    </div>
+                  )}
+                  <div className="finance-report-header">
                     <div>
                       <h1 className="text-lg font-semibold text-[var(--v-fg)]">
                         {session.companyName} ({session.ticker})
@@ -110,9 +120,21 @@ function StockPageContent() {
                         {session.liveData ? 'Live market view' : 'Equity research view'}
                       </p>
                     </div>
-                    <button type="button" onClick={resetView} className="finance-secondary-btn">
-                      New screen
-                    </button>
+                    <div className="finance-report-header-actions">
+                      <CompanySearch
+                        compact
+                        value={toCompanySearchResult(session.ticker, session.companyName)}
+                        onChange={() => {}}
+                        onSelect={(company) => {
+                          if (company.ticker !== session.ticker) void loadTicker(company.ticker);
+                        }}
+                        disabled={loading}
+                        placeholder="Search another company…"
+                      />
+                      <button type="button" onClick={resetView} className="finance-secondary-btn">
+                        New screen
+                      </button>
+                    </div>
                   </div>
 
                   <LineChartPro title={chartTitle} data={session.priceHistory} unit="USD" />
@@ -142,6 +164,7 @@ function StockPageContent() {
                     <ComparisonTable title={`${session.ticker} peer comparison`} items={session.peers} />
                   )}
                 </div>
+                </>
               )}
             </section>
           }

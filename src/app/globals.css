@@ -1511,6 +1511,16 @@ body.finance-split-dragging--vertical {
   position: relative;
 }
 
+.company-search--compact {
+  min-width: 12rem;
+  max-width: 20rem;
+  flex: 1 1 12rem;
+}
+
+.company-search--compact .finance-field {
+  margin: 0;
+}
+
 .company-search-input-wrap {
   position: relative;
 }
@@ -1624,7 +1634,43 @@ body.finance-split-dragging--vertical {
   color: var(--v-fg);
 }
 
+.finance-report-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.finance-report-header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.finance-report-view--loading {
+  pointer-events: none;
+  opacity: 0.55;
+}
+
+.finance-report-loading-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 0.75rem;
+  background: color-mix(in srgb, var(--v-bg) 72%, transparent);
+  font-size: 0.875rem;
+  color: var(--v-fg-3);
+}
+
 .finance-report-view {
+  position: relative;
   max-width: 48rem;
   margin-inline: auto;
 }

@@ -2,7 +2,9 @@
 
 import { useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
+import { Loader2 } from 'lucide-react';
 import { BalanceSheet } from '@/components/dashboard/balance-sheet';
+import { CompanySearch } from '@/components/finance/company-search';
 import { FinanceAnalysisPanel } from '@/components/finance/finance-analysis-panel';
 import { FinanceBuilder } from '@/components/finance/finance-builder';
 import { FinanceChat } from '@/components/finance/finance-chat';
@@ -12,6 +14,7 @@ import { FinanceMarketPanel } from '@/components/finance/finance-market-panel';
 import { FinanceMetricsPanel } from '@/components/finance/finance-metrics-panel';
 import { WorkspacePageHeader } from '@/components/workspace/workspace-page-header';
 import { useSweepTheme } from '@/hooks/use-sweep-theme';
+import { toCompanySearchResult } from '@/lib/company-search-utils';
 import { getDefaultPeriod } from '@/lib/finance-data';
 import { buildPreloadedFinanceSession } from '@/lib/finance-session';
 import { clearFinanceSession, loadFinanceSession, saveFinanceSession } from '@/lib/finance-storage';
@@ -23,12 +26,38 @@ function FinancePageContent() {
   const [session, setSession] = useState<FinanceSession | null>(null);
   const [error, setError] = useState('');
   const [hydrated, setHydrated] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'analysis' | 'statements'>('analysis');
 
   const handleSession = (next: FinanceSession) => {
     setSession(next);
     saveFinanceSession(next);
     setActiveTab('analysis');
+    setError('');
+  };
+
+  const loadFinanceReport = async (ticker: string) => {
+    const normalized = ticker.trim().toUpperCase();
+    if (!normalized) return;
+
+    setLoading(true);
+    setError('');
+    try {
+      const preloaded = buildPreloadedFinanceSession(normalized, getDefaultPeriod(normalized));
+      if (preloaded) {
+        handleSession(preloaded);
+        return;
+      }
+
+      const res = await fetch(`/api/companies/${encodeURIComponent(normalized)}/report`);
+      const data = (await res.json()) as FinanceSession & { error?: string };
+      if (!res.ok) throw new Error(data.error ?? 'Could not load SEC balance sheet.');
+      handleSession(data);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not load report.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -70,8 +99,16 @@ function FinancePageContent() {
                   <FinanceBuilder onSession={handleSession} onError={setError} />
                 </>
               ) : (
-                <div className="finance-report-view space-y-4">
-                  <div className="flex flex-wrap items-start justify-between gap-3">
+                <>
+                  {error && <p className="mb-3 text-center text-sm text-red-500">{error}</p>}
+                <div className={`finance-report-view space-y-4 ${loading ? 'finance-report-view--loading' : ''}`}>
+                  {loading && (
+                    <div className="finance-report-loading-overlay" aria-live="polite">
+                      <Loader2 className="h-7 w-7 animate-spin" aria-hidden />
+                      Loading report…
+                    </div>
+                  )}
+                  <div className="finance-report-header">
                     <div>
                       <h1 className="text-lg font-semibold text-[var(--v-fg)]">
                         {session.report.companyName} ({session.report.ticker})
@@ -80,7 +117,19 @@ function FinancePageContent() {
                         {session.report.period} · {session.report.source}
                       </p>
                     </div>
-                    <div className="flex flex-wrap items-center gap-2">
+                    <div className="finance-report-header-actions">
+                      <CompanySearch
+                        compact
+                        value={toCompanySearchResult(session.report.ticker, session.report.companyName)}
+                        onChange={() => {}}
+                        onSelect={(company) => {
+                          if (company.ticker !== session.report.ticker) {
+                            void loadFinanceReport(company.ticker);
+                          }
+                        }}
+                        disabled={loading}
+                        placeholder="Search another company…"
+                      />
                       <FinanceDownloadButton session={session} />
                       <button type="button" onClick={resetReport} className="finance-secondary-btn">
                         New report
@@ -122,6 +171,7 @@ function FinancePageContent() {
                     />
                   )}
                 </div>
+                </>
               )}
             </section>
           }

@@ -7,15 +7,21 @@ import type { CompanySearchResult } from '@/lib/company-types';
 type Props = {
   value: CompanySearchResult | null;
   onChange: (company: CompanySearchResult | null) => void;
+  /** Fired when user picks a company from the dropdown (not when typing). */
+  onSelect?: (company: CompanySearchResult) => void;
   disabled?: boolean;
   placeholder?: string;
+  /** Hide the field label — for compact headers on report views. */
+  compact?: boolean;
 };
 
 export function CompanySearch({
   value,
   onChange,
+  onSelect,
   disabled = false,
   placeholder = 'Search ticker or company name (e.g. AAPL, Walmart)',
+  compact = false,
 }: Props) {
   const listId = useId();
   const rootRef = useRef<HTMLDivElement>(null);
@@ -79,15 +85,16 @@ export function CompanySearch({
 
   const pick = (company: CompanySearchResult) => {
     onChange(company);
+    onSelect?.(company);
     setQuery(`${company.name} (${company.ticker})`);
     setOpen(false);
     setResults([]);
   };
 
   return (
-    <div ref={rootRef} className="company-search">
+    <div ref={rootRef} className={`company-search ${compact ? 'company-search--compact' : ''}`}>
       <label className="finance-field" htmlFor={listId}>
-        <span>Company</span>
+        {!compact && <span>Company</span>}
         <div className="company-search-input-wrap">
           <Search className="company-search-icon" aria-hidden />
           <input
