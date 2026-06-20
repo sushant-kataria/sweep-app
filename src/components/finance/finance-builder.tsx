@@ -4,10 +4,18 @@ import Link from 'next/link';
 import { useRef, useState } from 'react';
 import { useAuth } from '@workos-inc/authkit-nextjs/components';
 import { FileSpreadsheet, Link2, Loader2, Upload } from 'lucide-react';
-import { COMPANY_OPTIONS, getDefaultPeriod, getPeriodsForTicker } from '@/lib/finance-data';
+import { CompanySearch } from '@/components/finance/company-search';
+import type { CompanySearchResult } from '@/lib/company-types';
+import { getDefaultPeriod, getPeriodsForTicker, hasPreloadedReport } from '@/lib/finance-data';
 import { buildPreloadedFinanceSession } from '@/lib/finance-session';
 import { extractUploadedFile } from '@/lib/finance-upload-client';
 import type { FinanceSession, ReportType } from '@/lib/finance-types';
+
+const DEFAULT_COMPANY: CompanySearchResult = {
+  cik: '0000320193',
+  ticker: 'AAPL',
+  name: 'Apple Inc.',
+};
 
 type SourceTab = 'demo' | 'url' | 'upload';
 
@@ -21,7 +29,8 @@ const STEPS = ['Reading document', 'Extracting balance sheet', 'Computing metric
 export function FinanceBuilder({ onSession, onError }: Props) {
   const { user } = useAuth();
   const [tab, setTab] = useState<SourceTab>('demo');
-  const [ticker, setTicker] = useState('AAPL');
+  const [selectedCompany, setSelectedCompany] = useState<CompanySearchResult | null>(DEFAULT_COMPANY);
+  const ticker = selectedCompany?.ticker ?? '';
   const [period, setPeriod] = useState(() => getDefaultPeriod('AAPL'));
   const [reportType, setReportType] = useState<ReportType>('balance_sheet');
   const [url, setUrl] = useState('');
@@ -32,6 +41,14 @@ export function FinanceBuilder({ onSession, onError }: Props) {
   const fileBlobRef = useRef<File | null>(null);
 
   const periods = getPeriodsForTicker(ticker);
+  const hasPreloaded = hasPreloadedReport(ticker);
+
+  const handleCompanyChange = (company: CompanySearchResult | null) => {
+    setSelectedCompany(company);
+    if (company) {
+      setPeriod(getDefaultPeriod(company.ticker));
+    }
+  };
 
   const parseAnalyzeResponse = async (res: Response) => {
     const raw = await res.text();
@@ -87,6 +104,10 @@ export function FinanceBuilder({ onSession, onError }: Props) {
   };
 
   const handleDemo = () => {
+    if (!selectedCompany) {
+      onError('Search and select an SEC-listed company first.');
+      return;
+    }
     if (reportType !== 'balance_sheet') {
       onError('Only balance sheet reports are available in this release.');
       return;
@@ -94,7 +115,11 @@ export function FinanceBuilder({ onSession, onError }: Props) {
     onError('');
     const session = buildPreloadedFinanceSession(ticker, period);
     if (!session) {
-      onError('No pre-loaded report for that company yet.');
+      onError(
+        hasPreloaded
+          ? 'No pre-loaded report for that company yet.'
+          : `${ticker} is in the SEC index. Instant reports are ready for Top 25 filers today — Phase 2 loads any ticker from EDGAR. Try upload or pick AAPL, MSFT, NVDA.`,
+      );
       return;
     }
     onSession(session);
@@ -191,7 +216,7 @@ export function FinanceBuilder({ onSession, onError }: Props) {
       <div className="finance-source-tabs">
         {(
           [
-            { id: 'demo' as const, label: 'Top 25 US', icon: FileSpreadsheet },
+            { id: 'demo' as const, label: 'SEC companies', icon: FileSpreadsheet },
             { id: 'url' as const, label: 'Annual report link', icon: Link2 },
             { id: 'upload' as const, label: 'Upload file', icon: Upload },
           ] as const
@@ -211,34 +236,25 @@ export function FinanceBuilder({ onSession, onError }: Props) {
       <div className="finance-builder-form">
         {tab === 'demo' && (
           <>
-            <label className="finance-field">
-              <span>Company</span>
-              <select
-                value={ticker}
-                onChange={(e) => {
-                  setTicker(e.target.value);
-                  setPeriod(getDefaultPeriod(e.target.value));
-                }}
-                className="finance-input"
-                disabled={loading}
-              >
-                {COMPANY_OPTIONS.map((c) => (
-                  <option key={c.ticker} value={c.ticker}>
-                    {c.name} ({c.ticker})
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="finance-field">
-              <span>Period</span>
-              <select value={period} onChange={(e) => setPeriod(e.target.value)} className="finance-input" disabled={loading}>
-                {periods.map((p) => (
-                  <option key={p} value={p}>
-                    {p}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <CompanySearch value={selectedCompany} onChange={handleCompanyChange} disabled={loading} />
+            {selectedCompany && (
+              <p className="text-[11px] text-[var(--v-fg-4)]">
+                CIK {selectedCompany.cik} · SEC EDGAR filer
+                {hasPreloaded ? ' · instant report available' : ' · full report in Phase 2'}
+              </p>
+            )}
+            {hasPreloaded && (
+              <label className="finance-field">
+                <span>Period</span>
+                <select value={period} onChange={(e) => setPeriod(e.target.value)} className="finance-input" disabled={loading}>
+                  {periods.map((p) => (
+                    <option key={p} value={p}>
+                      {p}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
             <label className="finance-field">
               <span>Report type</span>
               <select
@@ -254,7 +270,7 @@ export function FinanceBuilder({ onSession, onError }: Props) {
                   Generate report
                 </button>
                 <p className="text-[11px] text-[var(--v-fg-4)]">
-                  Latest quarterly balance sheets pre-loaded from SEC EDGAR — instant report.
+                  Search any SEC-listed company. Top 25 have instant quarterly balance sheets — all others unlock in Phase 2.
                 </p>
           </>
         )}
