@@ -37,6 +37,8 @@ export type StockSession = {
   peers: StockPeer[];
   analysis: StockAnalysis;
   loadedAt: number;
+  /** True when built from live market data instead of preloaded research profiles. */
+  liveData?: boolean;
 };
 
 export type StockReportContext = {
