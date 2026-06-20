@@ -1,6 +1,6 @@
 export type ReportType = 'balance_sheet';
 
-export type DataSourceType = 'demo' | 'url' | 'excel' | 'csv' | 'pdf';
+export type DataSourceType = 'demo' | 'edgar' | 'url' | 'excel' | 'csv' | 'pdf';
 
 export type BalanceSheetSection = {
   current: Array<{ label: string; value: number }>;
