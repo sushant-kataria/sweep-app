@@ -19,6 +19,7 @@ import {
   StockProsConsPanel,
   StockSectionNav,
 } from '@/components/stock/stock-screener-panels';
+import { StockDataFreshness } from '@/components/stock/stock-data-freshness';
 import { WorkspacePageHeader } from '@/components/workspace/workspace-page-header';
 import { useSweepTheme } from '@/hooks/use-sweep-theme';
 import { toCompanySearchResult } from '@/lib/company-search-utils';
@@ -174,6 +175,8 @@ function StockPageContent() {
                     </div>
 
                     <StockSectionNav />
+
+                    <StockDataFreshness screener={screener} market={market} />
 
                     <section id="summary" className="stock-summary space-y-4">
                       {screenerLoading && !screener ? (

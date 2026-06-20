@@ -1,5 +1,5 @@
 import { fetchEdgarCompanyFacts, SEC_USER_AGENT } from './finance-edgar';
-import { enrichMarketSnapshot, formatVolume } from './market-enrich';
+import { SCREENER_CACHE_TTL_MS } from './stock-screener-types';
 import type {
   FinancialPeriod,
   FinancialTable,
@@ -555,6 +555,8 @@ export async function buildStockScreenerData(input: {
   );
   const growthStats = buildGrowthStats(profitAndLoss, input.market);
   const prosCons = buildProsCons(input.metrics, input.market);
+  const loadedAt = Date.now();
+  const latestFilingDate = documents[0]?.date ?? null;
 
   return {
     ticker: input.company.ticker,
@@ -572,6 +574,10 @@ export async function buildStockScreenerData(input: {
     prosCons,
     documents,
     financeReportUrl: `/finance?ticker=${encodeURIComponent(input.company.ticker)}`,
-    loadedAt: Date.now(),
+    loadedAt,
+    expiresAt: loadedAt + SCREENER_CACHE_TTL_MS,
+    marketAsOf: input.market?.asOf ?? null,
+    latestFilingDate,
+    fromCache: false,
   };
 }

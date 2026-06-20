@@ -1938,6 +1938,31 @@ body.finance-split-dragging--vertical {
   margin-top: 1.5rem;
 }
 
+.stock-freshness {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: 0.5rem;
+  padding: 0.625rem 0.75rem;
+  border-radius: 0.625rem;
+  border: 1px solid var(--v-border);
+  background: var(--v-surface);
+  font-size: 0.6875rem;
+}
+
+.stock-freshness-label {
+  display: block;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--v-fg-5);
+}
+
+.stock-freshness-value {
+  display: block;
+  margin-top: 0.125rem;
+  font-weight: 500;
+  color: var(--v-fg-2);
+}
+
 .finance-market-stat-label {
   display: block;
   font-size: 0.625rem;
