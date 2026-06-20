@@ -5,6 +5,7 @@ import {
   isResearchFilingForm,
   normalizeResearchFormLabel,
 } from './edgar-filing-forms';
+import { enrichMarketSnapshot } from './market-enrich';
 import { SCREENER_CACHE_TTL_MS } from './stock-screener-types';
 import type {
   FinancialPeriod,
