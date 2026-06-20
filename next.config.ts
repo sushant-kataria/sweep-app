@@ -3,6 +3,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   transpilePackages: ["geist"],
+  serverExternalPackages: ["@libsql/client"],
   turbopack: {
     root: __dirname,
   },
