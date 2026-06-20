@@ -13,6 +13,7 @@ export function buildFinanceSessionFromReport(report: FinanceSession['report']):
     metrics,
     analysis,
     generatedAt: Date.now(),
+    parserVersion: report.dataSource === 'edgar' ? REPORT_PARSER_VERSION : undefined,
   };
 }
 
