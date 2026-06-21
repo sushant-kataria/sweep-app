@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-import { runScreenResults } from '@/lib/stock-screen-engine';
+import { runSectorResults } from '@/lib/stock-screen-engine';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -15,13 +15,13 @@ export async function GET(req: Request, context: RouteContext) {
   const query = searchParams.get('query') ?? undefined;
 
   try {
-    const result = await runScreenResults(id, { page, limit, query });
+    const result = await runSectorResults(id, { page, limit, query });
+    if (!result) {
+      return NextResponse.json({ error: 'Sector not found.' }, { status: 404 });
+    }
     return NextResponse.json(result);
   } catch (e) {
-    const message = e instanceof Error ? e.message : 'Screen scan failed.';
-    return NextResponse.json(
-      { error: message },
-      { status: e instanceof Error && message === 'Screen not found.' ? 404 : 500 },
-    );
+    const message = e instanceof Error ? e.message : 'Sector scan failed.';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

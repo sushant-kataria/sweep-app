@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
 import { Loader2 } from 'lucide-react';
@@ -144,6 +145,9 @@ function FinancePageContent() {
                         disabled={loading}
                         placeholder="Search another company…"
                       />
+                      <Link href="/finance/explore" className="finance-secondary-btn">
+                        Stock screens
+                      </Link>
                       <FinanceDownloadButton session={session} />
                       <button type="button" onClick={resetReport} className="finance-secondary-btn">
                         New report
