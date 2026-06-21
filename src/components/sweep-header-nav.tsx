@@ -11,6 +11,9 @@ export const SWEEP_SECTIONS: { id: SweepSection; label: string; href: string }[]
   { id: 'real-estate', label: 'Real Estate', href: '/real-estate' },
 ];
 
+/** Stock screens / explore — shown in mobile menu under Products. */
+export const SWEEP_EXPLORE_LINK = { label: 'Stock screens', href: '/finance/explore' } as const;
+
 export type CompanySection = 'about' | 'contact';
 
 export const COMPANY_SECTIONS: { id: CompanySection; label: string; href: string }[] = [

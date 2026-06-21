@@ -1,6 +1,7 @@
 'use client';
 
 import { useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import { Suspense, useEffect, useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { BalanceSheet } from '@/components/dashboard/balance-sheet';
@@ -26,6 +27,7 @@ function FinancePageContent() {
   const searchParams = useSearchParams();
   const { theme, toggleTheme } = useSweepTheme();
   const [session, setSession] = useState<FinanceSession | null>(null);
+  const [savedSession, setSavedSession] = useState<FinanceSession | null>(null);
   const [error, setError] = useState('');
   const [hydrated, setHydrated] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -65,12 +67,16 @@ function FinancePageContent() {
   useEffect(() => {
     const paramTicker = searchParams.get('ticker')?.toUpperCase();
     const shouldGenerate = searchParams.get('generate') === '1';
+    const resume = searchParams.get('resume') === '1';
     const saved = loadFinanceSession();
+    setSavedSession(saved);
 
     if (shouldGenerate && paramTicker) {
-      const session = buildPreloadedFinanceSession(paramTicker, getDefaultPeriod(paramTicker));
-      if (session) handleSession(session);
-    } else if (saved) {
+      const built = buildPreloadedFinanceSession(paramTicker, getDefaultPeriod(paramTicker));
+      if (built) handleSession(built);
+    } else if (paramTicker) {
+      void loadFinanceReport(paramTicker);
+    } else if (resume && saved) {
       setSession(saved);
     }
 
@@ -98,6 +104,22 @@ function FinancePageContent() {
               {!session ? (
                 <>
                   {error && <p className="mb-3 text-center text-sm text-red-500">{error}</p>}
+                  {savedSession && (
+                    <div className="finance-resume-banner">
+                      <p className="text-sm text-[var(--v-fg-3)]">
+                        Continue{' '}
+                        <strong>
+                          {savedSession.report.companyName} ({savedSession.report.ticker})
+                        </strong>
+                      </p>
+                      <Link
+                        href={`/finance?resume=1`}
+                        className="finance-secondary-btn finance-resume-banner-btn"
+                      >
+                        Resume report
+                      </Link>
+                    </div>
+                  )}
                   <FinanceExplore onSelectTicker={(ticker) => void loadFinanceReport(ticker)} />
                   <div className="finance-explore-divider">
                     <span>Or import a filing</span>
@@ -144,6 +166,9 @@ function FinancePageContent() {
                         disabled={loading}
                         placeholder="Search another company…"
                       />
+                      <Link href="/finance/explore" className="finance-secondary-btn">
+                        Stock screens
+                      </Link>
                       <FinanceDownloadButton session={session} />
                       <button type="button" onClick={resetReport} className="finance-secondary-btn">
                         New report
