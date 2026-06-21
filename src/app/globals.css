@@ -1682,6 +1682,26 @@ body.finance-split-dragging--vertical {
   line-height: 1.5;
 }
 
+.finance-resume-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.625rem;
+  border: 1px solid var(--v-border);
+  background: var(--v-surface);
+}
+
+.finance-resume-banner-btn {
+  margin: 0;
+  width: auto;
+  padding: 0.375rem 0.75rem;
+  font-size: 0.75rem;
+}
+
 .finance-builder {
   display: flex;
   max-width: 28rem;
