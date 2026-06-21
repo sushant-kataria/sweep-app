@@ -7,6 +7,7 @@ import { BalanceSheet } from '@/components/dashboard/balance-sheet';
 import { CompanySearch } from '@/components/finance/company-search';
 import { FinanceAnalysisPanel } from '@/components/finance/finance-analysis-panel';
 import { FinanceBuilder } from '@/components/finance/finance-builder';
+import { FinanceExplore } from '@/components/finance/finance-explore';
 import { FinanceChat } from '@/components/finance/finance-chat';
 import { FinanceDownloadButton } from '@/components/finance/finance-download-button';
 import { FinanceSplitView } from '@/components/finance/finance-split-view';
@@ -97,6 +98,10 @@ function FinancePageContent() {
               {!session ? (
                 <>
                   {error && <p className="mb-3 text-center text-sm text-red-500">{error}</p>}
+                  <FinanceExplore onSelectTicker={(ticker) => void loadFinanceReport(ticker)} />
+                  <div className="finance-explore-divider">
+                    <span>Or import a filing</span>
+                  </div>
                   <FinanceBuilder onSession={handleSession} onError={setError} />
                 </>
               ) : (
