@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from 'react';
 
-type DemoPhase = 'finance' | 'stock' | 'realty';
+type DemoPhase = 'finance' | 'stock';
 
-const PHASES: DemoPhase[] = ['finance', 'stock', 'realty'];
+const PHASES: DemoPhase[] = ['finance', 'stock'];
 
 const DEMO: Record<
   DemoPhase,
@@ -44,23 +44,6 @@ const DEMO: Record<
       { text: 'screener.peers.rank              →  #1 Semis', accent: true, delay: 350 },
       { text: '', delay: 400 },
       { text: '→ open full balance sheet in Finance', dim: true, delay: 300 },
-    ],
-  },
-  realty: {
-    file: 'portfolio.ts',
-    lines: [
-      { text: '// Real estate comps & portfolio', dim: true, delay: 0 },
-      { text: 'const listings = await sweep.realty({', delay: 400 },
-      { text: '  market: "Austin, TX",', delay: 200 },
-      { text: '  maxPrice: 850_000,', delay: 200 },
-      { text: '  beds: 3,', delay: 200 },
-      { text: '});', delay: 200 },
-      { text: '', delay: 300 },
-      { text: 'listings.matched      →  24', accent: true, delay: 450 },
-      { text: 'listings.medianPrice  →  $625,000', accent: true, delay: 350 },
-      { text: 'listings.avgCapRate   →  5.2%', accent: true, delay: 350 },
-      { text: '', delay: 400 },
-      { text: '✓ Portfolio view updated', dim: true, delay: 300 },
     ],
   },
 };
@@ -217,15 +200,6 @@ export function AnimatedReportPanel() {
             </div>
           )}
 
-          {phase === 'realty' && visibleLines > 6 && (
-            <div className="home-demo-listings font-mono">
-              {['1842 Oak Dr — $589k', '902 Ridge Ln — $715k', '4410 Elm Ct — $640k'].map((item, i) => (
-                <div key={item} className="home-demo-listing home-demo-sheet-row--in" style={{ animationDelay: `${i * 120}ms` }}>
-                  {item}
-                </div>
-              ))}
-            </div>
-          )}
         </div>
       </div>
     </div>
