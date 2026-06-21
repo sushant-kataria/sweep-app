@@ -3,15 +3,12 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
-export type SweepSection = 'finance' | 'stock';
+export type SweepSection = 'stock' | 'screens';
 
 export const SWEEP_SECTIONS: { id: SweepSection; label: string; href: string }[] = [
-  { id: 'finance', label: 'Reports', href: '/finance' },
   { id: 'stock', label: 'Stock', href: '/stock' },
+  { id: 'screens', label: 'Stock screens', href: '/finance/explore' },
 ];
-
-/** Stock screens / explore — shown in mobile menu under Products. */
-export const SWEEP_EXPLORE_LINK = { label: 'Stock screens', href: '/finance/explore' } as const;
 
 export type CompanySection = 'about' | 'contact';
 
@@ -21,8 +18,8 @@ export const COMPANY_SECTIONS: { id: CompanySection; label: string; href: string
 ];
 
 export function getActiveSection(pathname: string): SweepSection | null {
-  if (pathname.startsWith('/finance')) return 'finance';
   if (pathname.startsWith('/stock')) return 'stock';
+  if (pathname.startsWith('/finance')) return 'screens';
   return null;
 }
 

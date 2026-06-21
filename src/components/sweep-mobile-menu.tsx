@@ -5,7 +5,6 @@ import { usePathname } from 'next/navigation';
 import { Plus, Trash2, X } from 'lucide-react';
 import {
   COMPANY_SECTIONS,
-  SWEEP_EXPLORE_LINK,
   SWEEP_SECTIONS,
   getActiveCompanySection,
   getActiveSection,
@@ -71,13 +70,6 @@ export function SweepMobileMenu({
                 {label}
               </Link>
             ))}
-            <Link
-              href={SWEEP_EXPLORE_LINK.href}
-              onClick={onClose}
-              className={`font-pixel sweep-mobile-nav-link${pathname.startsWith('/finance/explore') || pathname.startsWith('/finance/screens') ? ' sweep-mobile-nav-link--active' : ''}`}
-            >
-              {SWEEP_EXPLORE_LINK.label}
-            </Link>
           </nav>
 
           <div className="mt-6 border-t border-[var(--v-border)] pt-4">
