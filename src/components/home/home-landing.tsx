@@ -106,12 +106,6 @@ export function HomeLanding() {
               Open Stock
               <ArrowRight className="h-4 w-4" />
             </Link>
-            <Link href="/finance" className="home-btn home-btn--ghost">
-              Open Finance
-            </Link>
-            <Link href="/stock?ticker=NVDA" className="home-btn home-btn--ghost">
-              Try NVDA
-            </Link>
           </div>
 
           <div className="home-stats font-mono">
