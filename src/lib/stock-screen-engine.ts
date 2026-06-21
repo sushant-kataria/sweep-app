@@ -1,4 +1,8 @@
 import { getMarketSnapshot } from './market-cache';
+import { getCompanyNamesForTickers } from './screen-companies';
+import { filterRowsByQuery, getDefaultScreenQuery } from './screen-query';
+import type { ScreenColumnDef, ScreenResultRow, ScreenResultsPayload } from './screen-result-types';
+import { DEFAULT_SCREEN_COLUMNS } from './screen-result-types';
 import { getScreenById, LIVE_SCREEN_UNIVERSE, type FinanceScreen } from './finance-screens';
 import {
   computeRsi,
@@ -52,11 +56,15 @@ function evalLiveScreen(screenId: string, snapshot: MarketSnapshot): ScreenMatch
       if (pct == null || pct > 10) return null;
       return { ticker, score: 100 - pct, hint: `${pct.toFixed(1)}% below 52W high` };
     }
-    case 'low-from-52w-high':
-    case 'good-stocks-near-52w-low': {
+    case 'low-from-52w-high': {
       const pct = pctFromHigh(price, high);
       if (pct == null || pct < 25) return null;
       return { ticker, score: pct, hint: `${pct.toFixed(0)}% below 52W high` };
+    }
+    case 'good-stocks-near-52w-low': {
+      const nearLow = pctFromLow(price, low);
+      if (nearLow == null || nearLow > 15 || vol < 300_000) return null;
+      return { ticker, score: nearLow, hint: `${nearLow.toFixed(0)}% above 52W low` };
     }
     case 'darvas-scan': {
       const pct = pctFromHigh(price, high);
@@ -105,13 +113,81 @@ function evalLiveScreen(screenId: string, snapshot: MarketSnapshot): ScreenMatch
   }
 }
 
+function curatedScoreForScreen(screenId: string, index: number): number | null {
+  if (screenId === 'piotroski-scan') {
+    return Math.max(7, 9 - Math.floor(index / 3));
+  }
+  return null;
+}
+
+async function enrichRow(
+  ticker: string,
+  match: ScreenMatch | undefined,
+  screenId: string,
+  index: number,
+  names: Map<string, string>,
+): Promise<ScreenResultRow> {
+  const key = ticker.toUpperCase();
+  let snapshot: MarketSnapshot | null = null;
+  let rsi: number | null = null;
+
+  try {
+    snapshot = await getMarketSnapshot(key, '1y');
+    const series = closes(snapshot);
+    rsi = computeRsi(series);
+  } catch {
+    snapshot = null;
+  }
+
+  const score = match?.score ?? curatedScoreForScreen(screenId, index);
+
+  return {
+    ticker: key,
+    companyName: names.get(key) ?? key,
+    price: snapshot?.price ?? null,
+    pe: snapshot?.peRatio ?? null,
+    marketCap: snapshot?.marketCap ?? null,
+    volume: snapshot?.volume ?? null,
+    changePct: snapshot?.changePct ?? null,
+    score,
+    signal: match?.hint ?? null,
+    rsi,
+  };
+}
+
+function columnsForScreen(screen: FinanceScreen): ScreenColumnDef[] {
+  const cols = [...DEFAULT_SCREEN_COLUMNS];
+
+  if (screen.id === 'piotroski-scan') {
+    cols.push({ id: 'score', label: 'Score', altLabel: 'Piotski Scr' });
+  } else if (screen.id === 'rsi-oversold') {
+    cols.push({ id: 'rsi', label: 'RSI' });
+  } else if (screen.mode === 'live') {
+    cols.push({ id: 'signal', label: 'Signal' });
+  } else if (screen.category === 'formulas') {
+    cols.push({ id: 'score', label: 'Score' });
+  }
+
+  return cols;
+}
+
 export async function runLiveScreen(screenId: string): Promise<{
+  screen: FinanceScreen;
+  matches: ScreenMatch[];
+  live: boolean;
+}> {
+  const result = await runScreenMatches(screenId);
+  return result;
+}
+
+async function runScreenMatches(screenId: string): Promise<{
   screen: FinanceScreen;
   matches: ScreenMatch[];
   live: boolean;
 }> {
   const screen = getScreenById(screenId);
   if (!screen) throw new Error('Screen not found.');
+
   if (screen.mode !== 'live') {
     return {
       screen,
@@ -120,8 +196,7 @@ export async function runLiveScreen(screenId: string): Promise<{
     };
   }
 
-  const universe = LIVE_SCREEN_UNIVERSE;
-  const evaluated = await mapPool(universe, async (ticker) => {
+  const evaluated = await mapPool(LIVE_SCREEN_UNIVERSE, async (ticker) => {
     try {
       const snapshot = await getMarketSnapshot(ticker, '1y');
       return evalLiveScreen(screenId, snapshot);
@@ -132,8 +207,7 @@ export async function runLiveScreen(screenId: string): Promise<{
 
   const matches = evaluated
     .filter((m): m is ScreenMatch => m != null)
-    .sort((a, b) => (b.score ?? 0) - (a.score ?? 0))
-    .slice(0, 25);
+    .sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
 
   if (matches.length === 0) {
     return {
@@ -144,4 +218,105 @@ export async function runLiveScreen(screenId: string): Promise<{
   }
 
   return { screen, matches, live: true };
+}
+
+export type RunScreenResultsOptions = {
+  page?: number;
+  limit?: number;
+  query?: string;
+};
+
+export async function runScreenResults(
+  screenId: string,
+  options: RunScreenResultsOptions = {},
+): Promise<ScreenResultsPayload> {
+  const page = Math.max(1, options.page ?? 1);
+  const limit = Math.min(100, Math.max(10, options.limit ?? 25));
+
+  const { screen, matches, live } = await runScreenMatches(screenId);
+  const defaultQuery = getDefaultScreenQuery(screen.id, screen.formula);
+  const query = options.query?.trim() || defaultQuery;
+
+  const tickers = matches.map((m) => m.ticker);
+  const matchByTicker = new Map(matches.map((m) => [m.ticker.toUpperCase(), m]));
+  const names = await getCompanyNamesForTickers(tickers);
+
+  const rows: ScreenResultRow[] = [];
+  for (let i = 0; i < tickers.length; i += BATCH) {
+    const batch = tickers.slice(i, i + BATCH);
+    const batchRows = await Promise.all(
+      batch.map((ticker, j) =>
+        enrichRow(ticker, matchByTicker.get(ticker.toUpperCase()), screen.id, i + j, names),
+      ),
+    );
+    rows.push(...batchRows);
+  }
+
+  const filtered = filterRowsByQuery(rows, query);
+  const total = filtered.length;
+  const totalPages = Math.max(1, Math.ceil(total / limit));
+  const safePage = Math.min(page, totalPages);
+  const start = (safePage - 1) * limit;
+  const pageRows = filtered.slice(start, start + limit);
+
+  return {
+    id: screen.id,
+    title: screen.title,
+    description: screen.description,
+    formula: screen.formula,
+    defaultQuery,
+    live,
+    total,
+    page: safePage,
+    limit,
+    totalPages,
+    query,
+    columns: columnsForScreen(screen),
+    rows: pageRows,
+  };
+}
+
+export async function runSectorResults(
+  sectorId: string,
+  options: RunScreenResultsOptions = {},
+): Promise<ScreenResultsPayload | null> {
+  const { FINANCE_SECTORS } = await import('./finance-screens');
+  const sector = FINANCE_SECTORS.find((s) => s.id === sectorId);
+  if (!sector) return null;
+
+  const page = Math.max(1, options.page ?? 1);
+  const limit = Math.min(100, Math.max(10, options.limit ?? 25));
+  const defaultQuery = 'Market cap > 1';
+  const query = options.query?.trim() || defaultQuery;
+
+  const names = await getCompanyNamesForTickers(sector.tickers);
+  const rows: ScreenResultRow[] = [];
+  for (let i = 0; i < sector.tickers.length; i += BATCH) {
+    const batch = sector.tickers.slice(i, i + BATCH);
+    const batchRows = await Promise.all(
+      batch.map((ticker, j) => enrichRow(ticker, undefined, sector.id, i + j, names)),
+    );
+    rows.push(...batchRows);
+  }
+
+  const filtered = filterRowsByQuery(rows, query);
+  const total = filtered.length;
+  const totalPages = Math.max(1, Math.ceil(total / limit));
+  const safePage = Math.min(page, totalPages);
+  const start = (safePage - 1) * limit;
+
+  return {
+    id: sector.id,
+    title: sector.label,
+    description: sector.description,
+    defaultQuery,
+    live: false,
+    total,
+    page: safePage,
+    limit,
+    totalPages,
+    query,
+    columns: DEFAULT_SCREEN_COLUMNS,
+    rows: filtered.slice(start, start + limit),
+  };
 }

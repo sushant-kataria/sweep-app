@@ -1,10 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import { useCallback, useMemo, useState } from 'react';
-import { Loader2, Search, TrendingUp, Zap } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { ChevronRight, Search, TrendingUp, Zap } from 'lucide-react';
 import { CompanySearch } from '@/components/finance/company-search';
-import { StockLogo } from '@/components/stock/stock-logo';
 import type { CompanySearchResult } from '@/lib/company-types';
 import {
   FINANCE_SCREEN_CATEGORIES,
@@ -14,57 +13,16 @@ import {
   type FinanceScreen,
   type FinanceSector,
 } from '@/lib/finance-screens';
-import type { ScreenMatch } from '@/lib/stock-screen-engine';
 
 type Props = {
   onSelectTicker: (ticker: string) => void;
   onSelectCompany?: (company: CompanySearchResult) => void;
 };
 
-type LoadedScreen = {
-  tickers: string[];
-  matches: ScreenMatch[];
-  live: boolean;
-  loading: boolean;
-  error?: string;
-};
-
-function TickerChip({
-  ticker,
-  hint,
-  onSelect,
-}: {
-  ticker: string;
-  hint?: string;
-  onSelect: (ticker: string) => void;
-}) {
+function ScreenLinkCard({ screen }: { screen: FinanceScreen }) {
   return (
-    <button type="button" className="finance-explore-ticker" onClick={() => onSelect(ticker)} title={hint}>
-      <StockLogo ticker={ticker} size="sm" />
-      <span>{ticker}</span>
-    </button>
-  );
-}
-
-function ScreenCard({
-  screen,
-  expanded,
-  loaded,
-  onToggle,
-  onSelectTicker,
-}: {
-  screen: FinanceScreen;
-  expanded: boolean;
-  loaded?: LoadedScreen;
-  onToggle: () => void;
-  onSelectTicker: (ticker: string) => void;
-}) {
-  const count = loaded?.tickers.length ?? screen.tickers.length;
-  const isLive = loaded?.live ?? screen.mode === 'live';
-
-  return (
-    <article className={`finance-explore-card ${expanded ? 'finance-explore-card--open' : ''}`}>
-      <button type="button" className="finance-explore-card-head" onClick={onToggle}>
+    <Link href={`/finance/screens/${screen.id}`} className="finance-explore-card finance-explore-card-link">
+      <div className="finance-explore-card-head finance-explore-card-head--link">
         <div>
           <div className="finance-explore-card-title-row">
             <h3 className="finance-explore-card-title">{screen.title}</h3>
@@ -82,131 +40,34 @@ function ScreenCard({
             </p>
           )}
         </div>
-        <span className="finance-explore-card-count">{loaded?.loading ? '…' : `${count} stocks`}</span>
-      </button>
-      {expanded && (
-        <div className="finance-explore-ticker-panel">
-          {loaded?.loading && (
-            <p className="finance-explore-loading">
-              <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-              {screen.mode === 'live' ? 'Running live scan…' : 'Loading…'}
-            </p>
-          )}
-          {loaded?.error && <p className="text-sm text-red-500">{loaded.error}</p>}
-          {!loaded?.loading && (
-            <div className="finance-explore-ticker-grid">
-              {(loaded?.tickers ?? screen.tickers).map((ticker) => {
-                const match = loaded?.matches.find((m) => m.ticker === ticker);
-                return (
-                  <TickerChip key={ticker} ticker={ticker} hint={match?.hint} onSelect={onSelectTicker} />
-                );
-              })}
-            </div>
-          )}
-          {isLive && !loaded?.loading && loaded?.live && (
-            <p className="finance-explore-live-note text-[11px] text-[var(--v-fg-5)]">
-              Live matches from {screen.formula} — scanned US large-cap universe.
-            </p>
-          )}
-        </div>
-      )}
-    </article>
+        <span className="finance-explore-card-count">{screen.tickers.length} stocks</span>
+        <ChevronRight className="finance-explore-card-chevron" aria-hidden />
+      </div>
+    </Link>
   );
 }
 
-function SectorCard({
-  sector,
-  expanded,
-  onToggle,
-  onSelectTicker,
-}: {
-  sector: FinanceSector;
-  expanded: boolean;
-  onToggle: () => void;
-  onSelectTicker: (ticker: string) => void;
-}) {
+function SectorLinkCard({ sector }: { sector: FinanceSector }) {
   return (
-    <article className={`finance-explore-sector ${expanded ? 'finance-explore-sector--open' : ''}`}>
-      <button type="button" className="finance-explore-sector-head" onClick={onToggle}>
+    <Link href={`/finance/sectors/${sector.id}`} className="finance-explore-sector finance-explore-card-link">
+      <div className="finance-explore-sector-head finance-explore-card-head--link">
         <div>
           <h3 className="finance-explore-sector-title">{sector.label}</h3>
           <p className="finance-explore-sector-desc">{sector.description}</p>
         </div>
         <span className="finance-explore-card-count">{sector.tickers.length}</span>
-      </button>
-      {expanded && (
-        <div className="finance-explore-ticker-grid">
-          {sector.tickers.map((ticker) => (
-            <TickerChip key={ticker} ticker={ticker} onSelect={onSelectTicker} />
-          ))}
-        </div>
-      )}
-    </article>
+        <ChevronRight className="finance-explore-card-chevron" aria-hidden />
+      </div>
+    </Link>
   );
 }
 
 export function FinanceExplore({ onSelectTicker, onSelectCompany }: Props) {
   const [screenQuery, setScreenQuery] = useState('');
-  const [expandedScreen, setExpandedScreen] = useState<string | null>(null);
-  const [expandedSector, setExpandedSector] = useState<string | null>(null);
   const [selectedCompany, setSelectedCompany] = useState<CompanySearchResult | null>(null);
-  const [screenData, setScreenData] = useState<Record<string, LoadedScreen>>({});
 
   const filteredScreens = useMemo(() => searchFinanceScreens(screenQuery), [screenQuery]);
   const filteredSectors = useMemo(() => searchFinanceSectors(screenQuery), [screenQuery]);
-
-  const loadScreen = useCallback(async (screen: FinanceScreen) => {
-    setScreenData((prev) => {
-      const existing = prev[screen.id];
-      if (existing?.loading) return prev;
-      return {
-        ...prev,
-        [screen.id]: {
-          tickers: screen.tickers,
-          matches: existing?.matches ?? [],
-          live: existing?.live ?? false,
-          loading: true,
-        },
-      };
-    });
-
-    try {
-      const res = await fetch(`/api/finance/screens/${encodeURIComponent(screen.id)}`);
-      const data = (await res.json()) as {
-        tickers?: string[];
-        matches?: ScreenMatch[];
-        live?: boolean;
-        error?: string;
-      };
-      if (!res.ok) throw new Error(data.error ?? 'Scan failed.');
-      setScreenData((prev) => ({
-        ...prev,
-        [screen.id]: {
-          tickers: data.tickers ?? screen.tickers,
-          matches: data.matches ?? [],
-          live: data.live ?? false,
-          loading: false,
-        },
-      }));
-    } catch (e) {
-      setScreenData((prev) => ({
-        ...prev,
-        [screen.id]: {
-          tickers: screen.tickers,
-          matches: [],
-          live: false,
-          loading: false,
-          error: e instanceof Error ? e.message : 'Scan failed.',
-        },
-      }));
-    }
-  }, []);
-
-  const toggleScreen = (screen: FinanceScreen) => {
-    const next = expandedScreen === screen.id ? null : screen.id;
-    setExpandedScreen(next);
-    if (next && !screenData[screen.id]) void loadScreen(screen);
-  };
 
   const handleCompanyPick = (company: CompanySearchResult) => {
     setSelectedCompany(company);
@@ -226,8 +87,7 @@ export function FinanceExplore({ onSelectTicker, onSelectCompany }: Props) {
           <a href="https://www.screener.in/explore/" target="_blank" rel="noopener noreferrer" className="underline-offset-2 hover:underline">
             screener.in
           </a>
-          — search companies, browse sectors, or open a screen. Live screens run standard market formulas on Yahoo
-          price data.
+          — open any screen for a full results table, pagination, and customizable search queries.
         </p>
       </div>
 
@@ -262,13 +122,7 @@ export function FinanceExplore({ onSelectTicker, onSelectCompany }: Props) {
         </div>
         <div className="finance-explore-sector-grid">
           {filteredSectors.map((sector) => (
-            <SectorCard
-              key={sector.id}
-              sector={sector}
-              expanded={expandedSector === sector.id}
-              onToggle={() => setExpandedSector((id) => (id === sector.id ? null : sector.id))}
-              onSelectTicker={onSelectTicker}
-            />
+            <SectorLinkCard key={sector.id} sector={sector} />
           ))}
         </div>
       </section>
@@ -282,14 +136,7 @@ export function FinanceExplore({ onSelectTicker, onSelectCompany }: Props) {
             {cat.subtitle && <p className="finance-explore-section-subtitle">{cat.subtitle}</p>}
             <div className="finance-explore-screen-list">
               {screens.map((screen) => (
-                <ScreenCard
-                  key={screen.id}
-                  screen={screen}
-                  expanded={expandedScreen === screen.id}
-                  loaded={screenData[screen.id]}
-                  onToggle={() => toggleScreen(screen)}
-                  onSelectTicker={onSelectTicker}
-                />
+                <ScreenLinkCard key={screen.id} screen={screen} />
               ))}
             </div>
           </section>
@@ -297,9 +144,8 @@ export function FinanceExplore({ onSelectTicker, onSelectCompany }: Props) {
       })}
 
       <p className="finance-explore-footnote text-[11px] text-[var(--v-fg-5)]">
-        India-specific screens (FII in INR, penny stocks under ₹10, intraday lists) are adapted for US SEC filers.
-        Fundamental screens use curated starter sets + documented formulas; live scans cover price/volume criteria.
-        Full XBRL tables on{' '}
+        Each screen opens a dedicated page with all matching stocks, pagination, and a customizable query editor.
+        Full XBRL fundamentals on{' '}
         <Link href="/stock" className="underline-offset-2 hover:underline">
           Stock terminal
         </Link>
