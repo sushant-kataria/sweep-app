@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { ArrowLeft, Menu, Moon, Sun } from 'lucide-react';
 import { AuthButton } from '@/components/auth/auth-button';
 import { SweepMobileMenu } from '@/components/sweep-mobile-menu';
+import { SweepHeaderNav } from '@/components/sweep-header-nav';
 import { SweepLogo } from '@/components/sweep-logo';
 
 type Props = {
@@ -36,7 +37,9 @@ export function WorkspacePageHeader({ theme, onToggleTheme, backHref = '/' }: Pr
               <SweepLogo className="h-7 w-7" showWordmark={false} />
             </Link>
           </div>
-          <div className="grok-header-slot grok-header-slot--center" aria-hidden />
+          <div className="grok-header-slot grok-header-slot--center">
+            <SweepHeaderNav />
+          </div>
           <div className="grok-header-slot grok-header-slot--right">
             <AuthButton />
             <button type="button" onClick={onToggleTheme} className="grok-ghost-btn" aria-label="Toggle theme">

@@ -41,9 +41,9 @@ const PILLARS = [
     id: 'realty',
     icon: Building2,
     label: 'Real Estate',
-    tag: 'listings · portfolio · comps',
+    tag: 'ZIP markets · investor screens · deal analyzer',
     description:
-      'Search properties, model rental portfolios, and pull Zillow-style comps — grounded answers with map-ready visualizations.',
+      'Browse 30 US metros with ZIP-level medians from Redfin, run investor screens, and analyze deals with FRED mortgage rates — all free public data.',
     href: '/real-estate',
     cta: 'Open Real Estate',
     accent: 'home-pillar--realty',

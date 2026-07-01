@@ -19,6 +19,7 @@ import { ZillowListings } from '@/components/dashboard/zillow-listings';
 import { HomeLanding } from '@/components/home/home-landing';
 import { AuthButton } from '@/components/auth/auth-button';
 import { SweepMobileMenu } from '@/components/sweep-mobile-menu';
+import { SweepHeaderNav } from '@/components/sweep-header-nav';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -742,7 +743,9 @@ function Chat({
             </Link>
           </div>
 
-          <div className="grok-header-slot grok-header-slot--center" aria-hidden />
+          <div className="grok-header-slot grok-header-slot--center">
+            <SweepHeaderNav />
+          </div>
 
           <div className="grok-header-slot grok-header-slot--right">
             <AuthButton />
