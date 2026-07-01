@@ -2,12 +2,65 @@
 
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import { Loader2 } from 'lucide-react';
+import { ProGate } from '@/components/auth/pro-gate';
 import { WorkspacePageHeader } from '@/components/workspace/workspace-page-header';
+import { useSubscription } from '@/hooks/use-subscription';
 import { useSweepTheme } from '@/hooks/use-sweep-theme';
+import { analyzeDeal } from '@/lib/real-estate-market/deal';
 import { formatUsd, formatYield } from '@/lib/real-estate-market/format';
 import type { DealAnalyzerResult } from '@/lib/real-estate-market/types';
+
+const SAMPLE_INPUT = {
+  purchasePrice: 250_000,
+  downPaymentPct: 20,
+  interestRate: 6.5,
+  loanTermYears: 30,
+  monthlyRent: 1_800,
+  monthlyExpenses: 400,
+};
+
+function DealResultGrid({ result }: { result: DealAnalyzerResult }) {
+  return (
+    <div className="grid gap-3 sm:grid-cols-2">
+      {[
+        ['Monthly cash flow', formatUsd(result.monthlyCashFlow)],
+        ['Annual cash flow', formatUsd(result.annualCashFlow)],
+        ['Monthly mortgage', formatUsd(result.monthlyMortgage)],
+        ['Gross yield', formatYield(result.grossYield)],
+        ['Cap rate (net)', formatYield(result.capRate)],
+        ['Cash-on-cash', formatYield(result.cashOnCash)],
+        ['Break-even rent', formatUsd(result.breakEvenRent)],
+        ['Deal score', String(result.dealScore)],
+      ].map(([label, value]) => (
+        <div key={label} className="rounded-xl border border-[var(--v-border)] bg-[var(--v-surface)] p-4">
+          <p className="text-[11px] uppercase tracking-wide text-[var(--v-fg-5)]">{label}</p>
+          <p className="mt-1 text-lg font-semibold text-[var(--v-fg)]">{value}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function SampleDealPreview() {
+  const sample = useMemo(
+    () => analyzeDeal(SAMPLE_INPUT, 'Sample — $250k purchase, 20% down, 6.5% rate, $1,800/mo rent'),
+    [],
+  );
+
+  return (
+    <div className="mb-6 rounded-xl border border-amber-500/30 bg-amber-500/5 p-4">
+      <p className="text-xs font-medium uppercase tracking-wide text-amber-600 dark:text-amber-400">Free sample</p>
+      <p className="mt-1 text-sm text-[var(--v-fg-3)]">
+        Example deal: $250,000 purchase · 20% down · 6.5% mortgage · $1,800/mo rent · $400/mo expenses.
+      </p>
+      <div className="mt-4">
+        <DealResultGrid result={sample} />
+      </div>
+    </div>
+  );
+}
 
 function DealAnalyzerForm() {
   const searchParams = useSearchParams();
@@ -54,6 +107,9 @@ function DealAnalyzerForm() {
         }),
       });
       const data = await res.json();
+      if (res.status === 402) {
+        throw new Error('Pro subscription required to run custom deal analysis.');
+      }
       if (!res.ok) throw new Error(data.error ?? 'Analysis failed.');
       setResult(data);
     } catch (e) {
@@ -109,22 +165,8 @@ function DealAnalyzerForm() {
       </div>
 
       {result && (
-        <div className="mt-6 grid gap-3 sm:grid-cols-2">
-          {[
-            ['Monthly cash flow', formatUsd(result.monthlyCashFlow)],
-            ['Annual cash flow', formatUsd(result.annualCashFlow)],
-            ['Monthly mortgage', formatUsd(result.monthlyMortgage)],
-            ['Gross yield', formatYield(result.grossYield)],
-            ['Cap rate (net)', formatYield(result.capRate)],
-            ['Cash-on-cash', formatYield(result.cashOnCash)],
-            ['Break-even rent', formatUsd(result.breakEvenRent)],
-            ['Deal score', String(result.dealScore)],
-          ].map(([label, value]) => (
-            <div key={label} className="rounded-xl border border-[var(--v-border)] bg-[var(--v-surface)] p-4">
-              <p className="text-[11px] uppercase tracking-wide text-[var(--v-fg-5)]">{label}</p>
-              <p className="mt-1 text-lg font-semibold text-[var(--v-fg)]">{value}</p>
-            </div>
-          ))}
+        <div className="mt-6">
+          <DealResultGrid result={result} />
         </div>
       )}
     </div>
@@ -133,12 +175,17 @@ function DealAnalyzerForm() {
 
 function DealAnalyzerPageContent() {
   const { theme, toggleTheme } = useSweepTheme();
+  const { pro, loading } = useSubscription();
+
   return (
     <div className="finance-shell">
       <WorkspacePageHeader theme={theme} onToggleTheme={toggleTheme} backHref="/real-estate" />
       <main className="finance-main">
         <section className="finance-report-panel finance-scroll mx-auto max-w-4xl p-4">
-          <DealAnalyzerForm />
+          {!loading && !pro && <SampleDealPreview />}
+          <ProGate feature="The interactive deal analyzer">
+            <DealAnalyzerForm />
+          </ProGate>
         </section>
       </main>
     </div>

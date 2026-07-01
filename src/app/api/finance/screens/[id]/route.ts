@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 
 import { runScreenResults } from '@/lib/stock-screen-engine';
+import { applyFreeSampleLimit } from '@/lib/free-tier-limits';
+import { requireProUserApi } from '@/lib/sweep-auth';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -16,6 +18,10 @@ export async function GET(req: Request, context: RouteContext) {
 
   try {
     const result = await runScreenResults(id, { page, limit, query });
+    const proUser = await requireProUserApi();
+    if (!proUser) {
+      return NextResponse.json(applyFreeSampleLimit(result));
+    }
     return NextResponse.json(result);
   } catch (e) {
     const message = e instanceof Error ? e.message : 'Screen scan failed.';

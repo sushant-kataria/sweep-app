@@ -74,6 +74,7 @@ export type RealEstateScreenResults = {
   total: number;
   totalPages: number;
   scanNote?: string;
+  preview?: boolean;
 };
 
 export type DealAnalyzerInput = {

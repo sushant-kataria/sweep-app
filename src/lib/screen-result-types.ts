@@ -58,4 +58,6 @@ export type ScreenResultsPayload = {
   /** True when a live screen fell back to its starter ticker list. */
   fallback?: boolean;
   scanNote?: string;
+  /** Free tier preview — full results require Pro. */
+  preview?: boolean;
 };

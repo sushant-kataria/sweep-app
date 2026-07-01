@@ -77,7 +77,7 @@ export function RealEstateExplore({ metros, generatedAt, source }: Props) {
           <a href={source} target="_blank" rel="noopener noreferrer" className="underline-offset-2 hover:underline">
             Data source
           </a>
-          . Investor screens & deal analyzer require{' '}
+          . Investor screens show a 5-row free preview; full results, CSV export & deal analyzer require{' '}
           <a href="/pricing" className="underline-offset-2 hover:underline">
             Pro
           </a>

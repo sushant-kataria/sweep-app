@@ -48,6 +48,16 @@ const statements = [
     latest_filing_date TEXT
   )`,
   `CREATE INDEX IF NOT EXISTS idx_stock_screener_ticker ON stock_screener_cache(ticker)`,
+  `CREATE TABLE IF NOT EXISTS subscriptions (
+    workos_user_id TEXT PRIMARY KEY,
+    stripe_customer_id TEXT,
+    stripe_subscription_id TEXT,
+    status TEXT NOT NULL,
+    price_id TEXT,
+    current_period_end TEXT,
+    updated_at TEXT NOT NULL
+  )`,
+  `CREATE INDEX IF NOT EXISTS idx_subscriptions_stripe_customer ON subscriptions(stripe_customer_id)`,
 ];
 
 for (const sql of statements) {
