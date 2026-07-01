@@ -3506,6 +3506,14 @@ body.finance-split-dragging--vertical {
   position: relative;
   width: 100%;
   min-width: 0;
+  /* Fixed height prevents layout shift while lines animate in/out */
+  height: 31.5rem;
+}
+
+@media (min-width: 720px) {
+  .home-demo-panel {
+    height: 21.5rem;
+  }
 }
 
 .home-demo-glow {
@@ -3518,6 +3526,9 @@ body.finance-split-dragging--vertical {
 
 .home-demo-window {
   position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
   overflow: hidden;
   border-radius: 0.875rem;
   border: 1px solid var(--home-border);
@@ -3586,7 +3597,10 @@ body.finance-split-dragging--vertical {
 
 .home-demo-body {
   display: grid;
+  flex: 1;
+  min-height: 0;
   gap: 0;
+  overflow: hidden;
 }
 
 @media (min-width: 720px) {
@@ -3596,10 +3610,21 @@ body.finance-split-dragging--vertical {
 }
 
 .home-demo-code {
-  min-height: 14rem;
+  height: 17.5rem;
+  min-height: 17.5rem;
+  max-height: 17.5rem;
+  overflow: hidden;
   padding: 0.75rem 0;
   font-size: 0.6875rem;
   line-height: 1.5;
+}
+
+@media (min-width: 720px) {
+  .home-demo-code {
+    height: 100%;
+    min-height: 0;
+    max-height: none;
+  }
 }
 
 .home-demo-line {
@@ -3644,6 +3669,10 @@ body.finance-split-dragging--vertical {
   border-top: 1px solid var(--home-border);
   padding: 0.85rem 0.9rem 1rem;
   background: color-mix(in srgb, var(--v-fg) 2%, transparent);
+  height: 11.75rem;
+  min-height: 11.75rem;
+  max-height: 11.75rem;
+  overflow: hidden;
 }
 
 @media (min-width: 720px) {
@@ -3652,6 +3681,9 @@ body.finance-split-dragging--vertical {
   .home-demo-listings {
     border-top: none;
     border-left: 1px solid var(--home-border);
+    height: 100%;
+    min-height: 0;
+    max-height: none;
   }
 }
 
