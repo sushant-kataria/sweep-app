@@ -81,14 +81,35 @@ function grossYield(price, rent) {
 }
 
 function dealScore(row, metroMedianYield) {
-  let score = 50;
+  let score = 40;
   const y = row.grossYield;
-  if (y != null && metroMedianYield != null) score += Math.min(25, (y - metroMedianYield) * 8);
-  if (row.priceYoy != null && row.priceYoy < 0) score += 8;
-  if (row.priceYoy != null && row.priceYoy > 0.15) score -= 10;
-  if (row.medianDom != null && row.medianDom > 45) score += 5;
-  if (row.inventoryYoy != null && row.inventoryYoy > 0.1) score += 5;
+  if (y != null && metroMedianYield != null) {
+    score += Math.min(15, Math.max(0, (y - metroMedianYield + 0.5) * 6));
+  }
+  if (row.priceYoy != null && row.priceYoy < 0) {
+    score += Math.min(18, Math.abs(row.priceYoy) * 80);
+  }
+  if (row.priceYoy != null && row.priceYoy > 0.15) score -= 8;
+  if (row.medianSalePrice != null && row.medianListPrice != null && row.medianListPrice > 0) {
+    const discount = (row.medianListPrice - row.medianSalePrice) / row.medianListPrice;
+    if (discount > 0) score += Math.min(12, discount * 40);
+  }
+  if (row.medianDom != null && row.medianDom < 25) score += 10;
+  else if (row.medianDom != null && row.medianDom > 45) score += 5;
+  if (row.inventoryYoy != null && row.inventoryYoy > 0.1) score += 8;
   return Math.max(0, Math.min(100, Math.round(score)));
+}
+
+function normalizeDealScores(rows) {
+  if (rows.length === 0) return rows;
+  const raw = rows.map((r) => r.dealScore);
+  const min = Math.min(...raw);
+  const max = Math.max(...raw);
+  if (max === min) return rows;
+  return rows.map((r) => ({
+    ...r,
+    dealScore: Math.round(((r.dealScore - min) / (max - min)) * 100),
+  }));
 }
 
 async function main() {
@@ -189,9 +210,19 @@ async function main() {
       medianYield,
       medianDom: avg(doms),
       priceYoy: avg(yoys),
-      zips: zipRows.sort((a, b) => (b.dealScore ?? 0) - (a.dealScore ?? 0)),
+      zips: zipRows,
     };
   });
+
+  const allZipRows = metroSummaries.flatMap((m) => m.zips);
+  const normalized = normalizeDealScores(allZipRows);
+  const normalizedByZip = new Map(normalized.map((z) => [z.zip, z]));
+
+  for (const metro of metroSummaries) {
+    metro.zips = metro.zips
+      .map((z) => normalizedByZip.get(z.zip) ?? z)
+      .sort((a, b) => (b.dealScore ?? 0) - (a.dealScore ?? 0));
+  }
 
   metroSummaries.sort((a, b) => a.name.localeCompare(b.name));
 

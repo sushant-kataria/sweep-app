@@ -33,7 +33,7 @@ export const REAL_ESTATE_SCREENS: RealEstateScreen[] = [
     id: 'top-deals',
     title: 'Top deal scores',
     description: 'Highest composite deal scores across all tracked metros.',
-    formula: 'Deal score ≥ 70',
+    formula: 'Deal score ≥ 60 (top tier)',
     category: 'Composite',
   },
   {

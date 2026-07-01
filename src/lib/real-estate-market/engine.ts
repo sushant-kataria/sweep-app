@@ -58,8 +58,11 @@ function filterByScreen(id: string, rows: ZipMarketRow[]): ZipMarketRow[] {
       return rows.filter((r) => r.medianDom != null && r.medianDom < 30);
     case 'rising-inventory':
       return rows.filter((r) => r.inventoryYoy != null && r.inventoryYoy > 0.1);
-    case 'top-deals':
-      return rows.filter((r) => r.dealScore >= 70);
+    case 'top-deals': {
+      const top = rows.filter((r) => r.dealScore >= 60);
+      if (top.length > 0) return top;
+      return [...rows].sort((a, b) => b.dealScore - a.dealScore);
+    }
     case 'affordable-entry':
       return rows.filter((r) => r.medianSalePrice != null && r.medianSalePrice < 400_000);
     default:
