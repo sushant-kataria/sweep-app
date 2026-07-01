@@ -7,6 +7,9 @@ import { createGunzip } from 'zlib';
 import { pipeline } from 'stream/promises';
 import { Readable } from 'stream';
 import { createInterface } from 'readline';
+import { execSync } from 'child_process';
+import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'fs';
+import { dirname, join } from 'path';
 
 const REDFIN_ZIP_URL =
   'https://redfin-public-data.s3.us-west-2.amazonaws.com/redfin_market_tracker/zip_code_market_tracker.tsv000.gz';
@@ -46,6 +49,8 @@ const METRO_PATTERNS = new Set([
 ]);
 
 const MAX_ZIPS_PER_METRO = 80;
+const GEONAMES_CACHE = join(process.cwd(), 'scripts/cache/geonames-us.txt');
+const GEONAMES_CACHE_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
 
 function unquote(v) {
   return String(v ?? '').replace(/^"|"$/g, '').trim();
@@ -112,7 +117,47 @@ function normalizeDealScores(rows) {
   }));
 }
 
+async function loadGeoNamesZipCities() {
+  console.log('Loading GeoNames ZIP → city lookup…');
+  let text;
+  const cacheFresh =
+    existsSync(GEONAMES_CACHE) &&
+    Date.now() - statSync(GEONAMES_CACHE).mtimeMs < GEONAMES_CACHE_MAX_AGE_MS;
+
+  if (cacheFresh) {
+    text = readFileSync(GEONAMES_CACHE, 'utf8');
+  } else {
+    const res = await fetch('https://download.geonames.org/export/zip/US.zip');
+    if (!res.ok) throw new Error(`GeoNames download failed (${res.status})`);
+    writeFileSync('/tmp/geonames-us.zip', Buffer.from(await res.arrayBuffer()));
+    text = execSync('unzip -p /tmp/geonames-us.zip US.txt', {
+      encoding: 'utf8',
+      maxBuffer: 64 * 1024 * 1024,
+    });
+    mkdirSync(dirname(GEONAMES_CACHE), { recursive: true });
+    writeFileSync(GEONAMES_CACHE, text);
+  }
+
+  const map = new Map();
+  for (const line of text.split('\n')) {
+    if (!line.startsWith('US\t')) continue;
+    const cols = line.split('\t');
+    const zip = cols[1];
+    const city = cols[2]?.trim();
+    if (!zip || !city) continue;
+    const accuracy = Number(cols[9] ?? 9);
+    const existing = map.get(zip);
+    if (!existing || accuracy < existing.accuracy) {
+      map.set(zip, { city, accuracy });
+    }
+  }
+
+  console.log(`  ${map.size.toLocaleString()} ZIP → city mappings`);
+  return new Map([...map.entries()].map(([zip, { city }]) => [zip, city]));
+}
+
 async function main() {
+  const cityByZip = await loadGeoNamesZipCities();
   console.log('Fetching Redfin ZIP data…');
   const res = await fetch(REDFIN_ZIP_URL);
   if (!res.ok) throw new Error(`Redfin download failed (${res.status})`);
@@ -146,6 +191,7 @@ async function main() {
 
     byZip.set(zip, {
       zip,
+      city: cityByZip.get(zip) ?? null,
       state: unquote(cols[10]),
       stateCode: unquote(cols[9]),
       metro: parentMetro,

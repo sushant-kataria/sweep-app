@@ -25,6 +25,7 @@ export async function GET(_req: Request, context: RouteContext) {
     priceYoy: metro.priceYoy,
     zips: metro.zips.map((z) => ({
       zip: z.zip,
+      city: z.city,
       medianSalePrice: z.medianSalePrice,
       estMonthlyRent: z.estMonthlyRent,
       grossYield: z.grossYield,

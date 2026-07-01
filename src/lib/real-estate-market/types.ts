@@ -1,5 +1,6 @@
 export type ZipMarketRow = {
   zip: string;
+  city: string | null;
   state: string;
   stateCode: string;
   metro: string;
@@ -48,6 +49,7 @@ export type RealEstateScreenColumn = {
 
 export type RealEstateScreenResultRow = {
   zip: string;
+  city: string | null;
   metro: string;
   metroSlug: string;
   stateCode: string;

@@ -145,6 +145,7 @@ export function MetroDetailView({ metro }: { metro: MetroSummary }) {
           <thead>
             <tr>
               <th className="text-left">ZIP</th>
+              <th className="text-left">City</th>
               <th className="text-right">Median price</th>
               <th className="text-right">Est. rent</th>
               <th className="text-right">Yield</th>
@@ -161,6 +162,7 @@ export function MetroDetailView({ metro }: { metro: MetroSummary }) {
                     {z.zip}
                   </Link>
                 </td>
+                <td>{z.city ?? '—'}</td>
                 <td className="text-right">{formatUsd(z.medianSalePrice, true)}</td>
                 <td className="text-right">{formatUsd(z.estMonthlyRent)}</td>
                 <td className="text-right">{formatYield(z.grossYield)}</td>
@@ -180,9 +182,11 @@ export function ZipDetailView({ zip }: { zip: import('@/lib/real-estate-market/t
   return (
     <div className="finance-explore">
       <div className="finance-explore-hero">
-        <h1 className="text-xl font-semibold text-[var(--v-fg)]">ZIP {zip.zip}</h1>
+        <h1 className="text-xl font-semibold text-[var(--v-fg)]">
+          {zip.city ? `${zip.city}, ${zip.stateCode}` : `ZIP ${zip.zip}`}
+        </h1>
         <p className="mt-1 text-sm text-[var(--v-fg-3)]">
-          {zip.metro} · {zip.state} · Period ending {zip.periodEnd}
+          ZIP {zip.zip} · {zip.metro} · Period ending {zip.periodEnd}
         </p>
       </div>
 

@@ -9,6 +9,7 @@ import type {
 
 const DEFAULT_COLUMNS: RealEstateScreenColumn[] = [
   { id: 'zip', label: 'ZIP', align: 'left' },
+  { id: 'city', label: 'City', align: 'left' },
   { id: 'metro', label: 'Metro', align: 'left' },
   { id: 'price', label: 'Median price', align: 'right' },
   { id: 'rent', label: 'Est. rent/mo', align: 'right' },
@@ -27,6 +28,7 @@ function toResultRow(row: ZipMarketRow): RealEstateScreenResultRow {
 
   return {
     zip: row.zip,
+    city: row.city,
     metro: row.metro,
     metroSlug: row.metroSlug,
     stateCode: row.stateCode,

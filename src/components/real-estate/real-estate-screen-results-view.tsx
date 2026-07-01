@@ -19,6 +19,8 @@ function cellValue(row: RealEstateScreenResults['rows'][number], colId: string):
   switch (colId) {
     case 'zip':
       return row.zip;
+    case 'city':
+      return row.city ?? '—';
     case 'metro':
       return row.metro;
     case 'price':
@@ -69,11 +71,16 @@ export function RealEstateScreenResultsView({ screenId, backHref = '/real-estate
 
   const exportCsv = () => {
     if (!payload) return;
-    const headers = ['ZIP', 'Metro', ...payload.columns.slice(2).map((c) => c.label)];
+    const headers = ['ZIP', 'City', 'Metro', ...payload.columns.slice(3).map((c) => c.label)];
     const lines = [headers.join(',')];
     payload.rows.forEach((row) => {
       lines.push(
-        [row.zip, `"${row.metro}"`, ...payload.columns.slice(2).map((c) => cellValue(row, c.id))].join(','),
+        [
+          row.zip,
+          `"${row.city ?? ''}"`,
+          `"${row.metro}"`,
+          ...payload.columns.slice(3).map((c) => cellValue(row, c.id)),
+        ].join(','),
       );
     });
     const blob = new Blob([lines.join('\n')], { type: 'text/csv' });
