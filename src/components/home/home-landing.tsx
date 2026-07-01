@@ -7,6 +7,7 @@ import {
   Building2,
   FileSpreadsheet,
   LineChart,
+  MapPin,
   Search,
   Table2,
   TrendingUp,
@@ -67,16 +68,21 @@ const CAPABILITIES = [
     description: '6-month, 1-year, and 5-year price history alongside fundamentals in the same split view.',
   },
   {
+    icon: MapPin,
+    title: 'Real estate ZIP markets',
+    description: '30 US metros with city-level ZIP data from Redfin, investor screens, and a FRED-powered deal analyzer.',
+  },
+  {
     icon: BarChart3,
     title: 'Peer comparison',
-    description: 'Compare watchlist tickers on key metrics. Screen in Stock, then open the full balance sheet in Finance.',
+    description: 'Compare watchlist tickers on key metrics. Screen in Stock, analyze ZIPs in Real Estate, go deeper in Finance.',
   },
 ] as const;
 
 const QUICK_START = [
   { ticker: 'AAPL', label: 'Apple balance sheet', href: '/finance?ticker=AAPL&generate=1' },
   { ticker: 'NVDA', label: 'NVIDIA screener', href: '/stock?ticker=NVDA' },
-  { ticker: 'WMT', label: 'Walmart analysis', href: '/finance?ticker=WMT&generate=1' },
+  { ticker: '78701', label: 'Austin TX real estate', href: '/real-estate/zip/78701' },
   { ticker: 'MSFT', label: 'Microsoft terminal', href: '/stock?ticker=MSFT' },
 ] as const;
 
@@ -88,7 +94,7 @@ export function HomeLanding() {
 
       <section className="home-hero">
         <div className="home-hero-content">
-          <p className="home-hero-badge font-mono">SEC filings · live quotes · XBRL tables</p>
+          <p className="home-hero-badge font-mono">SEC filings · live quotes · ZIP markets</p>
 
           <h1 className="home-hero-title font-pixel">
             Intelligence
@@ -97,14 +103,21 @@ export function HomeLanding() {
           </h1>
 
           <p className="home-hero-lead">
-            A developer-first equity research workspace. Screen live markets with SEC financials, generate
-            institutional balance sheet reports, and ask grounded questions — all in one split-view terminal.
+            A developer-first research workspace for equities and real estate. Screen live markets with SEC
+            financials, scan 2,300+ ZIP codes across 30 metros, generate institutional reports, and ask grounded
+            questions — all in one split-view terminal.
           </p>
 
           <div className="home-hero-actions">
             <Link href="/stock" className="home-btn home-btn--primary">
               Open Stock
               <ArrowRight className="h-4 w-4" />
+            </Link>
+            <Link href="/real-estate" className="home-btn home-btn--ghost">
+              Real Estate
+            </Link>
+            <Link href="/pricing" className="home-btn home-btn--ghost">
+              Pricing
             </Link>
           </div>
 
@@ -114,12 +127,12 @@ export function HomeLanding() {
               <span className="home-stat-label">US filers pre-loaded</span>
             </div>
             <div>
-              <span className="home-stat-value font-pixel">SEC</span>
-              <span className="home-stat-label">XBRL financial tables</span>
+              <span className="home-stat-value font-pixel">2.3K</span>
+              <span className="home-stat-label">Real estate ZIPs tracked</span>
             </div>
             <div>
               <span className="home-stat-value font-pixel">Live</span>
-              <span className="home-stat-label">Price charts & peer comps</span>
+              <span className="home-stat-label">Charts, screens & deal tools</span>
             </div>
           </div>
         </div>
@@ -129,11 +142,12 @@ export function HomeLanding() {
 
       <section className="home-capabilities">
         <div className="home-section-head">
-          <p className="home-section-kicker font-mono">equity research</p>
-          <h2 className="home-section-title font-pixel">Filings and markets, side by side.</h2>
+          <p className="home-section-kicker font-mono">research</p>
+          <h2 className="home-section-title font-pixel">Equities and real estate, side by side.</h2>
           <p className="home-capabilities-lead">
-            Stock combines live quotes with EDGAR-parsed financials. Finance goes deeper with full balance sheet
-            extraction, metrics, and downloadable reports. Start anywhere — cross-link when you need more depth.
+            Stock combines live quotes with EDGAR-parsed financials. Real Estate surfaces ZIP-level medians, investor
+            screens, and deal math from free public data. Finance goes deepest with balance sheet extraction and
+            downloadable reports. Start anywhere — cross-link when you need more depth.
           </p>
         </div>
         <div className="home-capability-grid">
@@ -194,7 +208,8 @@ export function HomeLanding() {
           <h2 className="home-section-title font-pixel">From ticker to report in seconds</h2>
           <p className="home-api-desc">
             Pre-loaded mega-cap filers return instantly. Upload a PDF or paste a filing URL for custom analysis.
-            The stock screener pulls structured XBRL from EDGAR — every chat answer stays grounded in the numbers.
+            Real estate screens rank ZIPs by yield, price dips, and deal score — sign in for full tables, AI chat, and
+            the deal analyzer. Pro billing runs on Stripe when you&apos;re ready to upgrade.
           </p>
         </div>
         <div className="home-api-stack">
@@ -215,16 +230,16 @@ export function HomeLanding() {
           </div>
           <div className="home-api-code font-mono">
             <div className="home-api-code-bar">
-              <span>POST /api/finance/analyze</span>
+              <span>GET /api/real-estate/screens/top-deals</span>
             </div>
             <pre className="home-api-pre">
-              <code>{`{
-  "source": "upload",
-  "doc": { "text": "…", "mimeType": "application/pdf" },
-  "fileName": "AAPL-10K.pdf"
-}
+              <code>{`// → ZIP, city, yield, deal score
+//   Sign in for full results + CSV
 
-// → balance sheet, metrics, analysis, PDF`}</code>
+{
+  "screenId": "top-deals",
+  "rows": [{ "zip": "78701", "city": "Austin", ... }]
+}`}</code>
             </pre>
           </div>
         </div>

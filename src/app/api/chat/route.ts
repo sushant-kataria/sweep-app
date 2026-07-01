@@ -11,8 +11,9 @@ import {
   type UIMessage,
 } from 'ai';
 import { dashboardTools } from '@/ai/dashboard-tools';
+import { requireSweepUserApi } from '@/lib/sweep-auth';
 
-export const runtime = 'edge';
+export const runtime = 'nodejs';
 export const maxDuration = 60;
 
 type Mode = 'chat' | 'search' | 'code' | 'finance' | 'stock' | 'real-estate';
@@ -306,6 +307,14 @@ function streamChunkHasContent(text: string) {
 }
 
 export async function POST(req: Request) {
+  const user = await requireSweepUserApi();
+  if (!user) {
+    return new Response(JSON.stringify({ error: 'Sign in required for AI chat.' }), {
+      status: 401,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
   const {
     messages,
     mode = 'chat',

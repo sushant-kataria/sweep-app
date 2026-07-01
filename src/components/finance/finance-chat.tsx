@@ -3,6 +3,7 @@
 import { useChat } from '@ai-sdk/react';
 import { useEffect, useRef, useState } from 'react';
 import { ArrowUp } from 'lucide-react';
+import { ChatAuthGate } from '@/components/auth/chat-auth-gate';
 import type { FinanceReportContext } from '@/lib/finance-types';
 
 const SUGGESTIONS = [
@@ -37,6 +38,7 @@ export function FinanceChat({ context }: { context: FinanceReportContext }) {
   };
 
   return (
+    <ChatAuthGate product="finance">
     <div className="finance-chat">
       <div className="finance-chat-header">
         <h2 className="finance-chat-title">Ask about this report</h2>
@@ -111,5 +113,6 @@ export function FinanceChat({ context }: { context: FinanceReportContext }) {
         </div>
       </form>
     </div>
+    </ChatAuthGate>
   );
 }

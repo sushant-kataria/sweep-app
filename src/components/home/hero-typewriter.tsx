@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 
-const WORDS = ['Equity', 'Finance', 'Stock'] as const;
+const WORDS = ['Equity', 'Finance', 'Stock', 'Real Estate'] as const;
 const FINAL_WORD = 'your asset';
 const TYPE_MS = 72;
 const DELETE_MS = 40;

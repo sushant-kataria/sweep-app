@@ -11,10 +11,11 @@ export const SWEEP_SECTIONS: { id: SweepSection; label: string; href: string }[]
   { id: 'real-estate', label: 'Real Estate', href: '/real-estate' },
 ];
 
-export type CompanySection = 'about' | 'contact';
+export type CompanySection = 'about' | 'pricing' | 'contact';
 
 export const COMPANY_SECTIONS: { id: CompanySection; label: string; href: string }[] = [
   { id: 'about', label: 'About', href: '/about' },
+  { id: 'pricing', label: 'Pricing', href: '/pricing' },
   { id: 'contact', label: 'Contact Us', href: '/contact' },
 ];
 
@@ -27,6 +28,7 @@ export function getActiveSection(pathname: string): SweepSection | null {
 
 export function getActiveCompanySection(pathname: string): CompanySection | null {
   if (pathname.startsWith('/about')) return 'about';
+  if (pathname.startsWith('/pricing')) return 'pricing';
   if (pathname.startsWith('/contact')) return 'contact';
   return null;
 }

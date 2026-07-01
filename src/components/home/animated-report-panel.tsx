@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from 'react';
 
-type DemoPhase = 'finance' | 'stock';
+type DemoPhase = 'finance' | 'stock' | 'realty';
 
-const PHASES: DemoPhase[] = ['finance', 'stock'];
+const PHASES: DemoPhase[] = ['finance', 'stock', 'realty'];
 
 const DEMO: Record<
   DemoPhase,
@@ -46,6 +46,24 @@ const DEMO: Record<
       { text: '→ open full balance sheet in Finance', dim: true, delay: 300 },
     ],
   },
+  realty: {
+    file: 'real-estate-screens.ts',
+    lines: [
+      { text: '// Redfin ZIP markets + investor screens', dim: true, delay: 0 },
+      { text: 'const market = await sweep.realEstate({', delay: 400 },
+      { text: '  metro: "Austin, TX",', delay: 200 },
+      { text: '  screen: "top-deals",', delay: 200 },
+      { text: '  source: "redfin",', delay: 200 },
+      { text: '});', delay: 200 },
+      { text: '', delay: 300 },
+      { text: 'market.zip.medianPrice           →  525,000', accent: true, delay: 450 },
+      { text: 'market.zip.grossYield            →  8.4%', accent: true, delay: 350 },
+      { text: 'market.zip.dealScore             →  87', accent: true, delay: 350 },
+      { text: 'market.mortgageRate              →  6.75% (FRED)', accent: true, delay: 350 },
+      { text: '', delay: 400 },
+      { text: '→ run deal analyzer on this ZIP', dim: true, delay: 300 },
+    ],
+  },
 };
 
 const BALANCE_ROWS = [
@@ -70,6 +88,35 @@ const SCREENER_ROWS = [
   { label: 'Debt / equity', value: '0.18', section: 'total' },
 ];
 
+const REALTY_ROWS = [
+  { label: 'ZIP 78701 · Austin', value: '$620K', section: 'assets' },
+  { label: 'Est. rent / mo', value: '$4,340', section: 'assets' },
+  { label: 'Gross yield', value: '8.4%', section: 'total' },
+  { label: 'Price YoY', value: '-2.1%', section: 'assets' },
+  { label: 'Days on market', value: '28d', section: 'liab' },
+  { label: 'Deal score', value: '87', section: 'total' },
+  { label: 'Mortgage (FRED)', value: '6.75%', section: 'liab' },
+  { label: 'Monthly cash flow', value: '+$412', section: 'total' },
+];
+
+function rowsForPhase(phase: DemoPhase) {
+  if (phase === 'finance') return BALANCE_ROWS;
+  if (phase === 'stock') return SCREENER_ROWS;
+  return REALTY_ROWS;
+}
+
+function sheetTitle(phase: DemoPhase) {
+  if (phase === 'finance') return 'Balance Sheet';
+  if (phase === 'stock') return 'Income & Ratios';
+  return 'ZIP Market Scan';
+}
+
+function sheetMeta(phase: DemoPhase) {
+  if (phase === 'finance') return 'AAPL · FY 2024 · USD M';
+  if (phase === 'stock') return 'NVDA · SEC XBRL · USD';
+  return '78701 · Austin, TX · Redfin';
+}
+
 export function AnimatedReportPanel() {
   const [phaseIdx, setPhaseIdx] = useState(0);
   const [visibleLines, setVisibleLines] = useState(0);
@@ -78,6 +125,7 @@ export function AnimatedReportPanel() {
 
   const phase = PHASES[phaseIdx];
   const demo = DEMO[phase];
+  const rows = rowsForPhase(phase);
 
   useEffect(() => {
     const blink = setInterval(() => setCursorOn((v) => !v), 530);
@@ -89,7 +137,6 @@ export function AnimatedReportPanel() {
     setVisibleRows(0);
 
     const timers: ReturnType<typeof setTimeout>[] = [];
-    const rows = phase === 'finance' ? BALANCE_ROWS : phase === 'stock' ? SCREENER_ROWS : [];
 
     let acc = 0;
     demo.lines.forEach((entry, i) => {
@@ -99,20 +146,18 @@ export function AnimatedReportPanel() {
 
     const lineTotalMs = acc + 800;
 
-    if (rows.length > 0) {
-      rows.forEach((_, i) => {
-        timers.push(setTimeout(() => setVisibleRows(i + 1), 1200 + i * 280));
-      });
-    }
+    rows.forEach((_, i) => {
+      timers.push(setTimeout(() => setVisibleRows(i + 1), 1200 + i * 280));
+    });
 
     timers.push(
       setTimeout(() => {
         setPhaseIdx((p) => (p + 1) % PHASES.length);
-      }, lineTotalMs + (rows.length > 0 ? rows.length * 280 + 2000 : 3500)),
+      }, lineTotalMs + rows.length * 280 + 2000),
     );
 
     return () => timers.forEach(clearTimeout);
-  }, [phaseIdx, phase, demo.lines]);
+  }, [phaseIdx, demo.lines, rows.length]);
 
   return (
     <div className="home-demo-panel">
@@ -158,48 +203,24 @@ export function AnimatedReportPanel() {
             )}
           </div>
 
-          {phase === 'finance' && (
-            <div className="home-demo-sheet">
-              <div className="home-demo-sheet-head">
-                <span className="font-pixel text-[11px] sm:text-xs">Balance Sheet</span>
-                <span className="font-mono text-[10px] text-[var(--home-muted)]">AAPL · FY 2024 · USD M</span>
-              </div>
-              <div className="home-demo-sheet-rows font-mono">
-                {BALANCE_ROWS.slice(0, visibleRows).map((row, i) => (
-                  <div
-                    key={row.label}
-                    className={`home-demo-sheet-row home-demo-sheet-row--in ${row.section === 'total' ? 'home-demo-sheet-row--total' : ''}`}
-                    style={{ animationDelay: `${i * 40}ms` }}
-                  >
-                    <span>{row.label}</span>
-                    <span>{row.value}</span>
-                  </div>
-                ))}
-              </div>
+          <div className="home-demo-sheet">
+            <div className="home-demo-sheet-head">
+              <span className="font-pixel text-[11px] sm:text-xs">{sheetTitle(phase)}</span>
+              <span className="font-mono text-[10px] text-[var(--home-muted)]">{sheetMeta(phase)}</span>
             </div>
-          )}
-
-          {phase === 'stock' && (
-            <div className="home-demo-sheet">
-              <div className="home-demo-sheet-head">
-                <span className="font-pixel text-[11px] sm:text-xs">Income & Ratios</span>
-                <span className="font-mono text-[10px] text-[var(--home-muted)]">NVDA · SEC XBRL · USD</span>
-              </div>
-              <div className="home-demo-sheet-rows font-mono">
-                {SCREENER_ROWS.slice(0, visibleRows).map((row, i) => (
-                  <div
-                    key={row.label}
-                    className={`home-demo-sheet-row home-demo-sheet-row--in ${row.section === 'total' ? 'home-demo-sheet-row--total' : ''}`}
-                    style={{ animationDelay: `${i * 40}ms` }}
-                  >
-                    <span>{row.label}</span>
-                    <span>{row.value}</span>
-                  </div>
-                ))}
-              </div>
+            <div className="home-demo-sheet-rows font-mono">
+              {rows.slice(0, visibleRows).map((row, i) => (
+                <div
+                  key={row.label}
+                  className={`home-demo-sheet-row home-demo-sheet-row--in ${row.section === 'total' ? 'home-demo-sheet-row--total' : ''}`}
+                  style={{ animationDelay: `${i * 40}ms` }}
+                >
+                  <span>{row.label}</span>
+                  <span>{row.value}</span>
+                </div>
+              ))}
             </div>
-          )}
-
+          </div>
         </div>
       </div>
     </div>

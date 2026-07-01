@@ -3,6 +3,7 @@
 import { useChat } from '@ai-sdk/react';
 import { useEffect, useRef, useState } from 'react';
 import { ArrowUp } from 'lucide-react';
+import { ChatAuthGate } from '@/components/auth/chat-auth-gate';
 import type { StockReportContext } from '@/lib/stock-types';
 
 const SUGGESTIONS = [
@@ -37,6 +38,7 @@ export function StockChat({ context }: { context: StockReportContext }) {
   };
 
   return (
+    <ChatAuthGate product="stock">
     <div className="finance-chat">
       <div className="finance-chat-header">
         <h2 className="finance-chat-title">Ask about this equity</h2>
@@ -107,5 +109,6 @@ export function StockChat({ context }: { context: StockReportContext }) {
         </div>
       </form>
     </div>
+    </ChatAuthGate>
   );
 }

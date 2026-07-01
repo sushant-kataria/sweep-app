@@ -3732,3 +3732,190 @@ body.finance-split-dragging--vertical {
     transform: scaleY(1);
   }
 }
+
+/* ── Pricing page ── */
+.pricing-page {
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+}
+
+.pricing-hero {
+  max-width: 42rem;
+}
+
+.pricing-cards {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 768px) {
+  .pricing-cards {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.pricing-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 1.25rem;
+  border: 1px solid var(--v-border);
+  border-radius: 1rem;
+  background: var(--v-surface);
+}
+
+.pricing-card--highlight {
+  border-color: var(--v-fg-4);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--v-fg) 8%, transparent);
+}
+
+.pricing-card-badge {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--v-fg-5);
+}
+
+.pricing-card-name {
+  font-size: 1.125rem;
+  color: var(--v-fg);
+}
+
+.pricing-card-price {
+  margin-top: 0.5rem;
+  color: var(--v-fg);
+}
+
+.pricing-card-desc {
+  margin-top: 0.75rem;
+  flex: 1;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--v-fg-3);
+}
+
+.pricing-table-wrap {
+  overflow-x: auto;
+  margin-top: 1rem;
+  border: 1px solid var(--v-border);
+  border-radius: 0.75rem;
+}
+
+.pricing-table {
+  width: 100%;
+  min-width: 560px;
+  font-size: 0.8125rem;
+  border-collapse: collapse;
+}
+
+.pricing-table th,
+.pricing-table td {
+  padding: 0.625rem 0.875rem;
+  border-bottom: 1px solid var(--v-border);
+  text-align: center;
+}
+
+.pricing-table th:first-child,
+.pricing-table td:first-child {
+  text-align: left;
+}
+
+.pricing-table thead th {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--v-fg-4);
+  background: var(--v-surface);
+}
+
+.pricing-feature-icon {
+  width: 1rem;
+  height: 1rem;
+  margin-inline: auto;
+}
+
+.pricing-feature-icon--yes {
+  color: #22c55e;
+}
+
+.pricing-feature-icon--no {
+  color: var(--v-fg-5);
+}
+
+.pricing-stripe-note {
+  padding: 1.25rem;
+  border: 1px solid var(--v-border);
+  border-radius: 0.75rem;
+  background: var(--v-surface);
+}
+
+/* ── Auth prompt (gated features) ── */
+.auth-prompt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 280px;
+  padding: 2rem 1.5rem;
+  text-align: center;
+}
+
+.finance-chat-panel-inner {
+  display: flex;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.auth-prompt-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  margin-bottom: 1rem;
+  border-radius: 9999px;
+  background: var(--v-surface);
+  color: var(--v-fg-4);
+}
+
+.auth-prompt-title {
+  font-size: 1.125rem;
+  color: var(--v-fg);
+}
+
+.auth-prompt-desc {
+  margin-top: 0.5rem;
+  max-width: 24rem;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--v-fg-3);
+}
+
+.auth-prompt-list {
+  margin-top: 1rem;
+  font-size: 0.75rem;
+  line-height: 1.6;
+  color: var(--v-fg-4);
+  list-style: none;
+  padding: 0;
+}
+
+.auth-prompt-list li::before {
+  content: '· ';
+}
+
+.auth-prompt-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+  margin-top: 1.25rem;
+}
