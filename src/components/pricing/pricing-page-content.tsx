@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { Check, X } from 'lucide-react';
-import { useAuth } from '@workos-inc/authkit-nextjs/components';
 import { PRICING_FEATURES, STRIPE_PRO_PAYMENT_LINK } from '@/lib/pricing';
 
 function FeatureCell({ enabled }: { enabled: boolean }) {
@@ -14,17 +13,16 @@ function FeatureCell({ enabled }: { enabled: boolean }) {
 }
 
 export function PricingPageContent() {
-  const { user } = useAuth();
   const proHref = STRIPE_PRO_PAYMENT_LINK || `/login?returnPathname=${encodeURIComponent('/pricing')}`;
 
   return (
     <div className="pricing-page">
       <div className="pricing-hero">
         <p className="home-section-kicker font-mono">pricing</p>
-        <h1 className="font-pixel text-2xl text-[var(--v-fg)] sm:text-3xl">Simple tiers. Free data sources.</h1>
+        <h1 className="font-pixel text-2xl text-[var(--v-fg)] sm:text-3xl">Free to explore. Pro to work.</h1>
         <p className="mt-3 max-w-2xl text-sm leading-relaxed text-[var(--v-fg-3)]">
-          Browse stock and real estate markets for free. Sign in to unlock AI chat, custom filing analysis, investor
-          screens, and the deal analyzer — no credit card during beta. Pro billing runs on{' '}
+          Browse stock and real estate markets on the free tier. Upgrade to Pro for AI chat, custom filing analysis,
+          investor screens, deal tools, and exports — billed monthly via{' '}
           <a
             href="https://stripe.com/pricing"
             target="_blank"
@@ -32,58 +30,52 @@ export function PricingPageContent() {
             className="underline-offset-2 hover:underline"
           >
             Stripe
-          </a>{' '}
-          (free to integrate; pay only when you charge subscribers).
+          </a>
+          .
         </p>
       </div>
 
-      <div className="pricing-cards">
+      <div className="pricing-cards pricing-cards--two">
         <article className="pricing-card">
           <h2 className="pricing-card-name font-pixel">Free</h2>
           <p className="pricing-card-price">
             <span className="font-pixel text-3xl">$0</span>
             <span className="text-sm text-[var(--v-fg-4)]"> / forever</span>
           </p>
-          <p className="pricing-card-desc">Explore markets and preloaded demos without an account.</p>
+          <p className="pricing-card-desc">
+            Explore markets, screen catalogs, and preloaded finance demos — no account required.
+          </p>
+          <ul className="pricing-card-features">
+            <li>Stock terminal & live charts</li>
+            <li>Real estate metro & ZIP browser</li>
+            <li>Preloaded SEC balance sheet demos</li>
+          </ul>
           <Link href="/stock" className="finance-secondary-btn mt-4 w-full text-center text-sm">
-            Start browsing
+            Start free
           </Link>
         </article>
 
         <article className="pricing-card pricing-card--highlight">
-          <span className="pricing-card-badge font-mono">Beta · free with sign-in</span>
-          <h2 className="pricing-card-name font-pixel">Account</h2>
-          <p className="pricing-card-price">
-            <span className="font-pixel text-3xl">$0</span>
-            <span className="text-sm text-[var(--v-fg-4)]"> / with sign-in</span>
-          </p>
-          <p className="pricing-card-desc">All Pro tools unlocked while we&apos;re in beta — just create an account.</p>
-          {user ? (
-            <p className="mt-4 text-center text-sm text-[var(--v-fg-3)]">Signed in as {user.email}</p>
-          ) : (
-            <Link
-              href={`/login?returnPathname=${encodeURIComponent('/pricing')}`}
-              className="finance-primary-btn mt-4 w-full text-center text-sm"
-            >
-              Sign in free
-            </Link>
-          )}
-        </article>
-
-        <article className="pricing-card">
           <span className="pricing-card-badge font-mono">Stripe Checkout</span>
           <h2 className="pricing-card-name font-pixel">Pro</h2>
           <p className="pricing-card-price">
             <span className="font-pixel text-3xl">$19</span>
             <span className="text-sm text-[var(--v-fg-4)]"> / month</span>
           </p>
-          <p className="pricing-card-desc">Unlimited AI, priority reports, and team features — billed via Stripe.</p>
+          <p className="pricing-card-desc">
+            Full workspace — AI Q&A, custom reports, real estate screens, deal analyzer, and CSV/PDF export.
+          </p>
+          <ul className="pricing-card-features">
+            <li>Everything in Free</li>
+            <li>AI chat on finance, stock & real estate</li>
+            <li>PDF upload, 10-K URLs & investor screens</li>
+          </ul>
           <a
             href={proHref}
             className="finance-primary-btn mt-4 w-full text-center text-sm"
             {...(STRIPE_PRO_PAYMENT_LINK ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
           >
-            {STRIPE_PRO_PAYMENT_LINK ? 'Upgrade with Stripe' : 'Sign in to join waitlist'}
+            {STRIPE_PRO_PAYMENT_LINK ? 'Upgrade to Pro' : 'Sign in to upgrade'}
           </a>
         </article>
       </div>
@@ -96,7 +88,6 @@ export function PricingPageContent() {
               <tr>
                 <th>Feature</th>
                 <th>Free</th>
-                <th>Account</th>
                 <th>Pro</th>
               </tr>
             </thead>
@@ -106,9 +97,6 @@ export function PricingPageContent() {
                   <td>{row.label}</td>
                   <td>
                     <FeatureCell enabled={row.free} />
-                  </td>
-                  <td>
-                    <FeatureCell enabled={row.account} />
                   </td>
                   <td>
                     <FeatureCell enabled={row.pro} />
@@ -121,15 +109,10 @@ export function PricingPageContent() {
       </section>
 
       <section className="pricing-stripe-note">
-        <h2 className="font-pixel text-lg text-[var(--v-fg)]">Why Stripe?</h2>
+        <h2 className="font-pixel text-lg text-[var(--v-fg)]">Billing via Stripe</h2>
         <p className="text-sm leading-relaxed text-[var(--v-fg-3)]">
-          Stripe has no monthly platform fee — you only pay per successful charge (2.9% + 30¢ in the US). We use Stripe
-          Checkout and the Customer Portal for subscriptions, invoices, and self-serve billing. Alternatives like Lemon
-          Squeezy work too if you need merchant-of-record tax handling; Stripe is our default for direct subscriptions.
-        </p>
-        <p className="mt-2 text-xs text-[var(--v-fg-5)]">
-          Set <code className="font-mono">NEXT_PUBLIC_STRIPE_PRO_PAYMENT_LINK</code> to your Stripe Payment Link to
-          enable one-click Pro upgrades.
+          Pro subscriptions are handled by Stripe Checkout — no monthly platform fee from Stripe, only per-charge
+          processing (typically 2.9% + 30¢ in the US). Customers can manage billing through the Stripe customer portal.
         </p>
       </section>
     </div>

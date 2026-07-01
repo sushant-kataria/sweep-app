@@ -3782,9 +3782,17 @@ body.finance-split-dragging--vertical {
   grid-template-columns: 1fr;
 }
 
-@media (min-width: 768px) {
+.pricing-cards--two {
+  max-width: 44rem;
+}
+
+@media (min-width: 640px) {
   .pricing-cards {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .pricing-cards--two {
+    margin-inline: auto;
   }
 }
 
@@ -3829,6 +3837,19 @@ body.finance-split-dragging--vertical {
   font-size: 0.8125rem;
   line-height: 1.5;
   color: var(--v-fg-3);
+}
+
+.pricing-card-features {
+  margin-top: 0.875rem;
+  padding: 0;
+  list-style: none;
+  font-size: 0.75rem;
+  line-height: 1.6;
+  color: var(--v-fg-4);
+}
+
+.pricing-card-features li::before {
+  content: '· ';
 }
 
 .pricing-table-wrap {

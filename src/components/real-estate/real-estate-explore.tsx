@@ -78,10 +78,10 @@ export function RealEstateExplore({ metros, generatedAt, source }: Props) {
             Data source
           </a>
           . Investor screens & deal analyzer require{' '}
-          <a href="/login?returnPathname=%2Freal-estate" className="underline-offset-2 hover:underline">
-            free sign-in
-          </a>{' '}
-          — <a href="/pricing" className="underline-offset-2 hover:underline">pricing</a>.
+          <a href="/pricing" className="underline-offset-2 hover:underline">
+            Pro
+          </a>
+          .
         </p>
       </div>
 

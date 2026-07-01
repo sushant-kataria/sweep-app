@@ -11,18 +11,18 @@ type Props = {
 const COPY = {
   finance: {
     title: 'Sign in for report Q&A',
-    description: 'AI chat on balance sheets and filings is included with a free account during beta.',
-    features: ['Grounded answers from your active report', 'Liquidity, leverage, and risk analysis', 'See pricing for Pro limits'],
+    description: 'AI chat on balance sheets and filings is included with Pro.',
+    features: ['Grounded answers from your active report', 'Liquidity, leverage, and risk analysis', 'Upgrade on the pricing page'],
   },
   stock: {
     title: 'Sign in for equity Q&A',
-    description: 'Ask questions about SEC fundamentals and live market context with a free account.',
-    features: ['Grounded answers from XBRL tables', 'Peer and valuation questions', 'See pricing for Pro limits'],
+    description: 'Ask questions about SEC fundamentals and live market context with Pro.',
+    features: ['Grounded answers from XBRL tables', 'Peer and valuation questions', 'Upgrade on the pricing page'],
   },
   'real-estate': {
     title: 'Sign in for market Q&A',
-    description: 'Chat about ZIP metrics and deal assumptions with a free account.',
-    features: ['Grounded real estate context', 'Investor screen follow-ups', 'See pricing for Pro limits'],
+    description: 'Chat about ZIP metrics and deal assumptions with Pro.',
+    features: ['Grounded real estate context', 'Investor screen follow-ups', 'Upgrade on the pricing page'],
   },
 };
 

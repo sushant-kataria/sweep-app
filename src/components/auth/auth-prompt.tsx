@@ -12,7 +12,7 @@ type Props = {
 
 export function AuthPrompt({
   title = 'Sign in to unlock',
-  description = 'Create a free account to access Pro tools. No credit card required during beta.',
+  description = 'Pro features require a subscription. Sign in, then upgrade on the pricing page.',
   features = [
     'AI chat on reports and market data',
     'PDF & URL finance analysis',
