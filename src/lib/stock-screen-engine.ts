@@ -1,5 +1,6 @@
 import { getMarketSnapshot } from './market-cache';
 import { getCompanyNamesForTickers } from './screen-companies';
+import { enrichSnapshotForScreen } from './screen-market-enrich';
 import { filterRowsByQuery, getDefaultScreenQuery } from './screen-query';
 import type { ScreenColumnDef, ScreenResultRow, ScreenResultsPayload } from './screen-result-types';
 import { DEFAULT_SCREEN_COLUMNS } from './screen-result-types';
@@ -113,33 +114,42 @@ function evalLiveScreen(screenId: string, snapshot: MarketSnapshot): ScreenMatch
   }
 }
 
-function curatedScoreForScreen(screenId: string, index: number): number | null {
-  if (screenId === 'piotroski-scan') {
-    return Math.max(7, 9 - Math.floor(index / 3));
+function curatedSignal(screen: FinanceScreen, live: boolean): string {
+  if (screen.mode === 'live' && !live) {
+    return 'Starter list · live scan had no matches';
   }
-  return null;
+  if (screen.mode === 'curated') {
+    return 'Starter list · verify formula on stock page';
+  }
+  return 'Starter list';
+}
+
+function rowSignal(match: ScreenMatch | undefined, screen: FinanceScreen, live: boolean): string | null {
+  if (match?.hint) return match.hint;
+  if (screen.mode === 'live' && live) return null;
+  return curatedSignal(screen, live);
 }
 
 async function enrichRow(
   ticker: string,
   match: ScreenMatch | undefined,
-  screenId: string,
-  index: number,
+  screen: FinanceScreen,
   names: Map<string, string>,
+  live: boolean,
+  fetchEdgar: boolean,
 ): Promise<ScreenResultRow> {
   const key = ticker.toUpperCase();
   let snapshot: MarketSnapshot | null = null;
   let rsi: number | null = null;
 
   try {
-    snapshot = await getMarketSnapshot(key, '1y');
+    const base = await getMarketSnapshot(key, '1y');
+    snapshot = await enrichSnapshotForScreen(key, base, { fetchEdgar });
     const series = closes(snapshot);
     rsi = computeRsi(series);
   } catch {
     snapshot = null;
   }
-
-  const score = match?.score ?? curatedScoreForScreen(screenId, index);
 
   return {
     ticker: key,
@@ -149,23 +159,21 @@ async function enrichRow(
     marketCap: snapshot?.marketCap ?? null,
     volume: snapshot?.volume ?? null,
     changePct: snapshot?.changePct ?? null,
-    score,
-    signal: match?.hint ?? null,
+    score: match?.score ?? null,
+    signal: rowSignal(match, screen, live),
     rsi,
   };
 }
 
-function columnsForScreen(screen: FinanceScreen): ScreenColumnDef[] {
+function columnsForScreen(screen: FinanceScreen, live: boolean): ScreenColumnDef[] {
   const cols = [...DEFAULT_SCREEN_COLUMNS];
 
-  if (screen.id === 'piotroski-scan') {
-    cols.push({ id: 'score', label: 'Score', altLabel: 'Piotski Scr' });
-  } else if (screen.id === 'rsi-oversold') {
+  if (screen.id === 'rsi-oversold') {
     cols.push({ id: 'rsi', label: 'RSI' });
-  } else if (screen.mode === 'live') {
+  } else if (screen.mode === 'live' && live) {
     cols.push({ id: 'signal', label: 'Signal' });
-  } else if (screen.category === 'formulas') {
-    cols.push({ id: 'score', label: 'Score' });
+  } else {
+    cols.push({ id: 'signal', label: 'Note' });
   }
 
   return cols;
@@ -234,19 +242,21 @@ export async function runScreenResults(
   const limit = Math.min(100, Math.max(10, options.limit ?? 25));
 
   const { screen, matches, live } = await runScreenMatches(screenId);
-  const defaultQuery = getDefaultScreenQuery(screen.id, screen.formula);
+  const defaultQuery = getDefaultScreenQuery(screen);
   const query = options.query?.trim() || defaultQuery;
+  const fallback = screen.mode === 'live' && !live;
 
   const tickers = matches.map((m) => m.ticker);
   const matchByTicker = new Map(matches.map((m) => [m.ticker.toUpperCase(), m]));
   const names = await getCompanyNamesForTickers(tickers);
+  const fetchEdgar = tickers.length <= 15;
 
   const rows: ScreenResultRow[] = [];
   for (let i = 0; i < tickers.length; i += BATCH) {
     const batch = tickers.slice(i, i + BATCH);
     const batchRows = await Promise.all(
-      batch.map((ticker, j) =>
-        enrichRow(ticker, matchByTicker.get(ticker.toUpperCase()), screen.id, i + j, names),
+      batch.map((ticker) =>
+        enrichRow(ticker, matchByTicker.get(ticker.toUpperCase()), screen, names, live, fetchEdgar),
       ),
     );
     rows.push(...batchRows);
@@ -259,6 +269,12 @@ export async function runScreenResults(
   const start = (safePage - 1) * limit;
   const pageRows = filtered.slice(start, start + limit);
 
+  const scanNote = fallback
+    ? 'Live scan found no matches at the moment. Showing the starter watchlist — each row still has live price data.'
+    : screen.mode === 'curated'
+      ? 'Starter watchlist for this formula. Use the query box to filter on price, P/E, market cap, volume, or RSI. Full XBRL metrics are on the stock page.'
+      : 'Live scan results from standard market formulas on the US large-cap universe.';
+
   return {
     id: screen.id,
     title: screen.title,
@@ -266,12 +282,14 @@ export async function runScreenResults(
     formula: screen.formula,
     defaultQuery,
     live,
+    fallback,
+    scanNote,
     total,
     page: safePage,
     limit,
     totalPages,
     query,
-    columns: columnsForScreen(screen),
+    columns: columnsForScreen(screen, live),
     rows: pageRows,
   };
 }
@@ -286,15 +304,24 @@ export async function runSectorResults(
 
   const page = Math.max(1, options.page ?? 1);
   const limit = Math.min(100, Math.max(10, options.limit ?? 25));
-  const defaultQuery = 'Market cap > 1';
+  const defaultQuery = 'Price > 0';
   const query = options.query?.trim() || defaultQuery;
+
+  const sectorScreen: FinanceScreen = {
+    id: sector.id,
+    title: sector.label,
+    description: sector.description,
+    category: 'popular',
+    mode: 'curated',
+    tickers: sector.tickers,
+  };
 
   const names = await getCompanyNamesForTickers(sector.tickers);
   const rows: ScreenResultRow[] = [];
   for (let i = 0; i < sector.tickers.length; i += BATCH) {
     const batch = sector.tickers.slice(i, i + BATCH);
     const batchRows = await Promise.all(
-      batch.map((ticker, j) => enrichRow(ticker, undefined, sector.id, i + j, names)),
+      batch.map((ticker) => enrichRow(ticker, undefined, sectorScreen, names, false, true)),
     );
     rows.push(...batchRows);
   }
@@ -311,12 +338,13 @@ export async function runSectorResults(
     description: sector.description,
     defaultQuery,
     live: false,
+    scanNote: 'Sector constituents with live market data. Filter by price, P/E, market cap, volume, or RSI.',
     total,
     page: safePage,
     limit,
     totalPages,
     query,
-    columns: DEFAULT_SCREEN_COLUMNS,
+    columns: columnsForScreen(sectorScreen, false),
     rows: filtered.slice(start, start + limit),
   };
 }

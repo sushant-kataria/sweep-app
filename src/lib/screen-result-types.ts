@@ -55,4 +55,7 @@ export type ScreenResultsPayload = {
   query: string;
   columns: ScreenColumnDef[];
   rows: ScreenResultRow[];
+  /** True when a live screen fell back to its starter ticker list. */
+  fallback?: boolean;
+  scanNote?: string;
 };
