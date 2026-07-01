@@ -110,7 +110,7 @@ export function FinanceExplore({ onSelectTicker, onSelectCompany }: Props) {
               value={screenQuery}
               onChange={(e) => setScreenQuery(e.target.value)}
               placeholder="Filter by screen name, formula, or ticker…"
-              className="finance-input finance-explore-filter-input"
+              className="finance-input"
             />
           </div>
         </label>

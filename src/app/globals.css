@@ -1481,14 +1481,11 @@ body.finance-split-dragging--vertical {
   position: absolute;
   left: 0.75rem;
   top: 50%;
+  z-index: 1;
   height: 1rem;
   width: 1rem;
   transform: translateY(-50%);
   color: var(--v-fg-4);
-}
-
-.finance-explore-filter-input {
-  padding-left: 2.25rem;
 }
 
 .finance-explore-section {
@@ -2060,6 +2057,10 @@ body.finance-split-dragging--vertical {
 
 .finance-input:focus {
   border-color: var(--v-border-2);
+}
+
+.finance-explore-filter-wrap .finance-input {
+  padding: 0.625rem 0.75rem 0.625rem 2.625rem;
 }
 
 .company-search {
