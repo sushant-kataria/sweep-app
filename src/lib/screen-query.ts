@@ -1,4 +1,5 @@
 import type { ScreenResultRow } from './screen-result-types';
+import type { FinanceScreen } from './finance-screens';
 
 export type QueryField =
   | 'price'
@@ -39,37 +40,17 @@ const FIELD_ALIASES: Record<string, QueryField> = {
   'f-score': 'score',
 };
 
-/** Default editable query per screen (US market units: cap in billions). */
+/** Parseable default query per screen — permissive so rows always render; tighten in the query box. */
 export const SCREEN_DEFAULT_QUERIES: Record<string, string> = {
-  'piotroski-scan': 'Piotroski score >= 8',
-  'magic-formula': 'P/E < 25 AND Market cap > 10',
-  'coffee-can-portfolio': 'P/E < 35 AND Market cap > 50',
-  'garp-stocks': 'P/E < 40 AND Market cap > 5',
-  'quality-businesses': 'P/E < 30 AND Market cap > 20',
   'darvas-scan': 'Price > 10 AND Volume > 100000',
-  'golden-crossover': 'Market cap > 10',
-  'bearish-crossovers': 'Market cap > 5',
+  'breakout-stocks': 'Price > 10 AND Volume > 100000',
   'price-volume-action': 'Volume > 100000',
   'rsi-oversold': 'RSI < 30',
-  'breakout-stocks': 'Price > 10 AND Volume > 100000',
-  'stocks-near-200-dma': 'Market cap > 50',
-  'companies-creating-new-high': 'Market cap > 10',
-  'low-from-52w-high': 'Market cap > 1',
-  'good-stocks-near-52w-low': 'Volume > 300000 AND Market cap > 1',
-  'highest-dividend-yield': 'Market cap > 5',
-  'fcf-yield': 'Market cap > 10',
-  'value-stocks': 'P/E < 20 AND Market cap > 1',
-  'debt-free-companies': 'Market cap > 20',
-  'undervalued-stocks': 'P/E < 15 AND Market cap > 2',
-  'bluest-blue-chips': 'Market cap > 100',
-  'growth-stocks': 'P/E < 50 AND Market cap > 10',
-  'fundamentally-strong': 'P/E < 35 AND Market cap > 20',
-  'canslim-style': 'Market cap > 5',
-  'peter-lynch-growth': 'P/E < 35 AND Market cap > 2',
+  'good-stocks-near-52w-low': 'Volume > 300000',
 };
 
-export function getDefaultScreenQuery(screenId: string, formula?: string): string {
-  return SCREEN_DEFAULT_QUERIES[screenId] ?? formula ?? 'Market cap > 1';
+export function getDefaultScreenQuery(screen: FinanceScreen): string {
+  return SCREEN_DEFAULT_QUERIES[screen.id] ?? 'Price > 0';
 }
 
 function normalizeField(raw: string): QueryField | null {

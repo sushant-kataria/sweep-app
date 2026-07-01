@@ -194,12 +194,18 @@ function ScreenResultsContent({ screenId, kind = 'screen', backHref = '/finance/
                         Live
                       </span>
                     )}
+                    {payload.fallback && (
+                      <span className="screen-results-fallback-badge">Starter list</span>
+                    )}
                   </div>
                   <p className="screen-results-desc">{payload.description}</p>
                   {payload.formula && (
                     <p className="screen-results-formula">
                       <span className="finance-explore-formula-label">Formula</span> {payload.formula}
                     </p>
+                  )}
+                  {payload.scanNote && (
+                    <p className="screen-results-scan-note">{payload.scanNote}</p>
                   )}
                 </div>
               </header>
