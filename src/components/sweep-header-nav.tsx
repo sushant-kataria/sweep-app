@@ -3,11 +3,12 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
-export type SweepSection = 'stock' | 'screens';
+export type SweepSection = 'stock' | 'screens' | 'real-estate';
 
 export const SWEEP_SECTIONS: { id: SweepSection; label: string; href: string }[] = [
   { id: 'stock', label: 'Stock', href: '/stock' },
   { id: 'screens', label: 'Stock screens', href: '/finance/explore' },
+  { id: 'real-estate', label: 'Real Estate', href: '/real-estate' },
 ];
 
 export type CompanySection = 'about' | 'contact';
@@ -20,6 +21,7 @@ export const COMPANY_SECTIONS: { id: CompanySection; label: string; href: string
 export function getActiveSection(pathname: string): SweepSection | null {
   if (pathname.startsWith('/stock')) return 'stock';
   if (pathname.startsWith('/finance')) return 'screens';
+  if (pathname.startsWith('/real-estate')) return 'real-estate';
   return null;
 }
 

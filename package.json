@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "seed:finance": "node scripts/seed-finance-data.mjs",
+    "seed:real-estate": "node scripts/ingest-redfin-real-estate.mjs",
     "db:init": "node scripts/init-turso-schema.mjs",
     "db:sync-tickers": "node scripts/ingest-sec-tickers.mjs"
   },
