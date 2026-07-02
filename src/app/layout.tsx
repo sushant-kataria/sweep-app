@@ -32,6 +32,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`dark ${GeistPixelSquare.variable}`}>
+      <head>
+        <link rel="preconnect" href="https://a.basemaps.cartocdn.com" crossOrigin="" />
+        <link rel="preconnect" href="https://b.basemaps.cartocdn.com" crossOrigin="" />
+        <link rel="dns-prefetch" href="https://c.basemaps.cartocdn.com" />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased font-sans`}
       >

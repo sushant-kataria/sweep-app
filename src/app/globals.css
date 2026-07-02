@@ -4530,8 +4530,78 @@ body.finance-split-dragging--vertical {
 
 @media (min-width: 640px) {
   .re-map-embed-panel--inline .re-map-shell--embed .re-map-canvas-wrap,
-  .re-map-embed-panel--inline .re-map-shell--embed .re-map-canvas {
+  .re-map-embed-panel--inline .re-map-shell--embed .re-map-canvas,
+  .re-map-embed-panel--inline .re-map-preview {
     min-height: 320px;
     height: min(38vh, 440px);
   }
+}
+
+/* Instant SVG preview while Leaflet chunk loads */
+.re-map-preview {
+  position: relative;
+  flex: 1;
+  min-height: 280px;
+  height: min(42vh, 420px);
+  border-radius: 0.5rem;
+  overflow: hidden;
+  background: var(--v-bg-2);
+}
+
+.re-map-page .re-map-preview {
+  min-height: 420px;
+  height: min(52vh, 520px);
+}
+
+.re-map-preview-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.re-map-preview-bg {
+  fill: var(--v-bg-2);
+}
+
+.re-map-preview-dot {
+  opacity: 0.92;
+  stroke: color-mix(in srgb, var(--v-fg) 25%, transparent);
+  stroke-width: 1.5;
+}
+
+.re-map-preview-label {
+  position: absolute;
+  bottom: 0.625rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.3125rem 0.625rem;
+  border-radius: 9999px;
+  background: color-mix(in srgb, var(--v-bg) 90%, transparent);
+  border: 1px solid var(--v-border);
+  font-size: 0.6875rem;
+  color: var(--v-fg-3);
+  backdrop-filter: blur(6px);
+  white-space: nowrap;
+}
+
+.re-map-preview-spinner {
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 9999px;
+  border: 2px solid var(--v-border);
+  border-top-color: var(--v-fg-3);
+  animation: re-map-spin 0.7s linear infinite;
+}
+
+@keyframes re-map-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.re-map-embed-panel--inline .re-map-preview {
+  margin: 0 0.75rem 0.75rem;
 }

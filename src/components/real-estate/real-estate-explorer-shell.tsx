@@ -1,21 +1,34 @@
 'use client';
 
+import { useEffect } from 'react';
 import { FinanceSplitView } from '@/components/finance/finance-split-view';
 import { RealEstateExplore } from '@/components/real-estate/real-estate-explore';
 import { WorkspacePageHeader } from '@/components/workspace/workspace-page-header';
 import { useSweepTheme } from '@/hooks/use-sweep-theme';
-import type { MapMetroPoint } from '@/lib/real-estate-market/map-data';
+import type { MapCityEntry, MapMetroLite } from '@/lib/real-estate-market/map-data';
+import { prefetchRealEstateMapChunk } from '@/lib/real-estate-market/map-prefetch';
 import type { MetroSummary } from '@/lib/real-estate-market/types';
 
 type Props = {
   metros: MetroSummary[];
-  mapMetros: MapMetroPoint[];
+  mapMetrosLite: MapMetroLite[];
+  cityIndex: MapCityEntry[];
   generatedAt: string;
   source: string;
 };
 
-export function RealEstateExplorerShell({ metros, mapMetros, generatedAt, source }: Props) {
+export function RealEstateExplorerShell({
+  metros,
+  mapMetrosLite,
+  cityIndex,
+  generatedAt,
+  source,
+}: Props) {
   const { theme, toggleTheme } = useSweepTheme();
+
+  useEffect(() => {
+    prefetchRealEstateMapChunk();
+  }, []);
 
   return (
     <div className="finance-shell">
@@ -26,7 +39,8 @@ export function RealEstateExplorerShell({ metros, mapMetros, generatedAt, source
             <section className="finance-report-panel finance-scroll">
               <RealEstateExplore
                 metros={metros}
-                mapMetros={mapMetros}
+                mapMetrosLite={mapMetrosLite}
+                cityIndex={cityIndex}
                 generatedAt={generatedAt}
                 source={source}
               />

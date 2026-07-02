@@ -1,26 +1,20 @@
 'use client';
 
-import dynamic from 'next/dynamic';
-import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { Suspense } from 'react';
+import { Suspense, useEffect, useState, type ComponentType } from 'react';
+import { MetroMapPreview } from '@/components/real-estate/metro-map-preview';
 import { WorkspacePageHeader } from '@/components/workspace/workspace-page-header';
 import { useSweepTheme } from '@/hooks/use-sweep-theme';
 import type { MapMetroPoint } from '@/lib/real-estate-market/map-data';
+import { prefetchRealEstateMapChunk } from '@/lib/real-estate-market/map-prefetch';
 
-const RealEstateLeafletMap = dynamic(
-  () => import('@/components/real-estate/real-estate-leaflet-map').then((m) => m.RealEstateLeafletMap),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="re-map-loading">
-        <Loader2 className="h-6 w-6 animate-spin" aria-hidden />
-        Loading map…
-      </div>
-    ),
-  },
-);
+type FullMapProps = {
+  metros: MapMetroPoint[];
+  theme: 'light' | 'dark';
+  variant: 'full';
+  initialMetroSlug: string | null;
+};
 
 type Props = {
   metros: MapMetroPoint[];
@@ -30,6 +24,19 @@ function RealEstateMapPageInner({ metros }: Props) {
   const { theme, toggleTheme } = useSweepTheme();
   const searchParams = useSearchParams();
   const initialMetroSlug = searchParams.get('metro');
+  const previewMetros = metros.map(({ zips: _zips, ...lite }) => lite);
+  const [MapComponent, setMapComponent] = useState<ComponentType<FullMapProps> | null>(null);
+
+  useEffect(() => {
+    prefetchRealEstateMapChunk();
+    let cancelled = false;
+    void import('@/components/real-estate/real-estate-leaflet-map').then((mod) => {
+      if (!cancelled) setMapComponent(() => mod.RealEstateLeafletMap);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <div className="finance-shell re-map-page">
@@ -46,12 +53,11 @@ function RealEstateMapPageInner({ metros }: Props) {
               ← Back to real estate hub
             </Link>
           </header>
-          <RealEstateLeafletMap
-            metros={metros}
-            theme={theme}
-            variant="full"
-            initialMetroSlug={initialMetroSlug}
-          />
+          {MapComponent ? (
+            <MapComponent metros={metros} theme={theme} variant="full" initialMetroSlug={initialMetroSlug} />
+          ) : (
+            <MetroMapPreview metros={previewMetros} theme={theme} />
+          )}
         </section>
       </main>
     </div>

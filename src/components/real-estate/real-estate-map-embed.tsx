@@ -1,31 +1,41 @@
 'use client';
 
-import dynamic from 'next/dynamic';
 import Link from 'next/link';
-import { ExternalLink, Loader2 } from 'lucide-react';
+import { ExternalLink } from 'lucide-react';
+import { useEffect, useState, type ComponentType } from 'react';
+import { MetroMapPreview } from '@/components/real-estate/metro-map-preview';
 import { useSweepTheme } from '@/hooks/use-sweep-theme';
-import type { MapMetroPoint } from '@/lib/real-estate-market/map-data';
+import type { MapCityEntry, MapMetroLite } from '@/lib/real-estate-market/map-data';
+import { prefetchRealEstateMapChunk } from '@/lib/real-estate-market/map-prefetch';
 
-const RealEstateLeafletMap = dynamic(
-  () => import('@/components/real-estate/real-estate-leaflet-map').then((m) => m.RealEstateLeafletMap),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="re-map-embed-loading">
-        <Loader2 className="h-5 w-5 animate-spin" aria-hidden />
-      </div>
-    ),
-  },
-);
+type MapEmbedProps = {
+  metros: MapMetroLite[];
+  cityIndex: MapCityEntry[];
+  theme: 'light' | 'dark';
+  variant: 'embed';
+};
 
 type Props = {
-  metros: MapMetroPoint[];
+  metros: MapMetroLite[];
+  cityIndex: MapCityEntry[];
   layout?: 'inline' | 'panel';
 };
 
-export function RealEstateMapEmbed({ metros, layout = 'panel' }: Props) {
+export function RealEstateMapEmbed({ metros, cityIndex, layout = 'panel' }: Props) {
   const { theme } = useSweepTheme();
   const isInline = layout === 'inline';
+  const [MapComponent, setMapComponent] = useState<ComponentType<MapEmbedProps> | null>(null);
+
+  useEffect(() => {
+    prefetchRealEstateMapChunk();
+    let cancelled = false;
+    void import('@/components/real-estate/real-estate-leaflet-map').then((mod) => {
+      if (!cancelled) setMapComponent(() => mod.RealEstateLeafletMap);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <div className={`re-map-embed-panel${isInline ? ' re-map-embed-panel--inline' : ''}`}>
@@ -36,12 +46,16 @@ export function RealEstateMapEmbed({ metros, layout = 'panel' }: Props) {
             {isInline ? 'Search by city or metro · click markers for details' : '30 metros · click to explore'}
           </p>
         </div>
-        <Link href="/real-estate/map" className="re-map-embed-full-link">
+        <Link href="/real-estate/map" className="re-map-embed-full-link" prefetch>
           <ExternalLink className="h-3 w-3" aria-hidden />
           Full map
         </Link>
       </div>
-      <RealEstateLeafletMap metros={metros} theme={theme} variant="embed" />
+      {MapComponent ? (
+        <MapComponent metros={metros} cityIndex={cityIndex} theme={theme} variant="embed" />
+      ) : (
+        <MetroMapPreview metros={metros} theme={theme} />
+      )}
     </div>
   );
 }

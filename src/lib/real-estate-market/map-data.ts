@@ -7,7 +7,7 @@ export type MapZipPoint = ZipMarketRow & {
   lng: number;
 };
 
-export type MapMetroPoint = {
+export type MapMetroLite = {
   slug: string;
   name: string;
   stateCode: string;
@@ -17,6 +17,9 @@ export type MapMetroPoint = {
   dealScoreTop: number | null;
   lat: number;
   lng: number;
+};
+
+export type MapMetroPoint = MapMetroLite & {
   zips: MapZipPoint[];
 };
 
@@ -40,6 +43,92 @@ export function enrichZipWithCoords(row: ZipMarketRow): MapZipPoint | null {
   const c = getZipCoords(row.zip);
   if (!c) return null;
   return { ...row, lat: c[0], lng: c[1] };
+}
+
+export function buildMapMetrosLite(): MapMetroLite[] {
+  return getAllMetros()
+    .map((metro) => {
+      const zips = metro.zips
+        .map(enrichZipWithCoords)
+        .filter((z): z is MapZipPoint => z != null);
+
+      if (zips.length === 0) return null;
+
+      const lat = zips.reduce((s, z) => s + z.lat, 0) / zips.length;
+      const lng = zips.reduce((s, z) => s + z.lng, 0) / zips.length;
+      const dealScoreTop = zips.reduce((max, z) => Math.max(max, z.dealScore ?? 0), 0);
+
+      return {
+        slug: metro.slug,
+        name: metro.name,
+        stateCode: metro.stateCode,
+        zipCount: zips.length,
+        medianSalePrice: metro.medianSalePrice,
+        medianYield: metro.medianYield,
+        dealScoreTop: dealScoreTop || null,
+        lat,
+        lng,
+      };
+    })
+    .filter((m): m is MapMetroLite => m != null)
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+/** Compact city/metro search index — built on server, no full ZIP payloads. */
+export function buildCitySearchIndexFromSeed(): MapCityEntry[] {
+  const entries: MapCityEntry[] = [];
+  const seen = new Set<string>();
+
+  for (const metro of getAllMetros()) {
+    const zips = metro.zips
+      .map(enrichZipWithCoords)
+      .filter((z): z is MapZipPoint => z != null);
+    if (zips.length === 0) continue;
+
+    const lat = zips.reduce((s, z) => s + z.lat, 0) / zips.length;
+    const lng = zips.reduce((s, z) => s + z.lng, 0) / zips.length;
+
+    const metroKey = `metro:${metro.slug}`;
+    if (!seen.has(metroKey)) {
+      seen.add(metroKey);
+      entries.push({
+        key: metroKey,
+        label: metro.name,
+        kind: 'metro',
+        metroSlug: metro.slug,
+        lat,
+        lng,
+        zipCount: zips.length,
+      });
+    }
+
+    const cityGroups = new Map<string, MapZipPoint[]>();
+    for (const z of zips) {
+      if (!z.city) continue;
+      const cityKey = `${z.city}|${z.stateCode}`;
+      const list = cityGroups.get(cityKey) ?? [];
+      list.push(z);
+      cityGroups.set(cityKey, list);
+    }
+
+    for (const [cityKey, cityZips] of cityGroups) {
+      const [city] = cityKey.split('|');
+      const key = `city:${metro.slug}:${cityKey}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      entries.push({
+        key,
+        label: `${city}, ${cityZips[0].stateCode}`,
+        kind: 'city',
+        metroSlug: metro.slug,
+        lat: cityZips.reduce((s, z) => s + z.lat, 0) / cityZips.length,
+        lng: cityZips.reduce((s, z) => s + z.lng, 0) / cityZips.length,
+        zipCount: cityZips.length,
+      });
+    }
+  }
+
+  return entries.sort((a, b) => a.label.localeCompare(b.label));
 }
 
 export function buildMapMetros(): MapMetroPoint[] {
@@ -135,8 +224,8 @@ export function dealScoreColor(score: number): string {
   return '#ef4444';
 }
 
-export function getMapBounds(metros: MapMetroPoint[]): [[number, number], [number, number]] {
-  const all = metros.flatMap((m) => m.zips);
+export function getMapBounds(metros: Array<{ lat: number; lng: number; zips?: MapZipPoint[] }>): [[number, number], [number, number]] {
+  const all = metros.flatMap((m) => (m.zips && m.zips.length > 0 ? m.zips : [{ lat: m.lat, lng: m.lng }]));
   if (all.length === 0) return [[24, -125], [50, -66]];
   const lats = all.map((z) => z.lat);
   const lngs = all.map((z) => z.lng);
@@ -147,7 +236,7 @@ export function getMapBounds(metros: MapMetroPoint[]): [[number, number], [numbe
   ];
 }
 
-export function getMetroBySlugFromMap(metros: MapMetroPoint[], slug: string): MapMetroPoint | null {
+export function getMetroBySlugFromMap<T extends { slug: string }>(metros: T[], slug: string): T | null {
   return metros.find((m) => m.slug === slug) ?? null;
 }
 
