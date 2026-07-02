@@ -246,4 +246,45 @@ export function getZipsForCity(metro: MapMetroPoint, cityLabel: string): MapZipP
   return metro.zips.filter((z) => z.city?.toLowerCase() === city);
 }
 
+/** Map API metro ZIP rows (no coords) to renderable points using bundled zip-coords. */
+export function enrichApiZipsForMap(
+  zips: Array<{
+    zip: string;
+    city: string | null;
+    medianSalePrice: number | null;
+    estMonthlyRent: number | null;
+    grossYield: number | null;
+    medianDom: number | null;
+    priceYoy: number | null;
+    dealScore: number;
+  }>,
+  metro: Pick<MapMetroLite, 'slug' | 'name' | 'stateCode'>,
+): MapZipPoint[] {
+  return zips
+    .map((z) =>
+      enrichZipWithCoords({
+        zip: z.zip,
+        city: z.city,
+        state: metro.stateCode,
+        stateCode: metro.stateCode,
+        metro: metro.name,
+        metroSlug: metro.slug,
+        metroCode: '',
+        medianSalePrice: z.medianSalePrice,
+        medianListPrice: null,
+        medianDom: z.medianDom,
+        homesSold: null,
+        inventory: null,
+        priceYoy: z.priceYoy,
+        inventoryYoy: null,
+        periodEnd: '',
+        estMonthlyRent: z.estMonthlyRent,
+        grossYield: z.grossYield,
+        dataSource: '',
+        dealScore: z.dealScore,
+      }),
+    )
+    .filter((z): z is MapZipPoint => z != null);
+}
+
 export { getAllZipRows };
