@@ -99,12 +99,9 @@ export function RealEstateExplore({ metros, mapMetrosLite, cityIndex, generatedA
 
       <RealEstateToolsGuide />
 
-      <div className="mb-4 flex flex-wrap gap-2">
+      <div className="mb-4">
         <Link href="/real-estate/deal-analyzer" className="finance-primary-btn text-sm">
           Open deal analyzer
-        </Link>
-        <Link href="/real-estate/map" className="finance-secondary-btn text-sm">
-          Full screen map
         </Link>
       </div>
 
