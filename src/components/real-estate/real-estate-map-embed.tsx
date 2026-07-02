@@ -43,7 +43,9 @@ export function RealEstateMapEmbed({ metros, cityIndex, layout = 'panel' }: Prop
         <div>
           <h2 className="re-map-embed-title">Market map</h2>
           <p className="re-map-embed-desc">
-            {isInline ? 'Search by city or metro · click markers for details' : '30 metros · click to explore'}
+            {isInline
+              ? 'Search a city, click a pin, and see price, rent, and deal score'
+              : '30 metros. Click to explore.'}
           </p>
         </div>
         <Link href="/real-estate/map" className="re-map-embed-full-link" prefetch>

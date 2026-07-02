@@ -401,7 +401,7 @@ export function RealEstateLeafletMap({
             onKeyDown={(e) => {
               if (e.key === 'Enter' && suggestions[0]) selectLocation(suggestions[0]);
             }}
-            placeholder={isEmbed ? 'Search city or metro…' : 'Search city or metro — e.g. Austin, Miami, Williamson'}
+            placeholder={isEmbed ? 'Search city or metro…' : 'Search city or metro (e.g. Austin, Miami, Williamson)'}
             className="finance-input re-map-search-input"
             aria-label="Search city or metro"
           />
