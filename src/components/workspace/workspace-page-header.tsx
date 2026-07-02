@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { ArrowLeft, Menu, Moon, Sun } from 'lucide-react';
 import { AuthButton } from '@/components/auth/auth-button';
-import { GlassSurface } from '@/components/ui/glass';
 import { SweepMobileMenu } from '@/components/sweep-mobile-menu';
 import { SweepHeaderNav } from '@/components/sweep-header-nav';
 import { SweepLogo } from '@/components/sweep-logo';
@@ -20,7 +19,7 @@ export function WorkspacePageHeader({ theme, onToggleTheme, backHref = '/' }: Pr
 
   return (
     <>
-      <GlassSurface as="header" className="finance-header safe-top grok-header sweep-glass-header">
+      <header className="finance-header safe-top sweep-glass-header">
         <div className="grok-header-inner">
           <div className="grok-header-slot grok-header-slot--left">
             <button
@@ -48,7 +47,7 @@ export function WorkspacePageHeader({ theme, onToggleTheme, backHref = '/' }: Pr
             </button>
           </div>
         </div>
-      </GlassSurface>
+      </header>
 
       <SweepMobileMenu open={showMenu} onClose={() => setShowMenu(false)} />
     </>

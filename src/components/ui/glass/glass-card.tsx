@@ -19,7 +19,7 @@ export function GlassCard<T extends ElementType = 'div'>({
   className,
   children,
   hoverable = true,
-  refract = true,
+  refract = false,
   force = false,
 }: Props<T>) {
   const glassEnabled = useGlassEnabled();
