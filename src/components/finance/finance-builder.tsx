@@ -5,6 +5,7 @@ import { useRef, useState } from 'react';
 import { useAuth } from '@workos-inc/authkit-nextjs/components';
 import { FileSpreadsheet, Link2, Loader2, Upload } from 'lucide-react';
 import { CompanySearch } from '@/components/finance/company-search';
+import { useSubscription } from '@/hooks/use-subscription';
 import type { CompanySearchResult } from '@/lib/company-types';
 import { getDefaultPeriod, getPeriodsForTicker, hasPreloadedReport } from '@/lib/finance-data';
 import { buildPreloadedFinanceSession } from '@/lib/finance-session';
@@ -28,6 +29,7 @@ const STEPS = ['Reading document', 'Extracting balance sheet', 'Computing metric
 
 export function FinanceBuilder({ onSession, onError }: Props) {
   const { user } = useAuth();
+  const { pro } = useSubscription();
   const [tab, setTab] = useState<SourceTab>('demo');
   const [selectedCompany, setSelectedCompany] = useState<CompanySearchResult | null>(DEFAULT_COMPANY);
   const ticker = selectedCompany?.ticker ?? '';
@@ -87,6 +89,9 @@ export function FinanceBuilder({ onSession, onError }: Props) {
       if (res.status === 401) {
         throw new Error('Sign in required to generate reports from uploads and annual report links.');
       }
+      if (res.status === 402) {
+        throw new Error('Pro subscription required for custom uploads and live SEC reports outside the Top 25 demos.');
+      }
       if (!res.ok) throw new Error(data.error ?? 'Analysis failed.');
       onSession(data as FinanceSession);
     } catch (e) {
@@ -134,6 +139,9 @@ const SEC_STEPS = ['Looking up SEC filer', 'Fetching XBRL from EDGAR', 'Building
     try {
       const res = await fetch(`/api/companies/${encodeURIComponent(ticker)}/report`);
       const data = await parseAnalyzeResponse(res);
+      if (res.status === 402) {
+        throw new Error('Pro subscription required for live SEC balance sheets. Free tier includes Top 25 preloaded demos.');
+      }
       if (!res.ok) throw new Error(data.error ?? 'Could not load SEC balance sheet.');
       onSession(data as FinanceSession);
     } catch (e) {
@@ -146,14 +154,20 @@ const SEC_STEPS = ['Looking up SEC filer', 'Fetching XBRL from EDGAR', 'Building
     }
   };
 
-  const requireSignIn = () => {
-    if (user) return true;
-    onError('Sign in required to generate reports from uploads and annual report links.');
-    return false;
+  const requirePro = () => {
+    if (!user) {
+      onError('Sign in required, then upgrade to Pro for uploads and annual report links.');
+      return false;
+    }
+    if (!pro) {
+      onError('Pro subscription required for uploads and annual report links. Top 25 SEC demos are free.');
+      return false;
+    }
+    return true;
   };
 
   const handleUrl = () => {
-    if (!requireSignIn()) return;
+    if (!requirePro()) return;
     const trimmed = url.trim();
     if (!trimmed) {
       onError('Paste a link to an annual report, 10-K, or filing page.');
@@ -169,7 +183,7 @@ const SEC_STEPS = ['Looking up SEC filer', 'Fetching XBRL from EDGAR', 'Building
   };
 
   const handleUpload = () => {
-    if (!requireSignIn()) return;
+    if (!requirePro()) return;
     const file = fileBlobRef.current;
     if (!file) {
       onError('Choose a PDF or spreadsheet file first.');
@@ -201,6 +215,9 @@ const SEC_STEPS = ['Looking up SEC filer', 'Fetching XBRL from EDGAR', 'Building
         const data = await parseAnalyzeResponse(res);
         if (res.status === 401) {
           throw new Error('Sign in required to generate reports from uploads and annual report links.');
+        }
+        if (res.status === 402) {
+          throw new Error('Pro subscription required for custom uploads and live SEC reports outside the Top 25 demos.');
         }
         if (!res.ok) throw new Error(data.error ?? 'Analysis failed.');
         onSession(data as FinanceSession);
@@ -291,18 +308,20 @@ const SEC_STEPS = ['Looking up SEC filer', 'Fetching XBRL from EDGAR', 'Building
                   Generate report
                 </button>
                 <p className="text-[11px] text-[var(--v-fg-4)]">
-                  Search any SEC-listed company. Top 25 load instantly; all others fetch the latest balance sheet from EDGAR (may take a few seconds).
+                  Search any SEC-listed company. Top 25 load instantly on the free tier; live EDGAR fetch for all others requires Pro.
                 </p>
           </>
         )}
 
         {tab === 'url' && (
           <>
-            {!user && (
+            {!pro && (
               <p className="rounded-lg border border-[var(--v-border)] bg-[var(--v-surface)] px-3 py-2 text-xs text-[var(--v-fg-3)]">
-                Sign in required to analyze annual report links.{' '}
-                <Link href="/login?returnPathname=%2Ffinance" className="text-[var(--v-fg)] underline">
-                  Sign in
+                {user
+                  ? 'Pro required to analyze annual report links. '
+                  : 'Sign in and upgrade to Pro to analyze annual report links. '}
+                <Link href="/pricing" className="text-[var(--v-fg)] underline">
+                  View pricing
                 </Link>
               </p>
             )}
@@ -328,11 +347,13 @@ const SEC_STEPS = ['Looking up SEC filer', 'Fetching XBRL from EDGAR', 'Building
 
         {tab === 'upload' && (
           <>
-            {!user && (
+            {!pro && (
               <p className="rounded-lg border border-[var(--v-border)] bg-[var(--v-surface)] px-3 py-2 text-xs text-[var(--v-fg-3)]">
-                Sign in required to analyze uploaded documents.{' '}
-                <Link href="/login?returnPathname=%2Ffinance" className="text-[var(--v-fg)] underline">
-                  Sign in
+                {user
+                  ? 'Pro required to analyze uploaded documents. '
+                  : 'Sign in and upgrade to Pro to analyze uploaded documents. '}
+                <Link href="/pricing" className="text-[var(--v-fg)] underline">
+                  View pricing
                 </Link>
               </p>
             )}

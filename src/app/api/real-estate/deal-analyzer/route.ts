@@ -2,14 +2,14 @@ import { NextResponse } from 'next/server';
 
 import { analyzeDeal } from '@/lib/real-estate-market/deal';
 import { getMortgageRate } from '@/lib/real-estate-market/mortgage-rate';
-import { requireSweepUserApi } from '@/lib/sweep-auth';
+import { requireProUserApi } from '@/lib/sweep-auth';
 
 export const runtime = 'nodejs';
 
 export async function POST(req: Request) {
-  const user = await requireSweepUserApi();
+  const user = await requireProUserApi();
   if (!user) {
-    return NextResponse.json({ error: 'Sign in required for deal analyzer.' }, { status: 401 });
+    return NextResponse.json({ error: 'Pro subscription required for deal analyzer.' }, { status: 402 });
   }
 
   try {

@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
 
 import { analyzeDocument } from '@/lib/finance-analyze';
-import { isGeneratedReportRequest, requireFinanceReportAuth } from '@/lib/finance-auth';
+import { isGeneratedReportRequest } from '@/lib/finance-auth';
+import { requireFinanceProApi } from '@/lib/finance-pro-auth';
+import { isFreeFinanceTicker } from '@/lib/free-tier';
 import {
   extractFromPdfFile,
   extractFromSpreadsheet,
@@ -21,10 +23,10 @@ function buildDemoSession(ticker: string, period: string): FinanceSession {
   return session;
 }
 
-async function authRequiredResponse() {
+async function proRequiredResponse() {
   return NextResponse.json(
-    { error: 'Sign in required to generate reports from uploads and annual report links.' },
-    { status: 401 },
+    { error: 'Pro subscription required for custom uploads and URL analysis.' },
+    { status: 402 },
   );
 }
 
@@ -33,8 +35,8 @@ export async function POST(req: Request) {
     const contentType = req.headers.get('content-type') ?? '';
 
     if (contentType.includes('multipart/form-data')) {
-      if (!(await requireFinanceReportAuth())) {
-        return authRequiredResponse();
+      if (!(await requireFinanceProApi())) {
+        return proRequiredResponse();
       }
       const form = await req.formData();
       const file = form.get('file');
@@ -90,8 +92,8 @@ export async function POST(req: Request) {
     };
 
     if (isGeneratedReportRequest(body)) {
-      if (!(await requireFinanceReportAuth())) {
-        return authRequiredResponse();
+      if (!(await requireFinanceProApi())) {
+        return proRequiredResponse();
       }
     }
 

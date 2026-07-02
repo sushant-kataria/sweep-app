@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 
 import { getCompanyByTicker } from '@/lib/companies-db';
 import { buildEdgarFinanceSession, buildPreloadedFinanceSession } from '@/lib/finance-session';
+import { requireProUserApi } from '@/lib/sweep-auth';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -22,6 +23,19 @@ export async function GET(req: Request, context: RouteContext) {
     const preloaded = buildPreloadedFinanceSession(normalized, period);
     if (preloaded) {
       return NextResponse.json(preloaded);
+    }
+
+    if (!preloaded) {
+      const proUser = await requireProUserApi();
+      if (!proUser) {
+        return NextResponse.json(
+          {
+            error: 'Pro required for live SEC balance sheets. Free tier includes Top 25 preloaded demos.',
+            code: 'PRO_REQUIRED',
+          },
+          { status: 402 },
+        );
+      }
     }
 
     const company = await getCompanyByTicker(normalized);

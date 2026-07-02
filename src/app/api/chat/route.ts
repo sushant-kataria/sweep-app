@@ -11,7 +11,7 @@ import {
   type UIMessage,
 } from 'ai';
 import { dashboardTools } from '@/ai/dashboard-tools';
-import { requireSweepUserApi } from '@/lib/sweep-auth';
+import { requireProUserApi } from '@/lib/sweep-auth';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -307,10 +307,10 @@ function streamChunkHasContent(text: string) {
 }
 
 export async function POST(req: Request) {
-  const user = await requireSweepUserApi();
+  const user = await requireProUserApi();
   if (!user) {
-    return new Response(JSON.stringify({ error: 'Sign in required for AI chat.' }), {
-      status: 401,
+    return new Response(JSON.stringify({ error: 'Pro subscription required for AI chat.' }), {
+      status: 402,
       headers: { 'Content-Type': 'application/json' },
     });
   }

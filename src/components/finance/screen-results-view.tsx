@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { Download, Loader2, Zap } from 'lucide-react';
+import { PreviewBanner } from '@/components/auth/pro-gate';
 import { StockLogo } from '@/components/stock/stock-logo';
 import { WorkspacePageHeader } from '@/components/workspace/workspace-page-header';
 import { useSweepTheme } from '@/hooks/use-sweep-theme';
@@ -204,17 +205,22 @@ function ScreenResultsContent({ screenId, kind = 'screen', backHref = '/finance/
                       <span className="finance-explore-formula-label">Formula</span> {payload.formula}
                     </p>
                   )}
-                  {payload.scanNote && (
-                    <p className="screen-results-scan-note">{payload.scanNote}</p>
+                  {payload.preview ? (
+                    <PreviewBanner scanNote={payload.scanNote} />
+                  ) : (
+                    payload.scanNote && <p className="screen-results-scan-note">{payload.scanNote}</p>
                   )}
                 </div>
               </header>
 
               <div className="screen-results-toolbar">
                 <p className="screen-results-count">
-                  {payload.total.toLocaleString()} results found: Showing page {payload.page} of {payload.totalPages}
+                  {payload.preview
+                    ? `Free preview — ${payload.total.toLocaleString()} total results`
+                    : `${payload.total.toLocaleString()} results found: Showing page ${payload.page} of ${payload.totalPages}`}
                 </p>
                 <div className="screen-results-toolbar-actions">
+                  {!payload.preview && (
                   <button
                     type="button"
                     className="finance-secondary-btn screen-results-export-btn"
@@ -223,6 +229,7 @@ function ScreenResultsContent({ screenId, kind = 'screen', backHref = '/finance/
                     <Download className="h-3.5 w-3.5" aria-hidden />
                     Export
                   </button>
+                  )}
                 </div>
               </div>
 
@@ -273,97 +280,101 @@ function ScreenResultsContent({ screenId, kind = 'screen', backHref = '/finance/
                 )}
               </div>
 
-              <div className="screen-results-pagination">
-                <button
-                  type="button"
-                  className="finance-secondary-btn"
-                  disabled={payload.page <= 1 || loading}
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                >
-                  Prev
-                </button>
-                <div className="screen-results-page-list">
-                  {pageNumbers.map((n) => (
+              {!payload.preview && (
+                <>
+                  <div className="screen-results-pagination">
                     <button
-                      key={n}
                       type="button"
-                      className={`screen-results-page-btn ${n === payload.page ? 'screen-results-page-btn--active' : ''}`}
-                      disabled={loading}
-                      onClick={() => setPage(n)}
+                      className="finance-secondary-btn"
+                      disabled={payload.page <= 1 || loading}
+                      onClick={() => setPage((p) => Math.max(1, p - 1))}
                     >
-                      {n}
+                      Prev
                     </button>
-                  ))}
-                  {payload.totalPages > pageNumbers[pageNumbers.length - 1] && (
-                    <>
-                      <span className="screen-results-page-ellipsis">…</span>
-                      <button
-                        type="button"
-                        className="screen-results-page-btn"
+                    <div className="screen-results-page-list">
+                      {pageNumbers.map((n) => (
+                        <button
+                          key={n}
+                          type="button"
+                          className={`screen-results-page-btn ${n === payload.page ? 'screen-results-page-btn--active' : ''}`}
+                          disabled={loading}
+                          onClick={() => setPage(n)}
+                        >
+                          {n}
+                        </button>
+                      ))}
+                      {payload.totalPages > pageNumbers[pageNumbers.length - 1] && (
+                        <>
+                          <span className="screen-results-page-ellipsis">…</span>
+                          <button
+                            type="button"
+                            className="screen-results-page-btn"
+                            disabled={loading}
+                            onClick={() => setPage(payload.totalPages)}
+                          >
+                            {payload.totalPages}
+                          </button>
+                        </>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      className="finance-secondary-btn"
+                      disabled={payload.page >= payload.totalPages || loading}
+                      onClick={() => setPage((p) => p + 1)}
+                    >
+                      Next
+                    </button>
+                    <label className="screen-results-page-size">
+                      Results per page
+                      <select
+                        value={limit}
                         disabled={loading}
-                        onClick={() => setPage(payload.totalPages)}
+                        onChange={(e) => {
+                          setLimit(Number(e.target.value));
+                          setPage(1);
+                        }}
                       >
-                        {payload.totalPages}
-                      </button>
-                    </>
-                  )}
-                </div>
-                <button
-                  type="button"
-                  className="finance-secondary-btn"
-                  disabled={payload.page >= payload.totalPages || loading}
-                  onClick={() => setPage((p) => p + 1)}
-                >
-                  Next
-                </button>
-                <label className="screen-results-page-size">
-                  Results per page
-                  <select
-                    value={limit}
-                    disabled={loading}
-                    onChange={(e) => {
-                      setLimit(Number(e.target.value));
-                      setPage(1);
-                    }}
-                  >
-                    {PAGE_SIZE_OPTIONS.map((size) => (
-                      <option key={size} value={size}>
-                        {size}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              </div>
+                        {PAGE_SIZE_OPTIONS.map((size) => (
+                          <option key={size} value={size}>
+                            {size}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  </div>
 
-              <section className="screen-results-query">
-                <h2 className="screen-results-query-title">Search Query</h2>
-                <p className="screen-results-query-help">You can customize the query below:</p>
-                <label className="finance-field">
-                  <span>Query</span>
-                  <textarea
-                    value={queryText}
-                    onChange={(e) => setQueryText(e.target.value)}
-                    rows={4}
-                    className="finance-input screen-results-query-input"
-                    placeholder={'Market cap > 10 AND\nP/E < 25'}
-                  />
-                </label>
-                <p className="screen-results-query-example">
-                  Custom query example:{' '}
-                  <code>Market cap &gt; 10 AND P/E &lt; 15 AND RSI &lt; 30</code>
-                </p>
-                <p className="screen-results-query-note">
-                  Market cap is in billions (USD). Use AND to combine conditions. Fundamental columns like ROCE require
-                  the{' '}
-                  <Link href="/stock" className="underline-offset-2 hover:underline">
-                    stock terminal
-                  </Link>{' '}
-                  for full XBRL data.
-                </p>
-                <button type="button" className="finance-primary-btn screen-results-run-btn" disabled={loading} onClick={runQuery}>
-                  Run this Query
-                </button>
-              </section>
+                  <section className="screen-results-query">
+                    <h2 className="screen-results-query-title">Search Query</h2>
+                    <p className="screen-results-query-help">You can customize the query below:</p>
+                    <label className="finance-field">
+                      <span>Query</span>
+                      <textarea
+                        value={queryText}
+                        onChange={(e) => setQueryText(e.target.value)}
+                        rows={4}
+                        className="finance-input screen-results-query-input"
+                        placeholder={'Market cap > 10 AND\nP/E < 25'}
+                      />
+                    </label>
+                    <p className="screen-results-query-example">
+                      Custom query example:{' '}
+                      <code>Market cap &gt; 10 AND P/E &lt; 15 AND RSI &lt; 30</code>
+                    </p>
+                    <p className="screen-results-query-note">
+                      Market cap is in billions (USD). Use AND to combine conditions. Fundamental columns like ROCE require
+                      the{' '}
+                      <Link href="/stock" className="underline-offset-2 hover:underline">
+                        stock terminal
+                      </Link>{' '}
+                      for full XBRL data.
+                    </p>
+                    <button type="button" className="finance-primary-btn screen-results-run-btn" disabled={loading} onClick={runQuery}>
+                      Run this Query
+                    </button>
+                  </section>
+                </>
+              )}
             </>
           )}
         </section>

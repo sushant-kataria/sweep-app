@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 import { Download, Loader2 } from 'lucide-react';
+import { PreviewBanner } from '@/components/auth/pro-gate';
 import { WorkspacePageHeader } from '@/components/workspace/workspace-page-header';
 import { useSweepTheme } from '@/hooks/use-sweep-theme';
 import { formatDom, formatPct, formatUsd, formatYield } from '@/lib/real-estate-market/format';
@@ -116,12 +117,16 @@ export function RealEstateScreenResultsView({ screenId, backHref = '/real-estate
                     <span className="font-medium">Formula:</span> {payload.formula}
                   </p>
                 </div>
-                <button type="button" onClick={exportCsv} className="finance-secondary-btn flex items-center gap-2 text-sm">
-                  <Download className="h-4 w-4" /> Export CSV
-                </button>
+                {!payload.preview && (
+                  <button type="button" onClick={exportCsv} className="finance-secondary-btn flex items-center gap-2 text-sm">
+                    <Download className="h-4 w-4" /> Export CSV
+                  </button>
+                )}
               </div>
 
-              {payload.scanNote && (
+              <PreviewBanner scanNote={payload.preview ? payload.scanNote : undefined} />
+
+              {!payload.preview && payload.scanNote && (
                 <p className="rounded-lg border border-[var(--v-border)] bg-[var(--v-surface)] px-3 py-2 text-xs text-[var(--v-fg-4)]">
                   {payload.scanNote}
                 </p>
@@ -163,6 +168,7 @@ export function RealEstateScreenResultsView({ screenId, backHref = '/real-estate
                 </table>
               </div>
 
+              {!payload.preview && (
               <div className="flex flex-wrap items-center justify-between gap-3 text-sm">
                 <p className="text-[var(--v-fg-4)]">
                   Page {payload.page} of {payload.totalPages} · {payload.total} ZIPs
@@ -200,6 +206,7 @@ export function RealEstateScreenResultsView({ screenId, backHref = '/real-estate
                   </button>
                 </div>
               </div>
+              )}
             </div>
           ) : null}
         </section>
