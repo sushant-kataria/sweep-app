@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { Download, Loader2, Zap } from 'lucide-react';
-import { PreviewBanner } from '@/components/auth/pro-gate';
+import { FreeSampleBadge, FreeSampleBanner, FreeSampleTableFooter } from '@/components/auth/free-sample-banner';
 import { StockLogo } from '@/components/stock/stock-logo';
 import { WorkspacePageHeader } from '@/components/workspace/workspace-page-header';
 import { useSweepTheme } from '@/hooks/use-sweep-theme';
@@ -195,6 +195,9 @@ function ScreenResultsContent({ screenId, kind = 'screen', backHref = '/finance/
                         Live
                       </span>
                     )}
+                    {payload.preview && payload.samplePreview && (
+                      <FreeSampleBadge shown={payload.samplePreview.shown} total={payload.samplePreview.total} />
+                    )}
                     {payload.fallback && (
                       <span className="screen-results-fallback-badge">Starter list</span>
                     )}
@@ -205,8 +208,8 @@ function ScreenResultsContent({ screenId, kind = 'screen', backHref = '/finance/
                       <span className="finance-explore-formula-label">Formula</span> {payload.formula}
                     </p>
                   )}
-                  {payload.preview ? (
-                    <PreviewBanner scanNote={payload.scanNote} />
+                  {payload.preview && payload.samplePreview ? (
+                    <FreeSampleBanner preview={payload.samplePreview} />
                   ) : (
                     payload.scanNote && <p className="screen-results-scan-note">{payload.scanNote}</p>
                   )}
@@ -215,8 +218,8 @@ function ScreenResultsContent({ screenId, kind = 'screen', backHref = '/finance/
 
               <div className="screen-results-toolbar">
                 <p className="screen-results-count">
-                  {payload.preview
-                    ? `Free preview — ${payload.total.toLocaleString()} total results`
+                  {payload.preview && payload.samplePreview
+                    ? `Free sample — ${payload.samplePreview.shown} of ${payload.samplePreview.total.toLocaleString()} stocks`
                     : `${payload.total.toLocaleString()} results found: Showing page ${payload.page} of ${payload.totalPages}`}
                 </p>
                 <div className="screen-results-toolbar-actions">
@@ -273,6 +276,12 @@ function ScreenResultsContent({ screenId, kind = 'screen', backHref = '/finance/
                       );
                     })}
                   </tbody>
+                  {payload.preview && payload.samplePreview && (
+                    <FreeSampleTableFooter
+                      preview={payload.samplePreview}
+                      colSpan={2 + payload.columns.length}
+                    />
+                  )}
                 </table>
 
                 {payload.rows.length === 0 && (

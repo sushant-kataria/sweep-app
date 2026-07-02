@@ -1,5 +1,7 @@
 /** Screener.in-style result row for finance screen pages. */
 
+import type { FreeSamplePreview } from '@/lib/free-tier-copy';
+
 export type ScreenResultRow = {
   ticker: string;
   companyName: string;
@@ -58,6 +60,8 @@ export type ScreenResultsPayload = {
   /** True when a live screen fell back to its starter ticker list. */
   fallback?: boolean;
   scanNote?: string;
+  /** Structured free-tier sample metadata for UI. */
+  samplePreview?: FreeSamplePreview;
   /** Free tier preview — full results require Pro. */
   preview?: boolean;
 };

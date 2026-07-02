@@ -4605,3 +4605,124 @@ body.finance-split-dragging--vertical {
 .re-map-embed-panel--inline .re-map-preview {
   margin: 0 0.75rem 0.75rem;
 }
+
+/* ── Free tier sample clarity ── */
+.free-sample-banner {
+  margin-bottom: 1rem;
+  padding: 0.875rem 1rem;
+  border: 1px solid color-mix(in srgb, #f59e0b 35%, var(--v-border));
+  border-radius: 0.75rem;
+  background: color-mix(in srgb, #f59e0b 8%, var(--v-surface));
+}
+
+.free-sample-banner-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.free-sample-banner-kicker {
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #d97706;
+}
+
+.dark .free-sample-banner-kicker {
+  color: #fbbf24;
+}
+
+.free-sample-banner-title {
+  margin-top: 0.125rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--v-fg);
+}
+
+.free-sample-banner-desc,
+.free-sample-banner-unlock {
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: var(--v-fg-3);
+}
+
+.free-sample-banner-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.free-sample-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
+  border: 1px solid color-mix(in srgb, #f59e0b 40%, var(--v-border));
+  background: color-mix(in srgb, #f59e0b 10%, var(--v-bg));
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: var(--v-fg-3);
+}
+
+.free-sample-table-footer td {
+  padding: 0.75rem 1rem;
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--v-fg-4);
+  background: color-mix(in srgb, var(--v-surface) 80%, var(--v-bg));
+  border-top: 1px dashed var(--v-border);
+}
+
+.free-sample-table-footer-link {
+  margin-left: 0.5rem;
+  color: var(--v-fg);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.free-tier-explainer {
+  margin-bottom: 1rem;
+  padding: 0.875rem 1rem;
+  border: 1px solid var(--v-border);
+  border-radius: 0.75rem;
+  background: var(--v-surface);
+}
+
+.free-tier-explainer-title {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--v-fg);
+}
+
+.free-tier-explainer-desc {
+  margin-top: 0.375rem;
+  font-size: 0.75rem;
+  line-height: 1.55;
+  color: var(--v-fg-3);
+}
+
+.free-tier-explainer-list {
+  margin: 0.625rem 0 0;
+  padding-left: 1.125rem;
+  font-size: 0.6875rem;
+  line-height: 1.6;
+  color: var(--v-fg-4);
+}
+
+.free-tier-explainer-list strong {
+  color: var(--v-fg-3);
+  font-weight: 600;
+}
+
+.free-tier-explainer-link {
+  display: inline-block;
+  margin-top: 0.625rem;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: var(--v-fg);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}

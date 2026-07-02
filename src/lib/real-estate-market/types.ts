@@ -74,6 +74,7 @@ export type RealEstateScreenResults = {
   total: number;
   totalPages: number;
   scanNote?: string;
+  samplePreview?: import('@/lib/free-tier-copy').FreeSamplePreview;
   preview?: boolean;
 };
 

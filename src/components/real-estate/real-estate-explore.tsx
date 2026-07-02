@@ -5,9 +5,11 @@ import { useMemo, useState } from 'react';
 import { Building2, ChevronRight, Search } from 'lucide-react';
 import { formatDom, formatPct, formatUsd, formatYield } from '@/lib/real-estate-market/format';
 import { searchRealEstateScreens } from '@/lib/real-estate-market/screens';
+import { FREE_SAMPLE_ROWS } from '@/lib/free-tier';
 import type { MapCityEntry, MapMetroLite } from '@/lib/real-estate-market/map-data';
 import type { MetroSummary } from '@/lib/real-estate-market/types';
 import { RealEstateMapEmbed } from '@/components/real-estate/real-estate-map-embed';
+import { FreeTierExplainer } from '@/components/auth/free-tier-explainer';
 
 type Props = {
   metros: MetroSummary[];
@@ -81,13 +83,17 @@ export function RealEstateExplore({ metros, mapMetrosLite, cityIndex, generatedA
           <a href={source} target="_blank" rel="noopener noreferrer" className="underline-offset-2 hover:underline">
             Data source
           </a>
-          . Investor screens show a 5-row free preview; full results, CSV export & deal analyzer require{' '}
+          . Investor screens show a {FREE_SAMPLE_ROWS}-row{' '}
+          <span className="text-[var(--v-fg-3)]">free sample</span> (real data, limited on purpose). Pro unlocks full
+          results, CSV export &amp; deal tools —{' '}
           <a href="/pricing" className="underline-offset-2 hover:underline">
             Pro
           </a>
           .
         </p>
       </div>
+
+      <FreeTierExplainer />
 
       <div className="mb-4 flex flex-wrap gap-2">
         <Link href="/real-estate/deal-analyzer" className="finance-primary-btn text-sm">

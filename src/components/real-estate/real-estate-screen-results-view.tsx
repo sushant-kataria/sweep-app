@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 import { Download, Loader2 } from 'lucide-react';
-import { PreviewBanner } from '@/components/auth/pro-gate';
+import { FreeSampleBadge, FreeSampleBanner, FreeSampleTableFooter } from '@/components/auth/free-sample-banner';
 import { WorkspacePageHeader } from '@/components/workspace/workspace-page-header';
 import { useSweepTheme } from '@/hooks/use-sweep-theme';
 import { formatDom, formatPct, formatUsd, formatYield } from '@/lib/real-estate-market/format';
@@ -112,6 +112,14 @@ export function RealEstateScreenResultsView({ screenId, backHref = '/real-estate
                     ← Real estate
                   </Link>
                   <h1 className="mt-1 text-lg font-semibold text-[var(--v-fg)]">{payload.title}</h1>
+                  {payload.preview && payload.samplePreview && (
+                    <div className="mt-1">
+                      <FreeSampleBadge
+                        shown={payload.samplePreview.shown}
+                        total={payload.samplePreview.total}
+                      />
+                    </div>
+                  )}
                   <p className="text-sm text-[var(--v-fg-3)]">{payload.description}</p>
                   <p className="mt-1 text-xs text-[var(--v-fg-4)]">
                     <span className="font-medium">Formula:</span> {payload.formula}
@@ -124,12 +132,14 @@ export function RealEstateScreenResultsView({ screenId, backHref = '/real-estate
                 )}
               </div>
 
-              <PreviewBanner scanNote={payload.preview ? payload.scanNote : undefined} />
-
-              {!payload.preview && payload.scanNote && (
-                <p className="rounded-lg border border-[var(--v-border)] bg-[var(--v-surface)] px-3 py-2 text-xs text-[var(--v-fg-4)]">
-                  {payload.scanNote}
-                </p>
+              {payload.preview && payload.samplePreview ? (
+                <FreeSampleBanner preview={payload.samplePreview} />
+              ) : (
+                payload.scanNote && (
+                  <p className="rounded-lg border border-[var(--v-border)] bg-[var(--v-surface)] px-3 py-2 text-xs text-[var(--v-fg-4)]">
+                    {payload.scanNote}
+                  </p>
+                )
               )}
 
               <div className="overflow-x-auto rounded-xl border border-[var(--v-border)]">
@@ -165,6 +175,12 @@ export function RealEstateScreenResultsView({ screenId, backHref = '/real-estate
                       </tr>
                     ))}
                   </tbody>
+                  {payload.preview && payload.samplePreview && (
+                    <FreeSampleTableFooter
+                      preview={payload.samplePreview}
+                      colSpan={1 + payload.columns.length}
+                    />
+                  )}
                 </table>
               </div>
 

@@ -50,10 +50,17 @@ function SampleDealPreview() {
   );
 
   return (
-    <div className="mb-6 rounded-xl border border-amber-500/30 bg-amber-500/5 p-4">
-      <p className="text-xs font-medium uppercase tracking-wide text-amber-600 dark:text-amber-400">Free sample</p>
-      <p className="mt-1 text-sm text-[var(--v-fg-3)]">
-        Example deal: $250,000 purchase · 20% down · 6.5% mortgage · $1,800/mo rent · $400/mo expenses.
+    <div className="mb-6 free-sample-banner">
+      <div className="free-sample-banner-head">
+        <p className="free-sample-banner-kicker">Free tier sample</p>
+        <p className="free-sample-banner-title">Example deal analysis (read-only)</p>
+      </div>
+      <p className="free-sample-banner-desc">
+        This is real math on a fixed example property — not your data. It shows what the deal analyzer outputs so you
+        can evaluate Sweep before upgrading. Pro lets you plug in any purchase price, rent, and expenses.
+      </p>
+      <p className="mt-2 text-xs text-[var(--v-fg-4)]">
+        Sample inputs: $250,000 purchase · 20% down · 6.5% mortgage · $1,800/mo rent · $400/mo expenses
       </p>
       <div className="mt-4">
         <DealResultGrid result={sample} />

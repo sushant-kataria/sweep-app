@@ -1,9 +1,11 @@
 import type { ScreenResultsPayload } from '@/lib/screen-result-types';
 import type { RealEstateScreenResults } from '@/lib/real-estate-market/types';
+import { buildRealEstateSamplePreview, buildScreenSamplePreview } from '@/lib/free-tier-copy';
 import { FREE_SAMPLE_ROWS } from '@/lib/free-tier';
 
 export function applyFreeSampleLimit<T extends ScreenResultsPayload>(payload: T): T {
   const rows = payload.rows.slice(0, FREE_SAMPLE_ROWS);
+  const samplePreview = buildScreenSamplePreview(payload.total, 'stocks');
   return {
     ...payload,
     rows,
@@ -11,13 +13,15 @@ export function applyFreeSampleLimit<T extends ScreenResultsPayload>(payload: T)
     limit: FREE_SAMPLE_ROWS,
     total: payload.total,
     totalPages: 1,
-    scanNote: `Free preview — showing ${rows.length} of ${payload.total} results. Upgrade to Pro for full tables, pagination, and export.`,
+    scanNote: `Free sample — ${rows.length} of ${payload.total} stocks shown. Pro unlocks the full table, pagination, custom queries, and export.`,
+    samplePreview,
     preview: true,
   } as T;
 }
 
 export function applyFreeRealEstateSampleLimit(payload: RealEstateScreenResults): RealEstateScreenResults {
   const rows = payload.rows.slice(0, FREE_SAMPLE_ROWS);
+  const samplePreview = buildRealEstateSamplePreview(payload.total);
   return {
     ...payload,
     rows,
@@ -25,7 +29,8 @@ export function applyFreeRealEstateSampleLimit(payload: RealEstateScreenResults)
     limit: FREE_SAMPLE_ROWS,
     total: payload.total,
     totalPages: 1,
-    scanNote: `Free preview — showing ${rows.length} of ${payload.total} ZIPs. Upgrade to Pro for full screens, pagination, and CSV export.`,
+    scanNote: `Free sample — ${rows.length} of ${payload.total} ZIPs shown. Pro unlocks the full screen, pagination, and CSV export.`,
+    samplePreview,
     preview: true,
   };
 }
