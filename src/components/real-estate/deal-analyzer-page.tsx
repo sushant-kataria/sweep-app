@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useMemo, useState } from 'react';
-import { Loader2 } from 'lucide-react';
+import { Eye, Loader2 } from 'lucide-react';
 import { ProGate } from '@/components/auth/pro-gate';
 import { WorkspacePageHeader } from '@/components/workspace/workspace-page-header';
 import { useSubscription } from '@/hooks/use-subscription';
@@ -50,16 +50,19 @@ function SampleDealPreview() {
   );
 
   return (
-    <div className="mb-6 free-sample-banner">
+    <div className="mb-6 free-sample-banner" role="status">
       <div className="free-sample-banner-head">
-        <p className="free-sample-banner-kicker">Free tier sample</p>
-        <p className="free-sample-banner-title">Example deal analysis (read-only)</p>
+        <Eye className="free-sample-banner-icon h-4 w-4" aria-hidden />
+        <div>
+          <p className="free-sample-banner-kicker">Free tier sample</p>
+          <p className="free-sample-banner-title">Example deal analysis (read-only)</p>
+        </div>
       </div>
       <p className="free-sample-banner-desc">
         This is real math on a fixed example property — not your data. It shows what the deal analyzer outputs so you
         can evaluate Sweep before upgrading. Pro lets you plug in any purchase price, rent, and expenses.
       </p>
-      <p className="mt-2 text-xs text-[var(--v-fg-4)]">
+      <p className="free-sample-banner-desc !mt-2 text-[0.6875rem]">
         Sample inputs: $250,000 purchase · 20% down · 6.5% mortgage · $1,800/mo rent · $400/mo expenses
       </p>
       <div className="mt-4">

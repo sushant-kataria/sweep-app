@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Sparkles } from 'lucide-react';
+import { Eye } from 'lucide-react';
 import { useSubscription } from '@/hooks/use-subscription';
 import {
   formatSampleHeadline,
@@ -40,9 +40,9 @@ export function FreeSampleBanner({ preview, className = '' }: Props) {
   const hidden = Math.max(0, preview.total - preview.shown);
 
   return (
-    <div className={`free-sample-banner ${className}`.trim()}>
+    <div className={`free-sample-banner ${className}`.trim()} role="status">
       <div className="free-sample-banner-head">
-        <Sparkles className="h-4 w-4 shrink-0 text-amber-500" aria-hidden />
+        <Eye className="free-sample-banner-icon h-4 w-4" aria-hidden />
         <div>
           <p className="free-sample-banner-kicker">Free tier sample</p>
           <p className="free-sample-banner-title">{formatSampleHeadline(preview)}</p>
@@ -51,7 +51,7 @@ export function FreeSampleBanner({ preview, className = '' }: Props) {
       <p className="free-sample-banner-desc">{formatSamplePurpose(preview)}</p>
       {hidden > 0 && (
         <p className="free-sample-banner-unlock">
-          <span className="font-medium text-[var(--v-fg)]">Pro unlocks:</span>{' '}
+          <span className="font-medium">Pro unlocks:</span>{' '}
           {preview.proUnlocks.join(' · ')}
         </p>
       )}
