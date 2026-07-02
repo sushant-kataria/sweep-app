@@ -13,6 +13,8 @@ import {
   type FinanceScreen,
   type FinanceSector,
 } from '@/lib/finance-screens';
+import { FreeTierExplainer } from '@/components/auth/free-tier-explainer';
+import { FREE_SAMPLE_ROWS } from '@/lib/free-tier';
 
 type Props = {
   onSelectTicker: (ticker: string) => void;
@@ -83,13 +85,12 @@ export function FinanceExplore({ onSelectTicker, onSelectCompany }: Props) {
         </div>
         <h1 className="text-xl font-semibold text-[var(--v-fg)]">Stock screens</h1>
         <p className="mt-1 max-w-2xl text-sm text-[var(--v-fg-3)]">
-          Explore US SEC filers like{' '}
-          <a href="https://www.screener.in/explore/" target="_blank" rel="noopener noreferrer" className="underline-offset-2 hover:underline">
-            screener.in
-          </a>
-          — open any screen for a full results table, pagination, and customizable search queries.
+          Browse screen catalogs on the free tier — each opens with a {FREE_SAMPLE_ROWS}-row sample of real matches.
+          Upgrade to Pro for full tables, pagination, custom queries, and CSV export.
         </p>
       </div>
+
+      <FreeTierExplainer />
 
       <div className="finance-explore-search-block">
         <label className="finance-field">
@@ -144,7 +145,7 @@ export function FinanceExplore({ onSelectTicker, onSelectCompany }: Props) {
       })}
 
       <p className="finance-explore-footnote text-[11px] text-[var(--v-fg-5)]">
-        Each screen opens a dedicated page with all matching stocks, pagination, and a customizable query editor.
+        Free tier: {FREE_SAMPLE_ROWS} sample rows per screen. Pro unlocks every match, pagination, query editor &amp; export.
         Full XBRL fundamentals on{' '}
         <Link href="/stock" className="underline-offset-2 hover:underline">
           Stock terminal
