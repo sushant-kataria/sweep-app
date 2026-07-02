@@ -2250,13 +2250,14 @@ body.finance-split-dragging--vertical {
   background: var(--v-btn-bg);
   padding: 0.4375rem 0.75rem;
   font-size: 0.75rem;
-  color: var(--v-fg-3);
-  transition: background 0.15s ease, color 0.15s ease;
+  color: var(--v-btn-fg);
+  text-decoration: none;
+  transition: opacity 0.15s ease;
 }
 
 .finance-secondary-btn:hover {
-  background: var(--v-btn-bg-hover);
-  color: var(--v-fg);
+  opacity: 0.88;
+  color: var(--v-btn-fg);
 }
 
 .finance-report-header {
