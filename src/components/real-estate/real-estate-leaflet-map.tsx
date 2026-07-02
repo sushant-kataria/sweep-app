@@ -26,10 +26,14 @@ import {
 import { formatDom, formatPct, formatUsd, formatYield } from '@/lib/real-estate-market/format';
 
 type Theme = 'light' | 'dark';
+type MapVariant = 'full' | 'embed';
 
 type Props = {
   metros: MapMetroPoint[];
   theme: Theme;
+  variant?: MapVariant;
+  /** Pre-select a metro on load (full map). */
+  initialMetroSlug?: string | null;
 };
 
 const TILES = {
@@ -44,6 +48,29 @@ const TILES = {
       '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>',
   },
 } as const;
+
+function MapInvalidateSize() {
+  const map = useMap();
+
+  useEffect(() => {
+    const run = () => map.invalidateSize({ animate: false });
+    run();
+    const t1 = window.setTimeout(run, 120);
+    const t2 = window.setTimeout(run, 480);
+
+    const el = map.getContainer().parentElement;
+    const ro = el ? new ResizeObserver(() => run()) : null;
+    ro?.observe(el);
+
+    return () => {
+      window.clearTimeout(t1);
+      window.clearTimeout(t2);
+      ro?.disconnect();
+    };
+  }, [map]);
+
+  return null;
+}
 
 function FlyTo({
   center,
@@ -153,7 +180,13 @@ function MetroSidebar({
   );
 }
 
-export function RealEstateLeafletMap({ metros, theme }: Props) {
+export function RealEstateLeafletMap({
+  metros,
+  theme,
+  variant = 'full',
+  initialMetroSlug = null,
+}: Props) {
+  const isEmbed = variant === 'embed';
   const cityIndex = useMemo(() => buildCitySearchIndex(metros), [metros]);
   const defaultBounds = useMemo(() => getMapBounds(metros), [metros]);
 
@@ -167,14 +200,25 @@ export function RealEstateLeafletMap({ metros, theme }: Props) {
     bounds?: LatLngBoundsExpression;
   }>({ bounds: defaultBounds });
   const [focusedZip, setFocusedZip] = useState<MapZipPoint | null>(null);
+  const [initialApplied, setInitialApplied] = useState(false);
 
   const tiles = TILES[theme];
 
   const visibleZips = useMemo(() => {
-    if (!selectedMetro) return [];
+    if (isEmbed || !selectedMetro) return [];
     if (cityFilter) return getZipsForCity(selectedMetro, cityFilter);
     return selectedMetro.zips;
-  }, [cityFilter, selectedMetro]);
+  }, [cityFilter, isEmbed, selectedMetro]);
+
+  useEffect(() => {
+    if (initialApplied || !initialMetroSlug) return;
+    const metro = getMetroBySlugFromMap(metros, initialMetroSlug);
+    if (!metro) return;
+    setSelectedMetro(metro);
+    setQuery(metro.name);
+    setFlyTarget({ center: [metro.lat, metro.lng], zoom: 9 });
+    setInitialApplied(true);
+  }, [initialApplied, initialMetroSlug, metros]);
 
   const handleSearchChange = useCallback(
     (value: string) => {
@@ -190,7 +234,7 @@ export function RealEstateLeafletMap({ metros, theme }: Props) {
       if (!metro) return;
 
       setSelectedMetro(metro);
-      setCityFilter(entry.kind === 'city' ? entry.label : null);
+      setCityFilter(isEmbed ? null : entry.kind === 'city' ? entry.label : null);
       setQuery(entry.label);
       setSuggestions([]);
       setFocusedZip(null);
@@ -212,17 +256,26 @@ export function RealEstateLeafletMap({ metros, theme }: Props) {
 
       setFlyTarget({ center: [entry.lat, entry.lng], zoom: entry.kind === 'metro' ? 9 : 11 });
     },
-    [metros],
+    [isEmbed, metros],
   );
 
-  const selectMetro = useCallback((metro: MapMetroPoint) => {
-    setSelectedMetro(metro);
-    setCityFilter(null);
-    setQuery(metro.name);
-    setSuggestions([]);
-    setFocusedZip(null);
-    setFlyTarget({ center: [metro.lat, metro.lng], zoom: 9 });
-  }, []);
+  const selectMetro = useCallback(
+    (metro: MapMetroPoint) => {
+      if (isEmbed) {
+        setQuery(metro.name);
+        setSuggestions([]);
+        setFlyTarget({ center: [metro.lat, metro.lng], zoom: 8 });
+        return;
+      }
+      setSelectedMetro(metro);
+      setCityFilter(null);
+      setQuery(metro.name);
+      setSuggestions([]);
+      setFocusedZip(null);
+      setFlyTarget({ center: [metro.lat, metro.lng], zoom: 9 });
+    },
+    [isEmbed],
+  );
 
   const selectZip = useCallback((zip: MapZipPoint) => {
     setFocusedZip(zip);
@@ -239,7 +292,7 @@ export function RealEstateLeafletMap({ metros, theme }: Props) {
   }, [defaultBounds]);
 
   return (
-    <div className={`re-map-shell re-map-shell--${theme}`}>
+    <div className={`re-map-shell re-map-shell--${theme}${isEmbed ? ' re-map-shell--embed' : ''}`}>
       <div className="re-map-search-wrap">
         <div className="re-map-search">
           <Search className="re-map-search-icon" aria-hidden />
@@ -250,7 +303,7 @@ export function RealEstateLeafletMap({ metros, theme }: Props) {
             onKeyDown={(e) => {
               if (e.key === 'Enter' && suggestions[0]) selectLocation(suggestions[0]);
             }}
-            placeholder="Search city or metro — e.g. Austin, Miami, Williamson"
+            placeholder={isEmbed ? 'Search city or metro…' : 'Search city or metro — e.g. Austin, Miami, Williamson'}
             className="finance-input re-map-search-input"
             aria-label="Search city or metro"
           />
@@ -285,28 +338,33 @@ export function RealEstateLeafletMap({ metros, theme }: Props) {
             center={[39.5, -98.35]}
             zoom={4}
             className="re-map-canvas"
-            scrollWheelZoom
+            scrollWheelZoom={!isEmbed}
+            zoomControl={!isEmbed}
+            attributionControl={!isEmbed}
           >
-            <TileLayer url={tiles.url} attribution={tiles.attribution} />
+            <TileLayer url={tiles.url} attribution={isEmbed ? '' : tiles.attribution} />
+            <MapInvalidateSize />
             <FlyTo center={flyTarget.center} zoom={flyTarget.zoom} bounds={flyTarget.bounds} />
 
-            {!selectedMetro &&
+            {(isEmbed || !selectedMetro) &&
               metros.map((metro) => (
                 <CircleMarker
                   key={metro.slug}
                   center={[metro.lat, metro.lng]}
-                  radius={10}
+                  radius={isEmbed ? 7 : 10}
                   pathOptions={{
                     color: theme === 'dark' ? '#ededed' : '#0a0a0a',
                     fillColor: dealScoreColor(metro.dealScoreTop ?? 50),
                     fillOpacity: 0.85,
-                    weight: 2,
+                    weight: isEmbed ? 1.5 : 2,
                   }}
                   eventHandlers={{ click: () => selectMetro(metro) }}
                 >
-                  <Tooltip direction="top" offset={[0, -8]} opacity={0.95}>
-                    <span className="re-map-tooltip">{metro.name}</span>
-                  </Tooltip>
+                  {!isEmbed && (
+                    <Tooltip direction="top" offset={[0, -8]} opacity={0.95}>
+                      <span className="re-map-tooltip">{metro.name}</span>
+                    </Tooltip>
+                  )}
                   <Popup closeButton className="re-map-leaflet-popup">
                     <div className="re-map-popup re-map-popup--compact">
                       <p className="re-map-popup-title">{metro.name}</p>
@@ -314,9 +372,26 @@ export function RealEstateLeafletMap({ metros, theme }: Props) {
                         {metro.zipCount} ZIPs · Median {formatUsd(metro.medianSalePrice, true)} · Yield{' '}
                         {formatYield(metro.medianYield)}
                       </p>
-                      <button type="button" className="finance-primary-btn re-map-popup-btn" onClick={() => selectMetro(metro)}>
-                        View ZIPs on map
-                      </button>
+                      {isEmbed ? (
+                        <div className="re-map-popup-actions">
+                          <Link
+                            href={`/real-estate/map?metro=${encodeURIComponent(metro.slug)}`}
+                            className="finance-primary-btn re-map-popup-btn"
+                          >
+                            Open full map
+                          </Link>
+                          <Link
+                            href={`/real-estate/markets/${metro.slug}`}
+                            className="finance-secondary-btn re-map-popup-btn"
+                          >
+                            Metro table
+                          </Link>
+                        </div>
+                      ) : (
+                        <button type="button" className="finance-primary-btn re-map-popup-btn" onClick={() => selectMetro(metro)}>
+                          View ZIPs on map
+                        </button>
+                      )}
                     </div>
                   </Popup>
                 </CircleMarker>
@@ -342,23 +417,25 @@ export function RealEstateLeafletMap({ metros, theme }: Props) {
             ))}
           </MapContainer>
 
-          <div className="re-map-legend">
-            <span className="re-map-legend-title">Deal score</span>
-            {[
-              ['75+', '#22c55e'],
-              ['55–74', '#eab308'],
-              ['35–54', '#f97316'],
-              ['<35', '#ef4444'],
-            ].map(([label, color]) => (
-              <span key={label} className="re-map-legend-item">
-                <span className="re-map-legend-dot" style={{ background: color }} />
-                {label}
-              </span>
-            ))}
-          </div>
+          {!isEmbed && (
+            <div className="re-map-legend">
+              <span className="re-map-legend-title">Deal score</span>
+              {[
+                ['75+', '#22c55e'],
+                ['55–74', '#eab308'],
+                ['35–54', '#f97316'],
+                ['<35', '#ef4444'],
+              ].map(([label, color]) => (
+                <span key={label} className="re-map-legend-item">
+                  <span className="re-map-legend-dot" style={{ background: color }} />
+                  {label}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
 
-        {selectedMetro && (
+        {!isEmbed && selectedMetro && (
           <MetroSidebar
             metro={selectedMetro}
             cityFilter={cityFilter}

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-const STORAGE_KEY = 'sweep-finance-split';
+const DEFAULT_STORAGE_KEY = 'sweep-finance-split';
 const MIN_RATIO = 0.12;
 const MAX_RATIO = 0.88;
 const DEFAULT_RATIO = 0.58;
@@ -12,11 +12,20 @@ type Orientation = 'horizontal' | 'vertical';
 type Props = {
   start: React.ReactNode;
   end: React.ReactNode;
+  /** Initial start-pane share (0–1). Defaults to 0.58. */
+  defaultRatio?: number;
+  /** localStorage key for persisted split ratio. */
+  storageKey?: string;
 };
 
-export function FinanceSplitView({ start, end }: Props) {
+export function FinanceSplitView({
+  start,
+  end,
+  defaultRatio = DEFAULT_RATIO,
+  storageKey = DEFAULT_STORAGE_KEY,
+}: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [ratio, setRatio] = useState(DEFAULT_RATIO);
+  const [ratio, setRatio] = useState(defaultRatio);
   const [dragging, setDragging] = useState(false);
   const [orientation, setOrientation] = useState<Orientation>('horizontal');
   const ratioRef = useRef(ratio);
@@ -24,12 +33,14 @@ export function FinanceSplitView({ start, end }: Props) {
   ratioRef.current = ratio;
 
   useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
+    const saved = localStorage.getItem(storageKey);
     if (saved) {
       const n = parseFloat(saved);
       if (Number.isFinite(n)) setRatio(Math.min(MAX_RATIO, Math.max(MIN_RATIO, n)));
+    } else {
+      setRatio(defaultRatio);
     }
-  }, []);
+  }, [defaultRatio, storageKey]);
 
   useEffect(() => {
     const mq = window.matchMedia('(min-width: 1024px)');
@@ -56,7 +67,7 @@ export function FinanceSplitView({ start, end }: Props) {
     const onMove = (e: PointerEvent) => updateRatio(e.clientX, e.clientY);
     const onUp = () => {
       setDragging(false);
-      localStorage.setItem(STORAGE_KEY, String(ratioRef.current));
+      localStorage.setItem(storageKey, String(ratioRef.current));
       document.body.classList.remove('finance-split-dragging', 'finance-split-dragging--vertical');
     };
 
@@ -81,8 +92,8 @@ export function FinanceSplitView({ start, end }: Props) {
   };
 
   const resetSplit = () => {
-    setRatio(DEFAULT_RATIO);
-    localStorage.setItem(STORAGE_KEY, String(DEFAULT_RATIO));
+    setRatio(defaultRatio);
+    localStorage.setItem(storageKey, String(defaultRatio));
   };
 
   const startPct = `${ratio * 100}%`;
