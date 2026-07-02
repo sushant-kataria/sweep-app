@@ -15,6 +15,7 @@ import type { LatLngBoundsExpression, LatLngExpression } from 'leaflet';
 import {
   buildCitySearchIndex,
   dealScoreColor,
+  enrichApiZipsForMap,
   getMapBounds,
   getMetroBySlugFromMap,
   getZipsForCity,
@@ -28,6 +29,12 @@ import { formatDom, formatPct, formatUsd, formatYield } from '@/lib/real-estate-
 
 type Theme = 'light' | 'dark';
 type MapVariant = 'full' | 'embed';
+
+type EmbedDrill = {
+  entry: MapCityEntry;
+  zips: MapZipPoint[];
+  loading: boolean;
+};
 
 type MapMetroMarker = MapMetroLite | MapMetroPoint;
 
@@ -214,14 +221,19 @@ export function RealEstateLeafletMap({
   }>({ bounds: defaultBounds });
   const [focusedZip, setFocusedZip] = useState<MapZipPoint | null>(null);
   const [initialApplied, setInitialApplied] = useState(false);
+  const [embedDrill, setEmbedDrill] = useState<EmbedDrill | null>(null);
+  const embedFetchRef = useRef(0);
 
   const tiles = TILES[theme];
 
   const visibleZips = useMemo(() => {
-    if (isEmbed || !selectedMetro || !hasZips(selectedMetro)) return [];
+    if (isEmbed) return embedDrill?.zips ?? [];
+    if (!selectedMetro || !hasZips(selectedMetro)) return [];
     if (cityFilter) return getZipsForCity(selectedMetro, cityFilter);
     return selectedMetro.zips;
-  }, [cityFilter, isEmbed, selectedMetro]);
+  }, [cityFilter, embedDrill, isEmbed, selectedMetro]);
+
+  const showMetroMarkers = isEmbed ? !embedDrill?.zips.length : !selectedMetro;
 
   useEffect(() => {
     if (initialApplied || !initialMetroSlug) return;
@@ -241,18 +253,83 @@ export function RealEstateLeafletMap({
     [cityIndex],
   );
 
+  const loadEmbedDrill = useCallback(
+    async (entry: MapCityEntry) => {
+      const metro = getMetroBySlugFromMap(metros, entry.metroSlug);
+      if (!metro) return;
+
+      const fetchId = embedFetchRef.current + 1;
+      embedFetchRef.current = fetchId;
+
+      setEmbedDrill({ entry, zips: [], loading: true });
+      setFlyTarget({ center: [entry.lat, entry.lng], zoom: entry.kind === 'metro' ? 9 : 11 });
+
+      if (entry.kind === 'metro') {
+        setEmbedDrill({ entry, zips: [], loading: false });
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/real-estate/markets/${encodeURIComponent(entry.metroSlug)}`);
+        const data = (await res.json()) as {
+          zips?: Array<{
+            zip: string;
+            city: string | null;
+            medianSalePrice: number | null;
+            estMonthlyRent: number | null;
+            grossYield: number | null;
+            medianDom: number | null;
+            priceYoy: number | null;
+            dealScore: number;
+          }>;
+        };
+        if (!res.ok || !data.zips || embedFetchRef.current !== fetchId) return;
+
+        const cityName = entry.label.split(',')[0]?.trim().toLowerCase();
+        const zips = enrichApiZipsForMap(data.zips, metro).filter(
+          (z) => z.city?.toLowerCase() === cityName,
+        );
+        if (embedFetchRef.current !== fetchId) return;
+
+        setEmbedDrill({ entry, zips, loading: false });
+
+        if (zips.length > 0) {
+          const lats = zips.map((z) => z.lat);
+          const lngs = zips.map((z) => z.lng);
+          setFlyTarget({
+            bounds: [
+              [Math.min(...lats) - 0.08, Math.min(...lngs) - 0.08],
+              [Math.max(...lats) + 0.08, Math.max(...lngs) + 0.08],
+            ],
+          });
+        }
+      } catch {
+        if (embedFetchRef.current === fetchId) {
+          setEmbedDrill({ entry, zips: [], loading: false });
+        }
+      }
+    },
+    [metros],
+  );
+
   const selectLocation = useCallback(
     (entry: MapCityEntry) => {
       const metro = getMetroBySlugFromMap(metros, entry.metroSlug);
       if (!metro) return;
 
-      if (hasZips(metro)) {
-        setSelectedMetro(metro);
-        setCityFilter(isEmbed ? null : entry.kind === 'city' ? entry.label : null);
-      }
       setQuery(entry.label);
       setSuggestions([]);
       setFocusedZip(null);
+
+      if (isEmbed) {
+        void loadEmbedDrill(entry);
+        return;
+      }
+
+      if (hasZips(metro)) {
+        setSelectedMetro(metro);
+        setCityFilter(entry.kind === 'city' ? entry.label : null);
+      }
 
       if (entry.kind === 'city' && hasZips(metro)) {
         const zips = getZipsForCity(metro, entry.label);
@@ -271,12 +348,14 @@ export function RealEstateLeafletMap({
 
       setFlyTarget({ center: [entry.lat, entry.lng], zoom: entry.kind === 'metro' ? 9 : 11 });
     },
-    [isEmbed, metros],
+    [isEmbed, loadEmbedDrill, metros],
   );
 
   const selectMetro = useCallback(
     (metro: MapMetroMarker) => {
       if (isEmbed) {
+        embedFetchRef.current += 1;
+        setEmbedDrill(null);
         setQuery(metro.name);
         setSuggestions([]);
         setFlyTarget({ center: [metro.lat, metro.lng], zoom: 8 });
@@ -300,6 +379,8 @@ export function RealEstateLeafletMap({
   }, []);
 
   const clearSelection = useCallback(() => {
+    embedFetchRef.current += 1;
+    setEmbedDrill(null);
     setSelectedMetro(null);
     setCityFilter(null);
     setFocusedZip(null);
@@ -324,7 +405,7 @@ export function RealEstateLeafletMap({
             className="finance-input re-map-search-input"
             aria-label="Search city or metro"
           />
-          {(query || selectedMetro) && (
+          {(query || selectedMetro || embedDrill) && (
             <button type="button" className="re-map-search-clear" onClick={clearSelection} aria-label="Clear search">
               <X className="h-4 w-4" />
             </button>
@@ -363,7 +444,7 @@ export function RealEstateLeafletMap({
             <MapInvalidateSize />
             <FlyTo center={flyTarget.center} zoom={flyTarget.zoom} bounds={flyTarget.bounds} />
 
-            {(isEmbed || !selectedMetro) &&
+            {showMetroMarkers &&
               metros.map((metro) => (
                 <CircleMarker
                   key={metro.slug}
@@ -413,6 +494,19 @@ export function RealEstateLeafletMap({
                   </Popup>
                 </CircleMarker>
               ))}
+
+            {isEmbed && embedDrill?.loading && embedDrill.entry.kind === 'city' && (
+              <CircleMarker
+                center={[embedDrill.entry.lat, embedDrill.entry.lng]}
+                radius={10}
+                pathOptions={{
+                  color: theme === 'dark' ? '#fff' : '#0a0a0a',
+                  fillColor: '#3b82f6',
+                  fillOpacity: 0.9,
+                  weight: 2,
+                }}
+              />
+            )}
 
             {visibleZips.map((zip) => (
               <CircleMarker
