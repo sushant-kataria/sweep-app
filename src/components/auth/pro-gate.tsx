@@ -79,9 +79,9 @@ export function PreviewBanner({ scanNote }: { scanNote?: string }) {
   if (loading || pro || !scanNote) return null;
 
   return (
-    <div className="mb-4 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-[var(--v-fg-3)]">
-      <p>{scanNote}</p>
-      <div className="mt-2 flex flex-wrap gap-2">
+    <div className="free-sample-banner mb-4" role="status">
+      <p className="free-sample-banner-desc !mt-0">{scanNote}</p>
+      <div className="free-sample-banner-actions !mt-2">
         {signedIn ? (
           <button
             type="button"

@@ -217,11 +217,16 @@ function ScreenResultsContent({ screenId, kind = 'screen', backHref = '/finance/
               </header>
 
               <div className="screen-results-toolbar">
-                <p className="screen-results-count">
-                  {payload.preview && payload.samplePreview
-                    ? `Free sample — ${payload.samplePreview.shown} of ${payload.samplePreview.total.toLocaleString()} stocks`
-                    : `${payload.total.toLocaleString()} results found: Showing page ${payload.page} of ${payload.totalPages}`}
-                </p>
+                {payload.preview && payload.samplePreview ? (
+                  <FreeSampleBadge
+                    shown={payload.samplePreview.shown}
+                    total={payload.samplePreview.total}
+                  />
+                ) : (
+                  <p className="screen-results-count">
+                    {`${payload.total.toLocaleString()} results found: Showing page ${payload.page} of ${payload.totalPages}`}
+                  </p>
+                )}
                 <div className="screen-results-toolbar-actions">
                   {!payload.preview && (
                   <button
