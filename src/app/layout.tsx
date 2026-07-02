@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { AuthKitProvider } from "@workos-inc/authkit-nextjs/components";
 import { GeistPixelSquare } from "geist/font/pixel";
+import { AppShell } from "@/components/app-shell";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -40,7 +41,9 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased font-sans`}
       >
-        <AuthKitProvider>{children}</AuthKitProvider>
+        <AuthKitProvider>
+          <AppShell>{children}</AppShell>
+        </AuthKitProvider>
       </body>
     </html>
   );

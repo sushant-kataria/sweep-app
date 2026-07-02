@@ -1,6 +1,7 @@
 /* Tailwind CSS v4 - @custom-variant is valid syntax */
 @import "tailwindcss";
 @import "tw-animate-css";
+@import "glass-refraction/css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -4793,4 +4794,114 @@ a.finance-secondary-btn:visited {
   color: var(--free-tier-info-title);
   text-decoration: underline;
   text-underline-offset: 2px;
+}
+
+/* ── Liquid glass (glass-refraction) — Phase 0 foundation ── */
+:root {
+  --gr-blur: 22px;
+  --gr-blur-card: 18px;
+  --gr-blur-pill: 10px;
+  --gr-bg-start: rgba(255, 255, 255, 0.78);
+  --gr-bg-end: rgba(255, 255, 255, 0.62);
+  --gr-chromatic-blue: rgba(0, 140, 255, 0.035);
+  --gr-chromatic-violet: rgba(100, 80, 255, 0.03);
+  --gr-chromatic-pink: rgba(255, 100, 180, 0.028);
+  --gr-chromatic-green: rgba(80, 220, 160, 0.02);
+}
+
+.dark {
+  --gr-bg-start: rgba(18, 22, 35, 0.52);
+  --gr-bg-end: rgba(12, 16, 28, 0.46);
+  --gr-chromatic-blue: rgba(0, 180, 255, 0.045);
+  --gr-chromatic-violet: rgba(120, 80, 255, 0.04);
+  --gr-chromatic-pink: rgba(255, 100, 200, 0.035);
+  --gr-chromatic-green: rgba(100, 255, 180, 0.025);
+}
+
+@media (max-width: 1023px) {
+  :root {
+    --v-glass-blur: 22px;
+  }
+}
+
+.sweep-glass-surface.glass {
+  border-radius: 0;
+}
+
+.sweep-glass-header.glass {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  border-bottom: 1px solid var(--v-border);
+}
+
+@media (max-width: 1023px) {
+  .sweep-glass-header.finance-header.glass {
+    background:
+      linear-gradient(
+        105deg,
+        transparent 40%,
+        rgba(255, 255, 255, 0.06) 50%,
+        transparent 60%),
+      linear-gradient(135deg, var(--gr-bg-start), var(--gr-bg-end));
+    backdrop-filter: blur(var(--gr-blur)) saturate(var(--gr-saturation)) brightness(1.08);
+    -webkit-backdrop-filter: blur(var(--gr-blur)) saturate(var(--gr-saturation)) brightness(1.08);
+  }
+}
+
+.sweep-glass-header.glass > .grok-header-inner {
+  position: relative;
+  z-index: 1;
+}
+
+@media (max-width: 1023px) {
+  .sweep-glass-refract {
+    filter: url(#glass-refract);
+  }
+
+  .sweep-glass-refract-strong {
+    filter: url(#glass-refract-strong);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glass {
+    animation: none !important;
+  }
+
+  .glass::before {
+    animation: none !important;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .glass,
+  .glass-card,
+  .glass-pill {
+    animation: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    background: var(--v-surface) !important;
+    box-shadow: none !important;
+    filter: none !important;
+  }
+
+  .glass::before,
+  .glass::after,
+  .glass-card::before,
+  .glass-card::after {
+    display: none !important;
+  }
+}
+
+html.sweep-glass-lite .glass,
+html.sweep-glass-lite .glass-card,
+html.sweep-glass-lite .glass-pill {
+  filter: none !important;
+  animation: none !important;
+}
+
+html.sweep-glass-lite .glass::before,
+html.sweep-glass-lite .glass::after {
+  animation: none !important;
 }
