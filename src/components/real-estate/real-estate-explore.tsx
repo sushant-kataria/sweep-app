@@ -9,7 +9,7 @@ import { FREE_SAMPLE_ROWS } from '@/lib/free-tier';
 import type { MapCityEntry, MapMetroLite } from '@/lib/real-estate-market/map-data';
 import type { MetroSummary } from '@/lib/real-estate-market/types';
 import { RealEstateMapEmbed } from '@/components/real-estate/real-estate-map-embed';
-import { FreeTierExplainer } from '@/components/auth/free-tier-explainer';
+import { RealEstateToolsGuide } from '@/components/real-estate/real-estate-tools-guide';
 
 type Props = {
   metros: MetroSummary[];
@@ -75,25 +75,29 @@ export function RealEstateExplore({ metros, mapMetrosLite, cityIndex, generatedA
         </div>
         <h1 className="text-xl font-semibold text-[var(--v-fg)]">Real estate markets</h1>
         <p className="mt-1 max-w-2xl text-sm text-[var(--v-fg-3)]">
-          US metro and ZIP-level investor data from free public sources — Redfin market tracker, FRED mortgage rates.
-          No paid listing APIs. Rent is estimated via the 0.7% rule until HUD FMR is merged.
+          Compare home prices, estimated rents, and deal scores across 30 US metros and thousands of ZIP codes. Data
+          comes from free public sources: Redfin for market prices and FRED for mortgage rates. We do not use paid
+          listing APIs. Rent is estimated at 0.7% of the home price until HUD fair market rent data is added.
+        </p>
+        <p className="mt-2 max-w-2xl text-sm text-[var(--v-fg-3)]">
+          Use the map to explore cities, run investor screens to find strong markets, then open the deal analyzer to
+          check cash flow on a property. Browse everything for free; Pro unlocks full screen results, CSV export, and
+          custom deal math.{' '}
+          <Link href="/pricing" className="underline-offset-2 hover:underline">
+            See Pro plans
+          </Link>
+          .
         </p>
         <p className="mt-2 text-[11px] text-[var(--v-fg-5)]">
-          Seed updated {new Date(generatedAt).toLocaleDateString()} ·{' '}
+          Data updated {new Date(generatedAt).toLocaleDateString()}.{' '}
           <a href={source} target="_blank" rel="noopener noreferrer" className="underline-offset-2 hover:underline">
-            Data source
+            View data source
           </a>
-          . Investor screens show a {FREE_SAMPLE_ROWS}-row{' '}
-          <span className="text-[var(--v-fg-3)]">free sample</span> (real data, limited on purpose). Pro unlocks full
-          results, CSV export &amp; deal tools —{' '}
-          <a href="/pricing" className="underline-offset-2 hover:underline">
-            Pro
-          </a>
-          .
+          . Investor screens show a {FREE_SAMPLE_ROWS}-row free sample with real data.
         </p>
       </div>
 
-      <FreeTierExplainer />
+      <RealEstateToolsGuide />
 
       <div className="mb-4 flex flex-wrap gap-2">
         <Link href="/real-estate/deal-analyzer" className="finance-primary-btn text-sm">

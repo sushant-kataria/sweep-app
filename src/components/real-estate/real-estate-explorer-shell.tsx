@@ -49,12 +49,14 @@ export function RealEstateExplorerShell({
           end={
             <section className="finance-chat-panel">
               <div className="finance-chat-placeholder">
-                <p className="text-sm text-[var(--v-fg-3)]">Browse metros and investor screens with free public data.</p>
+                <p className="text-sm text-[var(--v-fg-3)]">
+                  Pick a market, screen, or deal to analyze. Everything here uses free public data at no API cost.
+                </p>
                 <ul className="mt-4 space-y-2 text-xs text-[var(--v-fg-4)]">
-                  <li>· 30 major US metros, ZIP-level medians</li>
-                  <li>· 6 investor screens (yield, dips, DOM, inventory)</li>
-                  <li>· Deal analyzer with FRED mortgage rates</li>
-                  <li>· $0 data cost — Redfin + FRED only</li>
+                  <li>· Map 30 metros and search by city</li>
+                  <li>· 6 investor screens for yield, dips, and inventory</li>
+                  <li>· Deal analyzer with live FRED mortgage rates</li>
+                  <li>· $0 data cost from Redfin and FRED</li>
                 </ul>
               </div>
             </section>
