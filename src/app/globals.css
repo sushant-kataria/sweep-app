@@ -2237,11 +2237,13 @@ body.finance-split-dragging--vertical {
   padding: 0.6875rem 1rem;
   font-size: 0.875rem;
   font-weight: 500;
+  text-decoration: none;
   transition: opacity 0.15s ease;
 }
 
 .finance-primary-btn:hover {
   opacity: 0.88;
+  color: var(--v-bg);
 }
 
 .finance-secondary-btn {
@@ -2258,6 +2260,24 @@ body.finance-split-dragging--vertical {
 .finance-secondary-btn:hover {
   opacity: 0.88;
   color: var(--v-btn-fg);
+}
+
+a.finance-primary-btn,
+a.finance-primary-btn:visited {
+  color: var(--v-bg);
+}
+
+a.finance-secondary-btn,
+a.finance-secondary-btn:visited {
+  color: var(--v-btn-fg);
+}
+
+.auth-prompt-actions .finance-primary-btn,
+.auth-prompt-actions .finance-secondary-btn,
+.free-sample-banner-actions .finance-primary-btn,
+.free-sample-banner-actions .finance-secondary-btn {
+  width: auto;
+  margin-top: 0;
 }
 
 .finance-report-header {
