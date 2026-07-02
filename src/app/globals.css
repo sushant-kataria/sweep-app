@@ -4798,29 +4798,114 @@ a.finance-secondary-btn:visited {
 
 /* ── Liquid glass (glass-refraction) — Phase 0 foundation ── */
 :root {
-  --gr-blur: 22px;
-  --gr-blur-card: 18px;
+  --gr-blur: 24px;
+  --gr-blur-card: 20px;
   --gr-blur-pill: 10px;
+  --gr-saturation: 1.85;
   --gr-bg-start: rgba(255, 255, 255, 0.78);
   --gr-bg-end: rgba(255, 255, 255, 0.62);
   --gr-chromatic-blue: rgba(0, 140, 255, 0.035);
   --gr-chromatic-violet: rgba(100, 80, 255, 0.03);
   --gr-chromatic-pink: rgba(255, 100, 180, 0.028);
   --gr-chromatic-green: rgba(80, 220, 160, 0.02);
+  --sweep-glass-blur: 32px;
+  --sweep-glass-fill: rgba(255, 255, 255, 0.72);
+  --sweep-glass-fill-strong: rgba(255, 255, 255, 0.88);
+  --sweep-glass-edge: rgba(255, 255, 255, 0.55);
+  --sweep-glass-shadow: 0 8px 32px rgba(15, 23, 42, 0.12);
 }
 
 .dark {
-  --gr-bg-start: rgba(18, 22, 35, 0.52);
-  --gr-bg-end: rgba(12, 16, 28, 0.46);
-  --gr-chromatic-blue: rgba(0, 180, 255, 0.045);
-  --gr-chromatic-violet: rgba(120, 80, 255, 0.04);
-  --gr-chromatic-pink: rgba(255, 100, 200, 0.035);
-  --gr-chromatic-green: rgba(100, 255, 180, 0.025);
+  --gr-bg-start: rgba(40, 44, 58, 0.55);
+  --gr-bg-end: rgba(24, 28, 38, 0.48);
+  --gr-chromatic-blue: rgba(0, 180, 255, 0.055);
+  --gr-chromatic-violet: rgba(120, 80, 255, 0.05);
+  --gr-chromatic-pink: rgba(255, 100, 200, 0.045);
+  --gr-chromatic-green: rgba(100, 255, 180, 0.035);
+  --sweep-glass-fill: rgba(28, 28, 32, 0.62);
+  --sweep-glass-fill-strong: rgba(36, 36, 42, 0.78);
+  --sweep-glass-edge: rgba(255, 255, 255, 0.22);
+  --sweep-glass-shadow: 0 10px 40px rgba(0, 0, 0, 0.45);
 }
 
 @media (max-width: 1023px) {
   :root {
-    --v-glass-blur: 22px;
+    --v-glass-blur: 32px;
+  }
+
+  .finance-shell {
+    background:
+      radial-gradient(ellipse 120% 80% at 50% -20%, rgba(99, 102, 241, 0.12), transparent 55%),
+      radial-gradient(ellipse 90% 60% at 100% 0%, rgba(14, 165, 233, 0.08), transparent 50%),
+      var(--v-bg);
+  }
+
+  .dark .finance-shell {
+    background:
+      radial-gradient(ellipse 120% 80% at 50% -20%, rgba(99, 102, 241, 0.16), transparent 55%),
+      radial-gradient(ellipse 90% 60% at 100% 0%, rgba(14, 165, 233, 0.1), transparent 50%),
+      var(--v-bg);
+  }
+
+  /* iOS-style sticky header — CSS-only, no SVG filter on text */
+  .sweep-glass-header.finance-header {
+    isolation: isolate;
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--sweep-glass-fill-strong) 92%, transparent) 0%,
+      var(--sweep-glass-fill) 100%
+    );
+    -webkit-backdrop-filter: blur(var(--sweep-glass-blur)) saturate(1.9) brightness(1.06);
+    backdrop-filter: blur(var(--sweep-glass-blur)) saturate(1.9) brightness(1.06);
+    border-bottom: 1px solid color-mix(in srgb, var(--v-border) 70%, var(--sweep-glass-edge));
+    box-shadow:
+      inset 0 1px 0 var(--sweep-glass-edge),
+      var(--sweep-glass-shadow);
+  }
+
+  .sweep-glass-header.finance-header::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.2) 0%,
+      rgba(255, 255, 255, 0.04) 22%,
+      transparent 55%
+    );
+    z-index: 0;
+  }
+
+  .dark .sweep-glass-header.finance-header::before {
+    background: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.14) 0%,
+      rgba(255, 255, 255, 0.03) 24%,
+      transparent 58%
+    );
+  }
+
+  .sweep-glass-header.finance-header::after {
+    content: '';
+    position: absolute;
+    left: 8%;
+    right: 8%;
+    bottom: 0;
+    height: 1px;
+    pointer-events: none;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      color-mix(in srgb, var(--sweep-glass-edge) 80%, transparent) 50%,
+      transparent
+    );
+    z-index: 0;
+  }
+
+  .sweep-glass-header.finance-header > .grok-header-inner {
+    position: relative;
+    z-index: 1;
   }
 }
 
@@ -4828,38 +4913,27 @@ a.finance-secondary-btn:visited {
   border-radius: 0;
 }
 
-.sweep-glass-header.glass {
-  position: sticky;
-  top: 0;
-  z-index: 30;
-  border-bottom: 1px solid var(--v-border);
-}
+@media (min-width: 1024px) {
+  .sweep-glass-header.finance-header {
+    background: color-mix(in srgb, var(--v-bg) 94%, transparent);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: none;
+  }
 
-@media (max-width: 1023px) {
-  .sweep-glass-header.finance-header.glass {
-    background:
-      linear-gradient(
-        105deg,
-        transparent 40%,
-        rgba(255, 255, 255, 0.06) 50%,
-        transparent 60%),
-      linear-gradient(135deg, var(--gr-bg-start), var(--gr-bg-end));
-    backdrop-filter: blur(var(--gr-blur)) saturate(var(--gr-saturation)) brightness(1.08);
-    -webkit-backdrop-filter: blur(var(--gr-blur)) saturate(var(--gr-saturation)) brightness(1.08);
+  .sweep-glass-header.finance-header::before,
+  .sweep-glass-header.finance-header::after {
+    display: none;
   }
 }
 
-.sweep-glass-header.glass > .grok-header-inner {
-  position: relative;
-  z-index: 1;
-}
-
+/* SVG refraction — decorative surfaces only, never on text chrome */
 @media (max-width: 1023px) {
-  .sweep-glass-refract {
+  .sweep-glass-refract:not(.sweep-glass-header):not(.sweep-glass-header *) {
     filter: url(#glass-refract);
   }
 
-  .sweep-glass-refract-strong {
+  .sweep-glass-refract-strong:not(.sweep-glass-header):not(.sweep-glass-header *) {
     filter: url(#glass-refract-strong);
   }
 }
@@ -4877,7 +4951,8 @@ a.finance-secondary-btn:visited {
 @media (prefers-reduced-transparency: reduce) {
   .glass,
   .glass-card,
-  .glass-pill {
+  .glass-pill,
+  .sweep-glass-header.finance-header {
     animation: none !important;
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
@@ -4889,7 +4964,9 @@ a.finance-secondary-btn:visited {
   .glass::before,
   .glass::after,
   .glass-card::before,
-  .glass-card::after {
+  .glass-card::after,
+  .sweep-glass-header.finance-header::before,
+  .sweep-glass-header.finance-header::after {
     display: none !important;
   }
 }

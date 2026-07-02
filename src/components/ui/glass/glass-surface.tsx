@@ -19,7 +19,7 @@ export function GlassSurface<T extends ElementType = 'div'>({
   as,
   className,
   children,
-  refract = true,
+  refract = false,
   force = false,
 }: Props<T>) {
   const glassEnabled = useGlassEnabled();
