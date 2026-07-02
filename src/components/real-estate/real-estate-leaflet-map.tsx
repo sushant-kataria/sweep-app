@@ -20,6 +20,7 @@ import {
   getZipsForCity,
   searchMapLocations,
   type MapCityEntry,
+  type MapMetroLite,
   type MapMetroPoint,
   type MapZipPoint,
 } from '@/lib/real-estate-market/map-data';
@@ -28,12 +29,20 @@ import { formatDom, formatPct, formatUsd, formatYield } from '@/lib/real-estate-
 type Theme = 'light' | 'dark';
 type MapVariant = 'full' | 'embed';
 
+type MapMetroMarker = MapMetroLite | MapMetroPoint;
+
+function hasZips(metro: MapMetroMarker): metro is MapMetroPoint {
+  return 'zips' in metro && Array.isArray(metro.zips);
+}
+
 type Props = {
-  metros: MapMetroPoint[];
+  metros: MapMetroMarker[];
   theme: Theme;
   variant?: MapVariant;
   /** Pre-select a metro on load (full map). */
   initialMetroSlug?: string | null;
+  /** Pre-built search index (embed / hub — avoids shipping all ZIP rows). */
+  cityIndex?: MapCityEntry[];
 };
 
 const TILES = {
@@ -55,8 +64,8 @@ function MapInvalidateSize() {
   useEffect(() => {
     const run = () => map.invalidateSize({ animate: false });
     run();
-    const t1 = window.setTimeout(run, 120);
-    const t2 = window.setTimeout(run, 480);
+    const t1 = window.setTimeout(run, 50);
+    const t2 = window.setTimeout(run, 200);
 
     const el = map.getContainer().parentElement;
     const ro = el ? new ResizeObserver(() => run()) : null;
@@ -185,9 +194,13 @@ export function RealEstateLeafletMap({
   theme,
   variant = 'full',
   initialMetroSlug = null,
+  cityIndex: cityIndexProp,
 }: Props) {
   const isEmbed = variant === 'embed';
-  const cityIndex = useMemo(() => buildCitySearchIndex(metros), [metros]);
+  const cityIndex = useMemo(
+    () => cityIndexProp ?? buildCitySearchIndex(metros.filter(hasZips)),
+    [cityIndexProp, metros],
+  );
   const defaultBounds = useMemo(() => getMapBounds(metros), [metros]);
 
   const [query, setQuery] = useState('');
@@ -205,7 +218,7 @@ export function RealEstateLeafletMap({
   const tiles = TILES[theme];
 
   const visibleZips = useMemo(() => {
-    if (isEmbed || !selectedMetro) return [];
+    if (isEmbed || !selectedMetro || !hasZips(selectedMetro)) return [];
     if (cityFilter) return getZipsForCity(selectedMetro, cityFilter);
     return selectedMetro.zips;
   }, [cityFilter, isEmbed, selectedMetro]);
@@ -214,7 +227,7 @@ export function RealEstateLeafletMap({
     if (initialApplied || !initialMetroSlug) return;
     const metro = getMetroBySlugFromMap(metros, initialMetroSlug);
     if (!metro) return;
-    setSelectedMetro(metro);
+    if (hasZips(metro)) setSelectedMetro(metro);
     setQuery(metro.name);
     setFlyTarget({ center: [metro.lat, metro.lng], zoom: 9 });
     setInitialApplied(true);
@@ -233,13 +246,15 @@ export function RealEstateLeafletMap({
       const metro = getMetroBySlugFromMap(metros, entry.metroSlug);
       if (!metro) return;
 
-      setSelectedMetro(metro);
-      setCityFilter(isEmbed ? null : entry.kind === 'city' ? entry.label : null);
+      if (hasZips(metro)) {
+        setSelectedMetro(metro);
+        setCityFilter(isEmbed ? null : entry.kind === 'city' ? entry.label : null);
+      }
       setQuery(entry.label);
       setSuggestions([]);
       setFocusedZip(null);
 
-      if (entry.kind === 'city') {
+      if (entry.kind === 'city' && hasZips(metro)) {
         const zips = getZipsForCity(metro, entry.label);
         if (zips.length > 0) {
           const lats = zips.map((z) => z.lat);
@@ -260,14 +275,16 @@ export function RealEstateLeafletMap({
   );
 
   const selectMetro = useCallback(
-    (metro: MapMetroPoint) => {
+    (metro: MapMetroMarker) => {
       if (isEmbed) {
         setQuery(metro.name);
         setSuggestions([]);
         setFlyTarget({ center: [metro.lat, metro.lng], zoom: 8 });
         return;
       }
-      setSelectedMetro(metro);
+      if (hasZips(metro)) {
+        setSelectedMetro(metro);
+      }
       setCityFilter(null);
       setQuery(metro.name);
       setSuggestions([]);
