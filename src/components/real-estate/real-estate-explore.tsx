@@ -5,10 +5,13 @@ import { useMemo, useState } from 'react';
 import { Building2, ChevronRight, Search } from 'lucide-react';
 import { formatDom, formatPct, formatUsd, formatYield } from '@/lib/real-estate-market/format';
 import { searchRealEstateScreens } from '@/lib/real-estate-market/screens';
+import type { MapMetroPoint } from '@/lib/real-estate-market/map-data';
 import type { MetroSummary } from '@/lib/real-estate-market/types';
+import { RealEstateMapEmbed } from '@/components/real-estate/real-estate-map-embed';
 
 type Props = {
   metros: MetroSummary[];
+  mapMetros: MapMetroPoint[];
   generatedAt: string;
   source: string;
 };
@@ -48,7 +51,7 @@ function ScreenCard({ screen }: { screen: ReturnType<typeof searchRealEstateScre
   );
 }
 
-export function RealEstateExplore({ metros, generatedAt, source }: Props) {
+export function RealEstateExplore({ metros, mapMetros, generatedAt, source }: Props) {
   const [query, setQuery] = useState('');
 
   const filteredMetros = useMemo(() => {
@@ -93,6 +96,8 @@ export function RealEstateExplore({ metros, generatedAt, source }: Props) {
           Full screen map
         </Link>
       </div>
+
+      <RealEstateMapEmbed metros={mapMetros} layout="inline" />
 
       <div className="finance-explore-search-block">
         <label className="finance-field">

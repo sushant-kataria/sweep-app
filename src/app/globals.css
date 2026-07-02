@@ -4492,3 +4492,46 @@ body.finance-split-dragging--vertical {
     min-height: 320px;
   }
 }
+
+.re-map-embed-panel--inline {
+  width: 100%;
+  margin-bottom: 1.25rem;
+  border: 1px solid var(--v-border);
+  border-radius: 0.75rem;
+  background: var(--v-surface);
+  overflow: hidden;
+}
+
+.re-map-embed-panel--inline .re-map-embed-head {
+  padding: 0.875rem 1rem 0.625rem;
+}
+
+.re-map-embed-panel--inline .re-map-embed-title {
+  font-size: 0.9375rem;
+}
+
+.re-map-embed-panel--inline .re-map-embed-desc {
+  font-size: 0.6875rem;
+}
+
+.re-map-embed-panel--inline .re-map-shell--embed {
+  padding: 0 0.75rem 0.75rem;
+}
+
+.re-map-embed-panel--inline .re-map-shell--embed .re-map-canvas-wrap {
+  min-height: 280px;
+  height: min(42vh, 420px);
+}
+
+.re-map-embed-panel--inline .re-map-shell--embed .re-map-canvas {
+  min-height: 280px;
+  height: min(42vh, 420px);
+}
+
+@media (min-width: 640px) {
+  .re-map-embed-panel--inline .re-map-shell--embed .re-map-canvas-wrap,
+  .re-map-embed-panel--inline .re-map-shell--embed .re-map-canvas {
+    min-height: 320px;
+    height: min(38vh, 440px);
+  }
+}

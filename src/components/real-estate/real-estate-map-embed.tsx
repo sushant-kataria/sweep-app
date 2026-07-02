@@ -20,17 +20,21 @@ const RealEstateLeafletMap = dynamic(
 
 type Props = {
   metros: MapMetroPoint[];
+  layout?: 'inline' | 'panel';
 };
 
-export function RealEstateMapEmbed({ metros }: Props) {
+export function RealEstateMapEmbed({ metros, layout = 'panel' }: Props) {
   const { theme } = useSweepTheme();
+  const isInline = layout === 'inline';
 
   return (
-    <div className="re-map-embed-panel">
+    <div className={`re-map-embed-panel${isInline ? ' re-map-embed-panel--inline' : ''}`}>
       <div className="re-map-embed-head">
         <div>
           <h2 className="re-map-embed-title">Market map</h2>
-          <p className="re-map-embed-desc">30 metros · click to explore</p>
+          <p className="re-map-embed-desc">
+            {isInline ? 'Search by city or metro · click markers for details' : '30 metros · click to explore'}
+          </p>
         </div>
         <Link href="/real-estate/map" className="re-map-embed-full-link">
           <ExternalLink className="h-3 w-3" aria-hidden />
