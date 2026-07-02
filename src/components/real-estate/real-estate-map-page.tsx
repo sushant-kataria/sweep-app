@@ -2,6 +2,9 @@
 
 import dynamic from 'next/dynamic';
 import { Loader2 } from 'lucide-react';
+import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
+import { Suspense } from 'react';
 import { WorkspacePageHeader } from '@/components/workspace/workspace-page-header';
 import { useSweepTheme } from '@/hooks/use-sweep-theme';
 import type { MapMetroPoint } from '@/lib/real-estate-market/map-data';
@@ -23,8 +26,10 @@ type Props = {
   metros: MapMetroPoint[];
 };
 
-export function RealEstateMapPage({ metros }: Props) {
+function RealEstateMapPageInner({ metros }: Props) {
   const { theme, toggleTheme } = useSweepTheme();
+  const searchParams = useSearchParams();
+  const initialMetroSlug = searchParams.get('metro');
 
   return (
     <div className="finance-shell re-map-page">
@@ -37,10 +42,26 @@ export function RealEstateMapPage({ metros }: Props) {
               Explore 30 US metros on an interactive map. Search by city, click a metro to drill into ZIP-level deal
               scores, prices, and yields — synced with Sweep&apos;s Redfin seed data.
             </p>
+            <Link href="/real-estate" className="mt-2 inline-block text-xs text-[var(--v-fg-4)] underline-offset-2 hover:underline">
+              ← Back to real estate hub
+            </Link>
           </header>
-          <RealEstateLeafletMap metros={metros} theme={theme} />
+          <RealEstateLeafletMap
+            metros={metros}
+            theme={theme}
+            variant="full"
+            initialMetroSlug={initialMetroSlug}
+          />
         </section>
       </main>
     </div>
+  );
+}
+
+export function RealEstateMapPage({ metros }: Props) {
+  return (
+    <Suspense fallback={<div className="finance-shell min-h-dvh bg-[var(--v-bg)]" />}>
+      <RealEstateMapPageInner metros={metros} />
+    </Suspense>
   );
 }

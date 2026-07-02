@@ -1440,6 +1440,23 @@ body.finance-split-dragging--vertical {
   background: color-mix(in srgb, var(--v-bg-2) 60%, var(--v-bg));
 }
 
+.finance-map-panel {
+  display: flex;
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  background: var(--v-bg);
+  border-left: 1px solid var(--v-border);
+}
+
+.finance-split--vertical .finance-map-panel {
+  border-left: none;
+  border-top: 1px solid var(--v-border);
+  min-height: 280px;
+}
+
 .finance-explore {
   width: 100%;
   max-width: 52rem;
@@ -4365,4 +4382,113 @@ body.finance-split-dragging--vertical {
 
 .re-map-shell .leaflet-control-attribution a {
   color: var(--v-fg-3) !important;
+}
+
+/* Embedded map (real estate hub ~25% column) */
+.re-map-embed-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+}
+
+.re-map-embed-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex-shrink: 0;
+  padding: 0.75rem 0.75rem 0.5rem;
+  border-bottom: 1px solid var(--v-border);
+}
+
+.re-map-embed-title {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--v-fg);
+}
+
+.re-map-embed-desc {
+  margin-top: 0.125rem;
+  font-size: 0.625rem;
+  color: var(--v-fg-4);
+}
+
+.re-map-embed-full-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex-shrink: 0;
+  padding: 0.3125rem 0.5rem;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: var(--v-fg);
+  border: 1px solid var(--v-border);
+  border-radius: 0.375rem;
+  background: var(--v-surface);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.re-map-embed-full-link:hover {
+  background: var(--v-bg-2);
+}
+
+.re-map-embed-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  min-height: 12rem;
+  color: var(--v-fg-4);
+}
+
+.re-map-shell--embed {
+  flex: 1;
+  min-height: 0;
+  gap: 0.5rem;
+  padding: 0 0.5rem 0.5rem;
+}
+
+.re-map-shell--embed .re-map-search-wrap {
+  flex-shrink: 0;
+}
+
+.re-map-shell--embed .re-map-search-input {
+  font-size: 0.75rem !important;
+  padding-top: 0.4375rem !important;
+  padding-bottom: 0.4375rem !important;
+}
+
+.re-map-shell--embed .re-map-search-icon {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+.re-map-shell--embed .re-map-layout {
+  flex: 1;
+  min-height: 0;
+}
+
+.re-map-shell--embed .re-map-canvas-wrap {
+  min-height: 0;
+  flex: 1;
+  height: 100%;
+  border-radius: 0.5rem;
+}
+
+.re-map-shell--embed .re-map-canvas {
+  min-height: 0;
+  height: 100%;
+}
+
+.re-map-shell--embed .re-map-suggestions {
+  font-size: 0.75rem;
+}
+
+@media (min-width: 1024px) {
+  .re-map-shell--embed .re-map-canvas-wrap {
+    min-height: 320px;
+  }
 }
