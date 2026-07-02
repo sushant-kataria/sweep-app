@@ -86,8 +86,11 @@ export function RealEstateExplore({ metros, generatedAt, source }: Props) {
       </div>
 
       <div className="mb-4 flex flex-wrap gap-2">
-        <Link href="/real-estate/deal-analyzer" className="finance-primary-btn text-sm">
-          Open deal analyzer
+        <Link href="/real-estate/map" className="finance-primary-btn text-sm">
+          Open market map
+        </Link>
+        <Link href="/real-estate/deal-analyzer" className="finance-secondary-btn text-sm">
+          Deal analyzer
         </Link>
       </div>
 
