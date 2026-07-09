@@ -8,13 +8,16 @@ enum SweepAPIError: LocalizedError {
 
     var errorDescription: String? {
         switch self {
-        case .invalidURL: "Invalid API URL"
+        case .invalidURL:
+            return "Invalid API URL"
         case .http(let code, let body):
             if code == 401 { return "Sign in required" }
             if code == 402 { return body.isEmpty ? "Sweep Pro required" : body }
             return body.isEmpty ? "Request failed (\(code))" : body
-        case .decoding(let error): "Could not read server response: \(error.localizedDescription)"
-        case .message(let text): text
+        case .decoding(let error):
+            return "Could not read server response: \(error.localizedDescription)"
+        case .message(let text):
+            return text
         }
     }
 }
