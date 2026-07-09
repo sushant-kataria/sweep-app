@@ -1,10 +1,23 @@
 import { withAuth } from '@workos-inc/authkit-nextjs';
 import { redirect } from 'next/navigation';
 import type { User } from '@workos-inc/node';
+import { headers } from 'next/headers';
 
+import { mobileUserFromToken } from '@/lib/mobile-token';
 import { isProUser } from '@/lib/subscription';
 
+async function userFromMobileBearer(): Promise<User | null> {
+  const headerStore = await headers();
+  const authorization = headerStore.get('authorization') ?? headerStore.get('Authorization');
+  if (!authorization?.toLowerCase().startsWith('bearer ')) return null;
+  const token = authorization.slice(7).trim();
+  if (!token) return null;
+  return mobileUserFromToken(token);
+}
+
 export async function getSweepUser(): Promise<User | null> {
+  const mobileUser = await userFromMobileBearer();
+  if (mobileUser) return mobileUser;
   const { user } = await withAuth({ ensureSignedIn: false });
   return user;
 }

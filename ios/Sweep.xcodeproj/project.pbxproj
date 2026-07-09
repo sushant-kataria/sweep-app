@@ -1,0 +1,294 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		6821D856C06B42EC969D75B1 /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20014B1FBF384843AAC947BB /* AppModel.swift */; };
+		79CBF4736F404B2A8EE73CC5 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C59D2027EDC34D58B9B7EE9B /* RootView.swift */; };
+		5B841FA3CFDF4885A9BE920E /* SweepApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A37A620E82D74249982D3FF3 /* SweepApp.swift */; };
+		3B6BBFD425DE42908A92518C /* SharedUI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 281D5E6588C64CE3AA9688A6 /* SharedUI.swift */; };
+		223EC85DC55C4DE999818B0F /* SweepGlass.swift in Sources */ = {isa = PBXBuildFile; fileRef = C161440EE61B462CB061DE48 /* SweepGlass.swift */; };
+		2295EFBD5D7E42079F0AB0A2 /* SweepTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18848F06D95A4D8BB9FB93A1 /* SweepTheme.swift */; };
+		25F632CD89D94C609189B02A /* FinanceViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C7E96DA99CD480D93F3A2A2 /* FinanceViews.swift */; };
+		681D93AEFBF747EA867FFDBD /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 790BF627D7AF4F77BF6A6DFA /* HomeView.swift */; };
+		08B25FAF00C54A9A83817E0A /* RealEstateViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00244DFB55E2490FB7CBCCEF /* RealEstateViews.swift */; };
+		7402F12E000A4647BD4C8850 /* AccountView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A91AD43F3E7C49879EF1EFDA /* AccountView.swift */; };
+		458CB55BAE0841DDB85AA186 /* StockViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B2F752593504EF9B96DAEDE /* StockViews.swift */; };
+		150F2D957E174DFB84F8E9F2 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9D18DA179A064D83AACC81FC /* Models.swift */; };
+		4F34333395D64C5A95864453 /* AppConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 533FBE3B4561465080BF912A /* AppConfig.swift */; };
+		FB7FA70030F84989BB269087 /* AuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 247AF327CEDD491E95717B4D /* AuthService.swift */; };
+		1B14BD3BA7C9458CA2C11B1B /* SweepAPIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A7023902AF845F39D548847 /* SweepAPIClient.swift */; };
+		5C734F8430674ABDA1AAC237 /* TokenStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3685180BD28C48E5A01341E4 /* TokenStore.swift */; };
+		17E0FE65BAAF4B2990E429F0 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E0943B6D25F44D24989CB322 /* Assets.xcassets */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		20014B1FBF384843AAC947BB /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sweep/App/AppModel.swift"; sourceTree = SOURCE_ROOT; };
+		C59D2027EDC34D58B9B7EE9B /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sweep/App/RootView.swift"; sourceTree = SOURCE_ROOT; };
+		A37A620E82D74249982D3FF3 /* SweepApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sweep/App/SweepApp.swift"; sourceTree = SOURCE_ROOT; };
+		281D5E6588C64CE3AA9688A6 /* SharedUI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sweep/Components/SharedUI.swift"; sourceTree = SOURCE_ROOT; };
+		C161440EE61B462CB061DE48 /* SweepGlass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sweep/Design/SweepGlass.swift"; sourceTree = SOURCE_ROOT; };
+		18848F06D95A4D8BB9FB93A1 /* SweepTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sweep/Design/SweepTheme.swift"; sourceTree = SOURCE_ROOT; };
+		1C7E96DA99CD480D93F3A2A2 /* FinanceViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sweep/Features/Finance/FinanceViews.swift"; sourceTree = SOURCE_ROOT; };
+		790BF627D7AF4F77BF6A6DFA /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sweep/Features/Home/HomeView.swift"; sourceTree = SOURCE_ROOT; };
+		00244DFB55E2490FB7CBCCEF /* RealEstateViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sweep/Features/RealEstate/RealEstateViews.swift"; sourceTree = SOURCE_ROOT; };
+		A91AD43F3E7C49879EF1EFDA /* AccountView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sweep/Features/Settings/AccountView.swift"; sourceTree = SOURCE_ROOT; };
+		3B2F752593504EF9B96DAEDE /* StockViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sweep/Features/Stock/StockViews.swift"; sourceTree = SOURCE_ROOT; };
+		9D18DA179A064D83AACC81FC /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sweep/Models/Models.swift"; sourceTree = SOURCE_ROOT; };
+		533FBE3B4561465080BF912A /* AppConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sweep/Services/AppConfig.swift"; sourceTree = SOURCE_ROOT; };
+		247AF327CEDD491E95717B4D /* AuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sweep/Services/AuthService.swift"; sourceTree = SOURCE_ROOT; };
+		3A7023902AF845F39D548847 /* SweepAPIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sweep/Services/SweepAPIClient.swift"; sourceTree = SOURCE_ROOT; };
+		3685180BD28C48E5A01341E4 /* TokenStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sweep/Services/TokenStore.swift"; sourceTree = SOURCE_ROOT; };
+		9C29AE3B331D4528BCA7F423 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Sweep/Resources/Info.plist; sourceTree = SOURCE_ROOT; };
+		E0943B6D25F44D24989CB322 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Sweep/Resources/Assets.xcassets; sourceTree = SOURCE_ROOT; };
+		6AFE614171B84722B9D2B6BD /* Sweep.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Sweep.app; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		9E088A820CC74515A98B5C04 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		C70E6FBF70914B6BA0CF4ACB = {
+			isa = PBXGroup;
+			children = (
+				7027F0A89E194CD19C938B4B /* Sweep */,
+				03E17A4019FE4478B7331702 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		03E17A4019FE4478B7331702 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				6AFE614171B84722B9D2B6BD /* Sweep.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		7027F0A89E194CD19C938B4B /* Sweep */ = {
+			isa = PBXGroup;
+			children = (
+				20014B1FBF384843AAC947BB /* AppModel.swift */,
+				C59D2027EDC34D58B9B7EE9B /* RootView.swift */,
+				A37A620E82D74249982D3FF3 /* SweepApp.swift */,
+				281D5E6588C64CE3AA9688A6 /* SharedUI.swift */,
+				C161440EE61B462CB061DE48 /* SweepGlass.swift */,
+				18848F06D95A4D8BB9FB93A1 /* SweepTheme.swift */,
+				1C7E96DA99CD480D93F3A2A2 /* FinanceViews.swift */,
+				790BF627D7AF4F77BF6A6DFA /* HomeView.swift */,
+				00244DFB55E2490FB7CBCCEF /* RealEstateViews.swift */,
+				A91AD43F3E7C49879EF1EFDA /* AccountView.swift */,
+				3B2F752593504EF9B96DAEDE /* StockViews.swift */,
+				9D18DA179A064D83AACC81FC /* Models.swift */,
+				533FBE3B4561465080BF912A /* AppConfig.swift */,
+				247AF327CEDD491E95717B4D /* AuthService.swift */,
+				3A7023902AF845F39D548847 /* SweepAPIClient.swift */,
+				3685180BD28C48E5A01341E4 /* TokenStore.swift */,
+				9C29AE3B331D4528BCA7F423 /* Info.plist */,
+				E0943B6D25F44D24989CB322 /* Assets.xcassets */,
+			);
+			name = Sweep;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		A4F32DC3209F4EC691ABE0C5 /* Sweep */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 2F90E95BEC45436BA1535B5F /* Build configuration list for PBXNativeTarget "Sweep" */;
+			buildPhases = (
+				96504137ADFA44139F8DBCE6 /* Sources */,
+				9E088A820CC74515A98B5C04 /* Frameworks */,
+				1C8C031FF1F44583B46CA1EF /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Sweep;
+			productName = Sweep;
+			productReference = 6AFE614171B84722B9D2B6BD /* Sweep.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		A9B2C920708845E89B7B15D2 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2600;
+				LastUpgradeCheck = 2600;
+			};
+			buildConfigurationList = CC844073C6A54900B31C00BF /* Build configuration list for PBXProject "Sweep" */;
+			compatibilityVersion = "Xcode 15.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = C70E6FBF70914B6BA0CF4ACB;
+			productRefGroup = 03E17A4019FE4478B7331702 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				A4F32DC3209F4EC691ABE0C5 /* Sweep */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		1C8C031FF1F44583B46CA1EF /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				17E0FE65BAAF4B2990E429F0 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		96504137ADFA44139F8DBCE6 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				6821D856C06B42EC969D75B1 /* AppModel.swift in Sources */,
+				79CBF4736F404B2A8EE73CC5 /* RootView.swift in Sources */,
+				5B841FA3CFDF4885A9BE920E /* SweepApp.swift in Sources */,
+				3B6BBFD425DE42908A92518C /* SharedUI.swift in Sources */,
+				223EC85DC55C4DE999818B0F /* SweepGlass.swift in Sources */,
+				2295EFBD5D7E42079F0AB0A2 /* SweepTheme.swift in Sources */,
+				25F632CD89D94C609189B02A /* FinanceViews.swift in Sources */,
+				681D93AEFBF747EA867FFDBD /* HomeView.swift in Sources */,
+				08B25FAF00C54A9A83817E0A /* RealEstateViews.swift in Sources */,
+				7402F12E000A4647BD4C8850 /* AccountView.swift in Sources */,
+				458CB55BAE0841DDB85AA186 /* StockViews.swift in Sources */,
+				150F2D957E174DFB84F8E9F2 /* Models.swift in Sources */,
+				4F34333395D64C5A95864453 /* AppConfig.swift in Sources */,
+				FB7FA70030F84989BB269087 /* AuthService.swift in Sources */,
+				1B14BD3BA7C9458CA2C11B1B /* SweepAPIClient.swift in Sources */,
+				5C734F8430674ABDA1AAC237 /* TokenStore.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		527B444554D349E39AA839F1 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+		C5F97673C5C54583859981FC /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_VERSION = 6.0;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		A8773D6173964A24B0D810F0 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Sweep/Resources/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.sweep.app;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		C89CD287E3D8441E8B075498 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Sweep/Resources/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.sweep.app;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		CC844073C6A54900B31C00BF /* Build configuration list for PBXProject "Sweep" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				527B444554D349E39AA839F1 /* Debug */,
+				C5F97673C5C54583859981FC /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		2F90E95BEC45436BA1535B5F /* Build configuration list for PBXNativeTarget "Sweep" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A8773D6173964A24B0D810F0 /* Debug */,
+				C89CD287E3D8441E8B075498 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = A9B2C920708845E89B7B15D2 /* Project object */;
+}
