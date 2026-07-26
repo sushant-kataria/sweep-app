@@ -1,36 +1,48 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Sweep
 
-## Getting Started
+AI workspace for **finance screens**, **real-estate intel**, and **general chat**.
 
-First, run the development server:
+Built with Next.js App Router, Turso (SQLite/libSQL), Stripe Pro, and multi-provider LLM routing (OpenRouter / Gemini / Groq).
+
+## Features
+
+- **Chat** — general Q&A with fallback across configured model providers
+- **Finance** — stock screens, SEC/EDGAR-backed fundamentals, Yahoo/Finnhub market data
+- **Real estate** — market map and deal-oriented views
+- **Pro billing** — Stripe subscriptions with free-tier samples
+
+## Quick start
 
 ```bash
+npm install
+cp .env.example .env.local
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Optional data seeds
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run db:init
+npm run seed:finance
+npm run seed:real-estate
+```
 
-## Learn More
+## Environment
 
-To learn more about Next.js, take a look at the following resources:
+See [`.env.example`](./.env.example). Minimum for local chat: at least one of `OPENROUTER_API_KEY`, `GOOGLE_GENERATIVE_AI_API_KEY`, or `GROQ_API_KEY`. Turso + Stripe unlock finance caching and Pro billing.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Scripts
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Dev server |
+| `npm run build` / `start` | Production |
+| `npm run db:init` | Initialize Turso schema |
+| `npm run seed:finance` | Seed finance data |
+| `npm run seed:real-estate` | Seed real-estate data |
 
-## Deploy on Vercel
+## Stack
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Next.js · TypeScript · Tailwind · Turso · Stripe · WorkOS (auth where configured)
